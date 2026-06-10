@@ -1,0 +1,441 @@
+/* ============================================
+   TOOL PAGES — Shared Styles (Premium Redesign)
+   ============================================ */
+
+.tool-page {
+  width: 100%;
+  min-height: 100%;
+  overflow-y: auto;
+  padding: 32px 40px 60px;
+  animation: fadeIn 0.5s ease;
+  overscroll-behavior: contain;
+}
+
+/* ─── HEADER ─── */
+.tool-header {
+  margin-bottom: 32px;
+}
+
+.tool-header h1 {
+  font-size: 34px;
+  margin-bottom: 8px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.tool-header p {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.ai-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 107, 0, 0.1);
+  color: var(--saffron);
+  border: 1px solid rgba(255, 107, 0, 0.3);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 12px;
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(255, 107, 0, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 107, 0, 0); }
+}
+
+/* ─── TOOL GRID ─── */
+.tool-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+/* ─── CARD TITLE ─── */
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+/* ─── INPUT GROUPS ─── */
+.input-group {
+  margin-bottom: 24px;
+}
+
+.input-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.input-label span:last-child {
+  color: var(--saffron);
+  font-weight: 700;
+  font-family: 'Outfit', monospace;
+  font-size: 15px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.form-group input[type="text"],
+.form-group input[type="number"],
+input.neo-input {
+  width: 100%;
+  background: rgba(10, 14, 26, 0.4);
+  border: 1px solid var(--navy-border);
+  color: var(--text-primary);
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+.form-group input[type="text"]:focus,
+.form-group input[type="number"]:focus,
+input.neo-input:focus {
+  border-color: var(--saffron);
+  box-shadow: 0 0 15px rgba(255, 107, 0, 0.15);
+  background: rgba(15, 22, 41, 0.8);
+}
+
+.form-group input:read-only {
+  background: var(--navy-mid);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  border-color: transparent;
+}
+
+.form-group small {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+input[type="range"] {
+  width: 100%;
+  height: 6px;
+  background: var(--navy-border);
+  border-radius: 10px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: var(--saffron);
+  border: 3px solid var(--navy-mid);
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--saffron-glow);
+  transition: transform 0.15s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* ─── RESULTS CARD ─── */
+.results-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.result-main {
+  text-align: center;
+  padding: 28px;
+  background: rgba(255, 107, 0, 0.04);
+  border-radius: var(--radius);
+  border: 1px dashed rgba(255, 107, 0, 0.25);
+}
+
+.result-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.result-value {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--saffron);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* ─── STATS GRID ─── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-item {
+  padding: 16px;
+  background: var(--navy-hover);
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.stat-item:hover {
+  border-color: var(--navy-border);
+}
+
+.stat-item .label {
+  font-size: 10px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+}
+
+.stat-item .value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ─── DASHBOARD SPECIFIC ─── */
+
+/* Market Ticker */
+.dash-ticker {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  margin-bottom: 28px;
+  padding-bottom: 4px;
+}
+
+.dash-ticker-card {
+  padding: 14px 20px !important;
+  min-width: 165px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dash-ticker-name {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.dash-ticker-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dash-ticker-change {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dash-ticker-change.up { color: var(--green-light); }
+.dash-ticker-change.down { color: var(--red-accent); }
+
+/* Stat Cards */
+.dash-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.dash-stat-card {
+  padding: 22px !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.dash-stat-icon {
+  font-size: 24px;
+}
+
+.dash-stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+  font-weight: 600;
+}
+
+.dash-stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.dash-stat-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  opacity: 0.5;
+}
+
+.dash-stat-bar.saffron { background: var(--saffron); }
+.dash-stat-bar.green { background: var(--green-light); }
+.dash-stat-bar.red { background: var(--red-accent); }
+.dash-stat-bar.gold { background: var(--gold); }
+
+/* Quick Actions */
+.dash-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.dash-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
+}
+
+.dash-action-btn:hover {
+  background: var(--navy-hover);
+  border-color: var(--saffron);
+  transform: translateY(-2px);
+}
+
+.dash-action-icon {
+  font-size: 22px;
+}
+
+.dash-action-btn strong {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dash-action-desc {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* News */
+.dash-news-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--navy-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dash-news-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-news-item {
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--navy-border);
+  transition: background 0.15s ease;
+}
+
+.dash-news-item:last-child {
+  border-bottom: none;
+}
+
+.dash-news-item:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.dash-news-item h4 {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  line-height: 1.5;
+}
+
+.dash-news-item p {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 900px) {
+  .tool-page {
+    padding: 24px 20px 40px;
+  }
+  .tool-grid {
+    grid-template-columns: 1fr;
+  }
+  .tool-header h1 {
+    font-size: 26px;
+  }
+  .result-value {
+    font-size: 36px;
+  }
+  .dash-actions-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .dash-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .dash-stats {
+    grid-template-columns: 1fr;
+  }
+  .dash-actions-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}

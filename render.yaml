@@ -1,0 +1,28 @@
+# render.yaml — Deploy Finance AI backend to Render.com (Free Tier)
+# Push this file to your GitHub repo, then connect it on https://render.com
+
+services:
+  - type: web
+    name: finance-ai-backend
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: AZURE_OPENAI_API_KEY
+        sync: false          # Paste this manually in Render dashboard
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false          # e.g. https://your-resource.openai.azure.com/
+      - key: AZURE_OPENAI_DEPLOYMENT_NAME
+        sync: false          # e.g. gpt-4o-mini
+      - key: AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT_NAME
+        sync: false          # e.g. text-embedding-3-small
+      - key: AZURE_OPENAI_API_VERSION
+        value: "2024-02-15-preview"
+      - key: FRONTEND_URL
+        sync: false          # e.g. https://your-app.vercel.app
+      - key: SMTP_EMAIL
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+    healthCheckPath: /

@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+finance_ai.db
+chroma_db/
+uploads/
+test_output.txt

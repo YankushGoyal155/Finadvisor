@@ -1,0 +1,219 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  /* Brand Colors - Indian Heritage */
+  --saffron: #FF6B00;
+  --saffron-light: #FF8C38;
+  --saffron-glow: rgba(255, 107, 0, 0.3);
+  --gold: #FFD700;
+  --gold-light: #FFE033;
+  --green-india: #00A550;
+  --green-light: #00C862;
+  --red-accent: #FF4D4D;
+
+  /* Background Colors - Deep Space / Navy */
+  --navy: #0A0E1A;
+  --navy-mid: #0F1629;
+  --navy-card: #141B2D;
+  --navy-border: #1E2A40;
+  --navy-hover: #1A2336;
+
+  /* Text Colors */
+  --text-primary: #F0F4FF;
+  --text-secondary: #8B9BBF;
+  --text-muted: #4A5568;
+
+  /* Gradients */
+  --gradient-saffron: linear-gradient(135deg, #FF6B00, #FF8C38);
+  --gradient-gold: linear-gradient(135deg, #FFD700, #FF9500);
+  --gradient-green: linear-gradient(135deg, #00A550, #00C862);
+  --gradient-bg: linear-gradient(135deg, #0A0E1A 0%, #0F1629 50%, #0A1020 100%);
+  --gradient-card: linear-gradient(135deg, rgba(20, 27, 45, 0.8), rgba(10, 14, 26, 0.4));
+
+  /* Glass Effects */
+  --glass-bg: rgba(20, 27, 45, 0.7);
+  --glass-border: rgba(255, 107, 0, 0.15);
+  --glass-glow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+
+  /* Shadows */
+  --shadow-saffron: 0 0 30px rgba(255, 107, 0, 0.2);
+  --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-neon: 0 0 15px rgba(255, 107, 0, 0.4);
+
+  /* Sizing and Spacing Scale */
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-lg: 24px;
+
+  /* Font */
+  --font-main: 'Outfit', 'Inter', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, #root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--navy);
+  background-image: var(--gradient-bg);
+  color: var(--text-primary);
+  line-height: 1.6;
+  font-size: 16px; /* Reduced from 18px for a sharper look */
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar - Stealth Thin Style */
+::-webkit-scrollbar {
+  width: 5px; /* Slimmed down from 10px */
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(30, 42, 64, 0.5); /* Semi-transparent navy-border */
+  border-radius: 20px;
+  border: 3px solid var(--navy-mid); /* Creates the "floating" effect */
+  background-clip: padding-box;
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--saffron);
+  border: 2px solid var(--navy-mid);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--navy-border) transparent;
+}
+
+/* Utilities */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Base Styles */
+h1 { font-size: 3rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 1rem; }
+h2 { font-size: 2.2rem; font-weight: 700; margin-bottom: 0.75rem; }
+h3 { font-size: 1.6rem; font-weight: 600; }
+h4 {
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+input, textarea {
+  font-family: inherit;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 20px rgba(255, 107, 0, 0.2); }
+  50% { box-shadow: 0 0 35px rgba(255, 107, 0, 0.4); }
+  100% { box-shadow: 0 0 20px rgba(255, 107, 0, 0.2); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.fade-in { animation: fadeIn 0.6s ease forwards; }
+.float { animation: float 4s ease-in-out infinite; }
+.slide-in { animation: slideInRight 0.5s ease forwards; }
+
+/* Global Reusable Classes */
+.glass-card {
+  background: var(--navy-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--navy-border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  padding: 32px; /* Increased padding */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(255, 107, 0, 0.3);
+  box-shadow: var(--shadow-saffron);
+}
+
+.gradient-text {
+  background: var(--gradient-saffron);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.badge-saffron { background: var(--saffron-glow); color: var(--saffron); border: 1px solid var(--saffron); }
+.badge-green { background: rgba(0, 165, 80, 0.15); color: var(--green-light); border: 1px solid var(--green-india); }
+.badge-gold { background: rgba(255, 215, 0, 0.1); color: var(--gold); border: 1px solid var(--gold); }
+
+.btn-primary {
+  background: var(--gradient-saffron);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(255, 107, 0, 0.4);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  border: 1px solid var(--navy-border);
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--saffron);
+}

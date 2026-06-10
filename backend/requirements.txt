@@ -1,0 +1,24 @@
+# === Core ===
+fastapi==0.115.12
+uvicorn[standard]==0.34.2
+python-dotenv==1.1.0
+pydantic==2.11.3
+
+# === AI / LLM (Azure OpenAI) ===
+langchain==0.3.25
+langchain-openai==0.3.0
+langchain-community==0.3.24
+langchain-text-splitters==0.3.8
+langchain-core==0.3.55
+
+# === Vector DB ===
+chromadb==0.6.3
+
+# === Database ===
+# SQLite is used (built-in, no extra package needed)
+
+# === Email ===
+# (built-in: smtplib, ssl, email)
+
+# === File Upload ===
+python-multipart==0.0.20

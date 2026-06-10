@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Finance AI — Code Map</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
+  :root{--saffron:#FF6B00;--gold:#FFD700;--green:#00C862;--navy:#0A0E1A;--card:#141B2D;--border:#1E2A40;--text:#F0F4FF;--muted:#8B9BBF;--red:#FF4757;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:#0A0E1A;color:#F0F4FF;min-height:100vh;}
+  /* HEADER */
+  .hero{background:linear-gradient(135deg,#0F1629,#141B2D);padding:40px;border-bottom:1px solid #1E2A40;text-align:center;}
+  .hero h1{font-size:36px;font-weight:800;background:linear-gradient(135deg,#FF6B00,#FFD700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .hero p{color:#8B9BBF;margin-top:8px;font-size:15px;}
+  .badges{display:flex;gap:10px;justify-content:center;margin-top:16px;flex-wrap:wrap;}
+  .badge{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;}
+  .b-o{background:rgba(255,107,0,0.15);color:#FF8C38;border:1px solid rgba(255,107,0,0.3);}
+  .b-g{background:rgba(0,200,98,0.15);color:#00C862;border:1px solid rgba(0,200,98,0.3);}
+  .b-y{background:rgba(255,215,0,0.15);color:#FFD700;border:1px solid rgba(255,215,0,0.3);}
+  /* TABS */
+  .tabs{display:flex;gap:4px;padding:20px 40px 0;background:#0F1629;overflow-x:auto;}
+  .tab{padding:10px 20px;border-radius:10px 10px 0 0;border:none;background:transparent;color:#8B9BBF;font-family:'Inter',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;}
+  .tab.active{background:#141B2D;color:#FF8C38;border:1px solid #1E2A40;border-bottom:none;}
+  .tab:hover:not(.active){color:#F0F4FF;}
+  /* CONTENT */
+  .content{display:none;padding:30px 40px;}
+  .content.active{display:block;}
+  /* CARDS */
+  .card{background:#141B2D;border:1px solid #1E2A40;border-radius:14px;padding:24px;margin-bottom:20px;transition:border-color .3s;}
+  .card:hover{border-color:rgba(255,107,0,0.3);}
+  .card-title{font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+  .card-subtitle{font-size:12px;color:#8B9BBF;margin-top:4px;font-weight:400;}
+  /* TABLE */
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{background:#0F1629;color:#8B9BBF;padding:10px 14px;text-align:left;font-weight:600;border-bottom:1px solid #1E2A40;}
+  td{padding:10px 14px;border-bottom:1px solid rgba(30,42,64,0.5);vertical-align:top;}
+  tr:hover td{background:rgba(255,107,0,0.03);}
+  .file-name{font-family:'Fira Code',monospace;color:#FF8C38;font-size:12px;font-weight:500;}
+  .tag{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin:2px;}
+  .tag-py{background:rgba(59,130,246,0.15);color:#60A5FA;}
+  .tag-jsx{background:rgba(0,200,98,0.15);color:#00C862;}
+  .tag-css{background:rgba(168,85,247,0.15);color:#C084FC;}
+  .tag-ai{background:rgba(255,107,0,0.15);color:#FF8C38;}
+  /* CODE BLOCK */
+  pre{background:#0A0E1A;border:1px solid #1E2A40;border-radius:10px;padding:16px;overflow-x:auto;font-family:'Fira Code',monospace;font-size:12px;line-height:1.7;color:#E2E8F0;}
+  .kw{color:#FF8C38;}  .str{color:#00C862;}  .cm{color:#4A5568;}  .fn{color:#60A5FA;}  .num{color:#FFD700;}
+  /* FLOW */
+  .flow{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0;}
+  .flow-step{background:#0F1629;border:1px solid #1E2A40;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:500;}
+  .flow-step.highlight{border-color:#FF6B00;color:#FF8C38;}
+  .flow-arrow{color:#4A5568;font-size:18px;font-weight:700;}
+  /* GRID */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+  .mini-card{background:#0F1629;border:1px solid #1E2A40;border-radius:10px;padding:16px;}
+  .mini-card h4{font-size:13px;font-weight:700;margin-bottom:8px;color:#FF8C38;}
+  .mini-card p,.mini-card li{font-size:12px;color:#8B9BBF;line-height:1.6;}
+  .mini-card ul{padding-left:16px;}
+  /* FORMULA */
+  .formula{background:#0A0E1A;border-left:3px solid #FFD700;border-radius:0 10px 10px 0;padding:12px 16px;font-family:'Fira Code',monospace;font-size:13px;color:#FFD700;margin:12px 0;}
+  /* STATUS */
+  .status-ok{color:#00C862;}  .status-warn{color:#FFD700;}  .status-no{color:#FF4757;}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;}
+  .dot-g{background:#00C862;} .dot-y{background:#FFD700;} .dot-r{background:#FF4757;}
+  /* ARCH */
+  .arch-box{border:1px solid #1E2A40;border-radius:10px;padding:16px;text-align:center;font-size:13px;font-weight:600;}
+  .arch-box.orange{border-color:#FF6B00;background:rgba(255,107,0,0.05);}
+  .arch-box.blue{border-color:#60A5FA;background:rgba(96,165,250,0.05);}
+  .arch-box.green{border-color:#00C862;background:rgba(0,200,98,0.05);}
+  .arch-box.gold{border-color:#FFD700;background:rgba(255,215,0,0.05);}
+  .arch-label{font-size:10px;color:#8B9BBF;margin-top:4px;font-weight:400;}
+  h3{font-size:15px;font-weight:700;margin:20px 0 12px;}
+  h3:first-child{margin-top:0;}
+  p{font-size:13px;color:#8B9BBF;line-height:1.7;margin-bottom:12px;}
+  @media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr;}.content{padding:16px;}.tabs{padding:16px 16px 0;}}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🇮🇳 Finance AI — Code Map</h1>
+  <p>Complete visual guide to every file, concept, formula, and data flow</p>
+  <div class="badges">
+    <span class="badge b-o">FastAPI Backend</span>
+    <span class="badge b-g">React + Vite Frontend</span>
+    <span class="badge b-y">LLaMA 3 (Local AI)</span>
+    <span class="badge b-o">RAG + ChromaDB</span>
+    <span class="badge b-g">mfapi.in Live Data</span>
+  </div>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('overview')">🗺️ Overview</button>
+  <button class="tab" onclick="showTab('backend')">🐍 Backend</button>
+  <button class="tab" onclick="showTab('frontend')">⚛️ Frontend</button>
+  <button class="tab" onclick="showTab('formulas')">🧮 Formulas</button>
+  <button class="tab" onclick="showTab('flow')">🔄 Data Flow</button>
+  <button class="tab" onclick="showTab('howto')">🚀 How to Run</button>
+</div>
+
+<!-- ═══════════════════════════════════════════ OVERVIEW ═══════════════════════ -->
+<div id="tab-overview" class="content active">
+
+  <div class="card">
+    <div class="card-title">🏗️ System Architecture</div>
+    <div class="grid3" style="margin-bottom:16px;">
+      <div class="arch-box blue">⚛️ React (Vite)<div class="arch-label">localhost:5173 • UI Layer</div></div>
+      <div class="arch-box orange">🐍 FastAPI (Uvicorn)<div class="arch-label">localhost:8000 • API Layer</div></div>
+      <div class="arch-box green">🦙 Ollama (Local)<div class="arch-label">llama3.2:1b + nomic-embed-text</div></div>
+    </div>
+    <div class="grid2">
+      <div class="arch-box gold">🗄️ ChromaDB<div class="arch-label">Vector Database • ./chroma_db folder</div></div>
+      <div class="arch-box green">🌐 mfapi.in<div class="arch-label">External API • Live Mutual Fund NAV</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📁 All Files at a Glance</div>
+    <table>
+      <tr><th>File</th><th>Type</th><th>Purpose</th><th>Backend Needed?</th></tr>
+      <tr><td><span class="file-name">backend/main.py</span></td><td><span class="tag tag-py">Python</span></td><td>FastAPI server — starts the API, handles /chat endpoint</td><td><span class="dot dot-g"></span>This IS the backend</td></tr>
+      <tr><td><span class="file-name">backend/rag_service.py</span></td><td><span class="tag tag-py">Python</span></td><td>RAG AI brain — LLaMA 3 + ChromaDB pipeline</td><td><span class="dot dot-g"></span>Core AI logic</td></tr>
+      <tr><td><span class="file-name">backend/add_data.py</span></td><td><span class="tag tag-py">Python</span></td><td>Run manually to add PDF/TXT files to AI knowledge</td><td><span class="dot dot-g"></span>Manual tool</td></tr>
+      <tr><td><span class="file-name">frontend/index.html</span></td><td><span class="tag tag-css">HTML</span></td><td>HTML shell — &lt;div id="root"&gt; where React mounts</td><td><span class="dot dot-g"></span>❌ No</td></tr>
+      <tr><td><span class="file-name">frontend/src/main.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>Bootstraps React app into the HTML root</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">frontend/src/App.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>Root layout — sidebar + page router (switch statement)</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">src/index.css</span></td><td><span class="tag tag-css">CSS</span></td><td>Global design system — colors, fonts, animations, glass-card</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">src/App.css</span></td><td><span class="tag tag-css">CSS</span></td><td>Sidebar offset layout (280px → 72px when collapsed)</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">components/Sidebar.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>Collapsible left navigation with 7 menu items</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">components/Sidebar.css</span></td><td><span class="tag tag-css">CSS</span></td><td>Sidebar styles — width, active state, collapse animation</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">pages/ChatPage.jsx</span></td><td><span class="tag tag-jsx">React</span><span class="tag tag-ai">AI</span></td><td>Chat UI — calls POST /chat, shows typing indicator, renders markdown</td><td>✅ Yes (Ollama)</td></tr>
+      <tr><td><span class="file-name">pages/ChatPage.css</span></td><td><span class="tag tag-css">CSS</span></td><td>Chat bubbles, typing dots, gradient avatar styles</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">pages/TaxPlannerPage.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>Old vs New regime tax calculator (FY2025-26)</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">pages/InvestmentPage.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>SIP & Lumpsum calculator with investment cards</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">pages/EMICalculatorPage.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>Loan EMI calculator with preset loan types</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">pages/GoalsPage.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>Financial goal tracker with progress bars</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">pages/MutualFundPage.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>Live MF NAV tracker — calls mfapi.in, draws Canvas chart</td><td>❌ No (mfapi.in)</td></tr>
+      <tr><td><span class="file-name">pages/DashboardPage.jsx</span></td><td><span class="tag tag-jsx">React</span></td><td>Overview dashboard — currently placeholder stats</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">pages/ToolPage.css</span></td><td><span class="tag tag-css">CSS</span></td><td>Shared styles for Tax, Investment, EMI, Goals pages</td><td>❌ No</td></tr>
+      <tr><td><span class="file-name">pages/MutualFundPage.css</span></td><td><span class="tag tag-css">CSS</span></td><td>Styles specific to the MF tracker page</td><td>❌ No</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📦 Tech Stack — Why Each Was Chosen</div>
+    <table>
+      <tr><th>Technology</th><th>Version</th><th>Why Used</th></tr>
+      <tr><td><b>React</b></td><td>19.2</td><td>Component-based UI — each page/widget is its own reusable component</td></tr>
+      <tr><td><b>Vite</b></td><td>7.3.1</td><td>Extremely fast dev server with Hot Module Replacement (instant updates)</td></tr>
+      <tr><td><b>FastAPI</b></td><td>Latest</td><td>Python web framework — fastest Python API, auto-validates data with Pydantic</td></tr>
+      <tr><td><b>Uvicorn</b></td><td>Latest</td><td>ASGI server that actually runs FastAPI (like Apache/Nginx for Python)</td></tr>
+      <tr><td><b>Ollama llama3.2:1b</b></td><td>Latest</td><td>Local 1B param AI — private (no internet), fast (~5-10 sec response), free</td></tr>
+      <tr><td><b>nomic-embed-text</b></td><td>Latest</td><td>Tiny embedding model (converts text → vectors) — 10x faster than llama3</td></tr>
+      <tr><td><b>LangChain</b></td><td>Latest</td><td>Chains together: retriever → prompt → LLM → output parser (RAG wiring)</td></tr>
+      <tr><td><b>ChromaDB</b></td><td>Latest</td><td>Local vector database — stores knowledge chunks as math vectors for search</td></tr>
+      <tr><td><b>mfapi.in</b></td><td>API</td><td>Free Indian Mutual Fund API — 10,000+ funds, daily NAV history</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ BACKEND ═══════════════════════ -->
+<div id="tab-backend" class="content">
+
+  <div class="card">
+    <div class="card-title">📄 main.py — API Server <span style="font-size:13px;color:#8B9BBF;font-weight:400;">47 lines</span></div>
+    <table>
+      <tr><th>Lines</th><th>Code</th><th>What it does</th></tr>
+      <tr><td>1–5</td><td><span class="file-name">from fastapi import FastAPI...</span></td><td>Import all required libraries</td></tr>
+      <tr><td>7</td><td><span class="file-name">app = FastAPI(...)</span></td><td>Creates the web app object</td></tr>
+      <tr><td>10–16</td><td><span class="file-name">CORSMiddleware</span></td><td>Allows browser at :5173 to call this at :8000 (browser security rule)</td></tr>
+      <tr><td>18–19</td><td><span class="file-name">class ChatMessage(BaseModel)</span></td><td>Validates incoming JSON must have a "message" string field</td></tr>
+      <tr><td>24–28</td><td><span class="file-name">@app.on_event("startup")</span></td><td>Runs ONCE on start — loads LLaMA 3 + ChromaDB into memory</td></tr>
+      <tr><td>30–32</td><td><span class="file-name">GET /</span></td><td>Health check — visit localhost:8000 to confirm server is on</td></tr>
+      <tr><td>34–43</td><td><span class="file-name">POST /chat</span></td><td>⭐ Main endpoint — receives user question, returns AI answer</td></tr>
+      <tr><td>45–46</td><td><span class="file-name">uvicorn.run(..., reload=True)</span></td><td>Auto-restarts server when you save main.py</td></tr>
+    </table>
+    <pre style="margin-top:14px;"><span class="cm"># Request flow for /chat:</span>
+Frontend <span class="kw">POST</span> → <span class="str">{"message": "How to save tax?"}</span>
+         ↓
+FastAPI validates (must have "message" key)
+         ↓
+<span class="fn">ai_service.get_financial_advice</span>(query)
+         ↓
+Returns <span class="str">{"response": "Here are the ways..."}</span></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🧠 rag_service.py — AI Brain <span style="font-size:13px;color:#8B9BBF;font-weight:400;">100 lines • Most Important File</span></div>
+    <h3>What is RAG?</h3>
+    <div class="flow">
+      <div class="flow-step">User Question</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step highlight">ChromaDB Search (k=2 chunks)</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Build Prompt</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step highlight">LLaMA 3 Generates Answer</div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step">Return Text</div>
+    </div>
+    <table>
+      <tr><th>Lines</th><th>Code/Concept</th><th>Explanation</th></tr>
+      <tr><td>11–20</td><td><span class="file-name">financial_knowledge_base</span></td><td>Built-in Indian finance facts (tax slabs, 80C rules, SIP info) — the "textbook"</td></tr>
+      <tr><td>30</td><td><span class="file-name">Ollama(model="llama3.2:1b", temperature=0.2)</span></td><td>Connects to local LLaMA 3. temperature=0.2 = focused, not random</td></tr>
+      <tr><td>32</td><td><span class="file-name">OllamaEmbeddings(model="nomic-embed-text")</span></td><td>Converts text → number arrays. "tax saving" → [0.23, -0.81, 0.44, ...]</td></tr>
+      <tr><td>41–63</td><td><span class="file-name">_initialize_knowledge()</span></td><td>If chroma_db folder exists → load it. Otherwise → create from knowledge_base text</td></tr>
+      <tr><td>54</td><td><span class="file-name">chunk_size=500, chunk_overlap=50</span></td><td>Splits text into 500-char pieces, 50 chars overlap between chunks so no sentence gets cut</td></tr>
+      <tr><td>71</td><td><span class="file-name">as_retriever(search_kwargs={"k": 2})</span></td><td>Find only TOP 2 most similar chunks — keeps prompt small and response fast</td></tr>
+      <tr><td>74–81</td><td><span class="file-name">prompt_template</span></td><td>The system prompt: "You are India's best AI Financial Adviser..." with {context} and {question} slots</td></tr>
+      <tr><td>90–95</td><td><span class="file-name">qa_chain = ({...} | PROMPT | llm | parser)</span></td><td>LangChain pipeline: retriever finds chunks → fills prompt → LLM answers → parse to string</td></tr>
+    </table>
+    <h3>ChromaDB — How Vector Search Works</h3>
+    <div class="grid2" style="margin-top:10px;">
+      <div class="mini-card">
+        <h4>Storing Knowledge</h4>
+        <ul>
+          <li>"Section 80C allows ₹1.5L deduction" → embedding model → [0.12, -0.54, 0.88 ... 768 numbers] → saved in ChromaDB</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h4>Searching at Query Time</h4>
+        <ul>
+          <li>User asks "how to save tax?" → embedding → compare mathematically to all stored vectors → return top 2 most similar chunks</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📥 add_data.py — Knowledge Ingestion Tool <span style="font-size:13px;color:#8B9BBF;font-weight:400;">52 lines • Run manually</span></div>
+    <p>Run this script to add your own PDF or TXT files to the AI's knowledge base.</p>
+    <table>
+      <tr><th>Lines</th><th>Action</th><th>Detail</th></tr>
+      <tr><td>8</td><td><span class="file-name">OllamaEmbeddings("nomic-embed-text")</span></td><td>✅ Fixed — must match rag_service.py or search will fail</td></tr>
+      <tr><td>15–18</td><td>File type detection</td><td>If .pdf → PyPDFLoader, if .txt → TextLoader</td></tr>
+      <tr><td>27–28</td><td>Chunking</td><td>Same 500-char chunks as rag_service.py</td></tr>
+      <tr><td>33–39</td><td>Save to ChromaDB</td><td>If DB exists → add to it. If not → create new DB</td></tr>
+    </table>
+    <pre><span class="cm"># How to use:</span>
+python add_data.py
+<span class="str"># Enter: C:\Users\You\Documents\SEBI_Guide.pdf</span>
+<span class="str"># ✅ Document split into 42 knowledge chunks.</span>
+<span class="str"># ✅ Successfully added to the Finance AI Brain!</span></pre>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ FRONTEND ══════════════════════ -->
+<div id="tab-frontend" class="content">
+
+  <div class="card">
+    <div class="card-title">⚛️ React App Bootstrap Chain</div>
+    <div class="flow" style="flex-wrap:wrap;">
+      <div class="flow-step"><code>index.html</code><br><small style="color:#8B9BBF;">&lt;div id="root"&gt;</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><code>main.jsx</code><br><small style="color:#8B9BBF;">createRoot</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step highlight"><code>App.jsx</code><br><small>Router + Layout</small></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step"><code>Sidebar.jsx</code><br><small style="color:#8B9BBF;">Navigation</small></div>
+      <div class="flow-arrow">+</div>
+      <div class="flow-step"><code>ActivePage.jsx</code><br><small style="color:#8B9BBF;">Rendered Page</small></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎨 index.css — Design System (CSS Variables)</div>
+    <div class="grid3">
+      <div class="mini-card">
+        <h4>Brand Colors</h4>
+        <p><span style="color:#FF6B00">■</span> --saffron: #FF6B00<br><span style="color:#FFD700">■</span> --gold: #FFD700<br><span style="color:#00C862">■</span> --green: #00C862</p>
+      </div>
+      <div class="mini-card">
+        <h4>Background Colors</h4>
+        <p><span style="color:#0A0E1A">■</span> --navy: #0A0E1A (darkest)<br><span style="color:#141B2D">■</span> --navy-card: #141B2D<br><span style="color:#1E2A40">■</span> --navy-border: #1E2A40</p>
+      </div>
+      <div class="mini-card">
+        <h4>Key Animations</h4>
+        <ul><li>fadeIn — cards slide up</li><li>float — welcome icon bobs</li><li>pulse-glow — AI avatar</li><li>spin — loading spinners</li></ul>
+      </div>
+    </div>
+    <h3 style="margin-top:16px;">Reusable CSS Classes</h3>
+    <table>
+      <tr><th>Class</th><th>Effect</th></tr>
+      <tr><td><span class="file-name">.glass-card</span></td><td>Semi-transparent dark card with orange border glow on hover + backdrop-blur</td></tr>
+      <tr><td><span class="file-name">.btn-primary</span></td><td>Orange gradient button — lifts up and glows on hover</td></tr>
+      <tr><td><span class="file-name">.gradient-text</span></td><td>Text with orange gradient fill (used for totals, headings)</td></tr>
+      <tr><td><span class="file-name">.fade-in</span></td><td>Slides element up from 16px below and fades in over 0.5s</td></tr>
+      <tr><td><span class="file-name">.float</span></td><td>Infinite up-down floating animation (used on welcome icon)</td></tr>
+      <tr><td><span class="file-name">.input-field</span></td><td>Dark input with orange glow on focus</td></tr>
+      <tr><td><span class="file-name">.badge-saffron / .badge-green / .badge-gold</span></td><td>Colored pill labels (AI, Live, RAG Ready etc.)</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💬 ChatPage.jsx — Key State Variables</div>
+    <table>
+      <tr><th>State Variable</th><th>Type</th><th>What it stores</th></tr>
+      <tr><td><span class="file-name">messages</span></td><td>Array</td><td>[{role:'user'|'ai', content:'...', time: Date}, ...]</td></tr>
+      <tr><td><span class="file-name">input</span></td><td>String</td><td>Current text typed in the textarea</td></tr>
+      <tr><td><span class="file-name">isTyping</span></td><td>Boolean</td><td>true = show 3 animated dots. false = hide them</td></tr>
+      <tr><td><span class="file-name">messagesEndRef</span></td><td>Ref</td><td>Points to invisible div at bottom of chat — used to scroll down</td></tr>
+    </table>
+    <pre style="margin-top:14px;"><span class="cm">// The API call inside handleSend():</span>
+<span class="kw">const</span> response = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'http://localhost:8000/chat'</span>, {
+  method: <span class="str">'POST'</span>,
+  headers: { <span class="str">'Content-Type'</span>: <span class="str">'application/json'</span> },
+  body: <span class="fn">JSON.stringify</span>({ message: text })  <span class="cm">// → {"message":"..."}</span>
+})
+<span class="kw">const</span> data = <span class="kw">await</span> response.<span class="fn">json</span>()  <span class="cm">// ← {"response":"..."}</span></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💹 MutualFundPage.jsx — How the Canvas Chart Works</div>
+    <div class="grid2">
+      <div class="mini-card">
+        <h4>API Calls Made</h4>
+        <ul>
+          <li><code>GET /mf</code> — loads all 10,000+ fund names on page load (once)</li>
+          <li><code>GET /mf/{schemeCode}</code> — loads NAV history when user picks a fund</li>
+        </ul>
+      </div>
+      <div class="mini-card">
+        <h4>Canvas Chart Steps</h4>
+        <ul>
+          <li>Clear canvas</li>
+          <li>Draw grid lines (faint horizontal)</li>
+          <li>Draw Y-axis ₹ labels</li>
+          <li>Draw gradient fill (green/red)</li>
+          <li>Draw the NAV line</li>
+          <li>Draw hover crosshair + dot</li>
+          <li>Draw X-axis date labels</li>
+        </ul>
+      </div>
+    </div>
+    <pre style="margin-top:14px;"><span class="cm">// Map data → pixel coordinates:</span>
+<span class="kw">const</span> <span class="fn">getX</span> = i => PAD.left + (i / data.length) * chartWidth
+<span class="kw">const</span> <span class="fn">getY</span> = v => PAD.top + chartH - ((v - minNav) / range) * chartH
+<span class="cm">// Higher NAV = lower Y pixel (canvas Y is inverted)</span></pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📐 App.css & Sidebar.css — Layout Logic</div>
+    <table>
+      <tr><th>Situation</th><th>Sidebar Width</th><th>main-content margin-left</th></tr>
+      <tr><td>Sidebar expanded (default)</td><td>280px</td><td>280px</td></tr>
+      <tr><td>Sidebar collapsed (click logo)</td><td>72px</td><td>72px (.expanded class)</td></tr>
+      <tr><td>Mobile screen (≤768px)</td><td>hidden</td><td>0px</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ FORMULAS ═══════════════════════ -->
+<div id="tab-formulas" class="content">
+
+  <div class="card">
+    <div class="card-title">🧾 TaxPlannerPage.jsx — Tax Formulas</div>
+    <h3>Old Tax Regime</h3>
+    <div class="formula">Taxable = Income − Deductions − ₹50,000 (standard deduction)</div>
+    <table>
+      <tr><th>Slab</th><th>Tax Rate</th></tr>
+      <tr><td>₹0 to ₹2.5 Lakh</td><td>0%</td></tr>
+      <tr><td>₹2.5L to ₹5L</td><td>5%</td></tr>
+      <tr><td>₹5L to ₹10L</td><td>20%</td></tr>
+      <tr><td>Above ₹10L</td><td>30%</td></tr>
+    </table>
+    <p style="margin-top:10px;">+ Rebate u/s 87A: If taxable ≤ ₹5L → tax = ₹0</p>
+    <p>+ 4% Health & Education Cess on final tax amount</p>
+
+    <h3>New Tax Regime (FY 2025-26)</h3>
+    <div class="formula">Taxable = Income − ₹75,000 (standard deduction)</div>
+    <table>
+      <tr><th>Slab</th><th>Tax Rate</th></tr>
+      <tr><td>₹0 to ₹4 Lakh</td><td>0%</td></tr>
+      <tr><td>₹4L to ₹8L</td><td>5%</td></tr>
+      <tr><td>₹8L to ₹12L</td><td>10%</td></tr>
+      <tr><td>₹12L to ₹16L</td><td>15%</td></tr>
+      <tr><td>₹16L to ₹20L</td><td>20%</td></tr>
+      <tr><td>₹20L to ₹24L</td><td>25%</td></tr>
+      <tr><td>Above ₹24L</td><td>30%</td></tr>
+    </table>
+    <p style="margin-top:10px;">+ Rebate u/s 87A: If taxable ≤ ₹12L → tax = ₹0 &nbsp;|&nbsp; + 4% Cess</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📈 InvestmentPage.jsx — SIP & Lumpsum</div>
+    <h3>SIP (Monthly Investment) Formula</h3>
+    <div class="formula">FV = P × [((1 + r)^n − 1) / r] × (1 + r)</div>
+    <div class="grid3">
+      <div class="mini-card"><h4>P</h4><p>Monthly investment amount (e.g. ₹5,000)</p></div>
+      <div class="mini-card"><h4>r</h4><p>Monthly interest rate = Annual% ÷ 12 ÷ 100 (e.g. 12% → 0.01)</p></div>
+      <div class="mini-card"><h4>n</h4><p>Total months = Years × 12 (e.g. 10 years → 120)</p></div>
+    </div>
+    <p style="margin-top:10px;"><b>Example:</b> ₹5,000/month, 12%/year, 10 years → Future Value = <b style="color:#00C862">₹11,61,695</b></p>
+
+    <h3>Lumpsum (One-Time Investment) Formula</h3>
+    <div class="formula">FV = Amount × (1 + Rate/100)^Years</div>
+    <p><b>Example:</b> ₹1,00,000, 12%/year, 10 years → Future Value = <b style="color:#00C862">₹3,10,585</b></p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏦 EMICalculatorPage.jsx — Loan EMI Formula</div>
+    <div class="formula">EMI = P × r × (1 + r)^n / [(1 + r)^n − 1]</div>
+    <div class="grid3">
+      <div class="mini-card"><h4>P</h4><p>Principal loan amount (₹)</p></div>
+      <div class="mini-card"><h4>r</h4><p>Monthly rate = Annual% ÷ 12 ÷ 100</p></div>
+      <div class="mini-card"><h4>n</h4><p>Tenure in months = Years × 12</p></div>
+    </div>
+    <p style="margin-top:10px;"><b>Example:</b> ₹50L loan, 8.5% rate, 20 years → EMI = <b style="color:#FFD700">~₹43,391/month</b></p>
+    <h3>Loan Types Built-in</h3>
+    <table>
+      <tr><th>Loan</th><th>Amount</th><th>Rate</th><th>Tenure</th></tr>
+      <tr><td>🏠 Home</td><td>₹50,00,000</td><td>8.5%</td><td>20 yrs</td></tr>
+      <tr><td>🚗 Car</td><td>₹8,00,000</td><td>9.5%</td><td>7 yrs</td></tr>
+      <tr><td>💳 Personal</td><td>₹5,00,000</td><td>12%</td><td>5 yrs</td></tr>
+      <tr><td>🎓 Education</td><td>₹10,00,000</td><td>7.5%</td><td>10 yrs</td></tr>
+      <tr><td>🏪 Business</td><td>₹20,00,000</td><td>11%</td><td>10 yrs</td></tr>
+      <tr><td>🪙 Gold</td><td>₹3,00,000</td><td>7%</td><td>3 yrs</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ FLOW ══════════════════════════ -->
+<div id="tab-flow" class="content">
+
+  <div class="card">
+    <div class="card-title">🤖 AI Chat — Complete Step-by-Step Flow</div>
+    <table>
+      <tr><th>Step</th><th>Where</th><th>What Happens</th></tr>
+      <tr><td>1</td><td>ChatPage.jsx</td><td>User types in &lt;textarea&gt; and presses Enter</td></tr>
+      <tr><td>2</td><td>ChatPage.jsx</td><td><code>handleSend()</code> adds user message to <code>messages[]</code> state immediately</td></tr>
+      <tr><td>3</td><td>ChatPage.jsx</td><td><code>isTyping = true</code> — shows animated 3-dot typing indicator</td></tr>
+      <tr><td>4</td><td>ChatPage.jsx</td><td><code>fetch('POST /chat', body: {message})</code> — HTTP call to FastAPI</td></tr>
+      <tr><td>5</td><td>main.py</td><td>FastAPI validates request → calls <code>ai_service.get_financial_advice(query)</code></td></tr>
+      <tr><td>6</td><td>rag_service.py</td><td>ChromaDB retriever finds TOP 2 most relevant knowledge chunks via vector cosine similarity</td></tr>
+      <tr><td>7</td><td>rag_service.py</td><td>LangChain fills the prompt template: {context} = chunks, {question} = user query</td></tr>
+      <tr><td>8</td><td>Ollama (local)</td><td>LLaMA 3.2:1b processes the prompt and generates markdown-formatted answer</td></tr>
+      <tr><td>9</td><td>main.py</td><td>FastAPI returns <code>{"response": "...markdown text..."}</code> as JSON</td></tr>
+      <tr><td>10</td><td>ChatPage.jsx</td><td>Adds AI message to <code>messages[]</code>, calls <code>formatMarkdown()</code> to convert **bold** → &lt;strong&gt;</td></tr>
+      <tr><td>11</td><td>ChatPage.jsx</td><td><code>isTyping = false</code> — typing dots disappear, message renders with fade-in animation</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💹 Mutual Fund Page — Data Flow</div>
+    <table>
+      <tr><th>Step</th><th>Where</th><th>What Happens</th></tr>
+      <tr><td>1</td><td>MutualFundPage.jsx</td><td>Page loads → <code>useEffect</code> runs → <code>fetch('https://api.mfapi.in/mf')</code></td></tr>
+      <tr><td>2</td><td>mfapi.in</td><td>Returns array of ~10,000 funds: <code>[{schemeName, schemeCode}, ...]</code></td></tr>
+      <tr><td>3</td><td>MutualFundPage.jsx</td><td>Stored in <code>allFunds</code> state. First 100 shown by default</td></tr>
+      <tr><td>4</td><td>MutualFundPage.jsx</td><td>User types in search → <code>filteredFunds</code> computed (case-insensitive filter, max 200)</td></tr>
+      <tr><td>5</td><td>MutualFundPage.jsx</td><td>User clicks a fund → <code>selectedFund</code> state updates</td></tr>
+      <tr><td>6</td><td>MutualFundPage.jsx</td><td>2nd <code>useEffect</code> detects selectedFund change → <code>fetch('mfapi.in/mf/{schemeCode}')</code></td></tr>
+      <tr><td>7</td><td>mfapi.in</td><td>Returns: <code>{meta: {fund_house, scheme_name,...}, data: [{date, nav}, ...]}</code></td></tr>
+      <tr><td>8</td><td>MutualFundPage.jsx</td><td><code>filteredData</code> computed by cutting to selected period (1M/3M/6M/1Y/3Y/All)</td></tr>
+      <tr><td>9</td><td>Canvas API</td><td>Chart redraws: grid → Y-labels → gradient fill → line → hover dot → X-labels</td></tr>
+      <tr><td>10</td><td>MutualFundPage.jsx</td><td>Stats (latest NAV, high, low, % return) calculated from the navValues array</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📐 State Management — How Pages Communicate</div>
+    <p>The app uses simple React <b>useState</b> hooks. There is no Redux or Context API. Here's how data flows:</p>
+    <pre><span class="cm">// App.jsx holds the global navigation state:</span>
+<span class="kw">const</span> [activePage, setActivePage] = <span class="fn">useState</span>(<span class="str">'chat'</span>)
+
+<span class="cm">// Sidebar receives setActivePage as a prop → calls it on button click</span>
+<span class="fn">&lt;Sidebar</span> setActivePage={setActivePage} <span class="fn">/&gt;</span>
+
+<span class="cm">// App renders the correct page:</span>
+switch (activePage) {
+  <span class="kw">case</span> <span class="str">'chat'</span>:  <span class="kw">return</span> &lt;ChatPage /&gt;
+  <span class="kw">case</span> <span class="str">'tax'</span>:   <span class="kw">return</span> &lt;TaxPlannerPage /&gt;
+  <span class="cm">// etc.</span>
+}</pre>
+    <p style="margin-top:12px;"><b>⚠️ Limitation:</b> Each page's own state (chat messages, goal amounts) is lost when you switch pages. Fix: lift state up to App.jsx or use React Context.</p>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════ HOW TO RUN ═════════════════════ -->
+<div id="tab-howto" class="content">
+
+  <div class="card">
+    <div class="card-title">🛠️ One-Time Setup (Install Everything)</div>
+    <pre><span class="cm"># Step 1: Install Ollama from https://ollama.ai (Windows installer)</span>
+
+<span class="cm"># Step 2: Download the AI models (~1.2 GB total) — do this ONCE</span>
+ollama pull llama3.2:1b       <span class="cm"># The chat AI model (~900 MB)</span>
+ollama pull nomic-embed-text  <span class="cm"># The embeddings model (~300 MB)</span>
+
+<span class="cm"># Step 3: Install Python libraries</span>
+cd <span class="str">"d:\Finace AI\backend"</span>
+pip install fastapi uvicorn langchain langchain-community langchain-text-splitters chromadb pydantic pypdf
+
+<span class="cm"># Step 4: Install frontend packages</span>
+cd <span class="str">"d:\Finace AI\frontend"</span>
+npm install</pre>
+  </div>
+
+  <div class="card">
+    <div class="card-title">▶️ Running the App (Every Day)</div>
+    <table>
+      <tr><th>Order</th><th>Terminal</th><th>Command</th><th>Wait for...</th></tr>
+      <tr><td>1st</td><td>Terminal 1</td><td><code>ollama serve</code></td><td>"Ollama is running" (may auto-start)</td></tr>
+      <tr><td>2nd</td><td>Terminal 2</td><td><code>cd "d:\Finace AI\backend" && python main.py</code></td><td>"Uvicorn running on http://0.0.0.0:8000"</td></tr>
+      <tr><td>3rd</td><td>Terminal 3</td><td><code>cd "d:\Finace AI\frontend" && npm run dev</code></td><td>"Local: http://localhost:5173/"</td></tr>
+      <tr><td>4th</td><td>Browser</td><td>Open <b>http://localhost:5173</b></td><td>Finance AI loads! 🎉</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🐛 Known Issues & Fixes</div>
+    <table>
+      <tr><th>Issue</th><th>Status</th><th>Fix / Workaround</th></tr>
+      <tr><td>add_data.py used wrong embedding model (llama3)</td><td><span class="status-ok">✅ Fixed</span></td><td>Changed to nomic-embed-text (matches rag_service.py)</td></tr>
+      <tr><td>Goals data resets on browser refresh</td><td><span class="status-warn">⚠️ Open</span></td><td>Add localStorage.setItem() in GoalsPage.jsx</td></tr>
+      <tr><td>Chat history lost when switching pages</td><td><span class="status-warn">⚠️ Open</span></td><td>Move messages state up to App.jsx</td></tr>
+      <tr><td>Dashboard shows ₹0 (placeholder data)</td><td><span class="status-warn">⚠️ Open</span></td><td>Connect to a real bank API or manual input form</td></tr>
+      <tr><td>No user login/authentication</td><td><span class="status-warn">⚠️ Open</span></td><td>Fine for local use. Add auth before deploying online</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💡 Features That DON'T Need the Backend</div>
+    <div class="grid2">
+      <div>
+        <p><span class="dot dot-g"></span><b>Works without backend:</b></p>
+        <ul style="font-size:13px;color:#8B9BBF;padding-left:20px;line-height:2;">
+          <li>Mutual Fund Tracker (uses mfapi.in directly)</li>
+          <li>Tax Planner Calculator</li>
+          <li>SIP / Lumpsum Calculator</li>
+          <li>EMI Calculator</li>
+          <li>Goals Tracker</li>
+          <li>Dashboard</li>
+        </ul>
+      </div>
+      <div>
+        <p><span class="dot dot-r"></span><b>Needs backend + Ollama:</b></p>
+        <ul style="font-size:13px;color:#8B9BBF;padding-left:20px;line-height:2;">
+          <li>AI Chat Adviser (ChatPage)</li>
+        </ul>
+        <br>
+        <p><span class="dot dot-y"></span><b>Needs internet:</b></p>
+        <ul style="font-size:13px;color:#8B9BBF;padding-left:20px;line-height:2;">
+          <li>Mutual Fund live NAV data</li>
+          <li>Google Fonts loading</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name) {
+  document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+</body>
+</html>
