@@ -9,7 +9,7 @@ langchain==0.3.25
 langchain-openai==0.3.0
 langchain-community==0.3.24
 langchain-text-splitters==0.3.8
-langchain-core==0.3.55
+langchain-core==0.3.59
 
 # === Vector DB ===
 chromadb==0.6.3
