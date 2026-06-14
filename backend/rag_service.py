@@ -29,7 +29,7 @@ class RAGFinanceService:
         try:
             print("Connecting to Azure OpenAI...")
             self.llm = AzureChatOpenAI(
-                azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o-mini"),
+                azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o"),
                 api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview"),
                 temperature=0.2,
                 api_key=os.getenv("AZURE_OPENAI_API_KEY"),
@@ -75,11 +75,11 @@ class RAGFinanceService:
     def get_financial_advice(
         self,
         query: str,
-        model_name: str = "gpt-4o-mini",
+        model_name: str = "gpt-4o",
         chat_history: list | None = None,
         user_data: dict | None = None,
     ) -> str:
-        if not self.embeddings or not self.vector_store or not self.llm:
+        if self.embeddings is None or self.vector_store is None or self.llm is None:
             return "AI Service is initializing. Please wait a moment and try again!"
 
         if chat_history is None:
