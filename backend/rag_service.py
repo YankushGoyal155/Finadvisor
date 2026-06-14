@@ -1,14 +1,13 @@
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).parent / '.env', override=True)
 
-from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
-from langchain_community.vectorstores import Chroma
+from langchain_openai import AzureChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 financial_knowledge_base = """
 The old tax regime offers lower tax rates across different income brackets but requires taxpayers to let go of many tax exemptions and deductions such as HRA, LTA, 80C, 80D, etc. 
@@ -24,20 +23,12 @@ Always maintain an emergency fund equivalent to 6 months of living expenses.
 
 class RAGFinanceService:
     def __init__(self):
-        self.db_dir = "./chroma_db"
-
         try:
             print("Connecting to Azure OpenAI...")
             self.llm = AzureChatOpenAI(
-                azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o"),
-                api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview"),
+                azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o-mini"),
+                api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview"),
                 temperature=0.2,
-                api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-                azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
-            )
-            self.embeddings = AzureOpenAIEmbeddings(
-                azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT_NAME", "text-embedding-3-small"),
-                api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-02-15-preview"),
                 api_key=os.getenv("AZURE_OPENAI_API_KEY"),
                 azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
             )
@@ -45,32 +36,6 @@ class RAGFinanceService:
         except Exception as e:
             print(f"❌ Error initializing Azure OpenAI: {e}")
             self.llm = None
-            self.embeddings = None
-
-        self.vector_store = None
-        self._initialize_knowledge()
-
-    def _initialize_knowledge(self):
-        if not self.embeddings:
-            return
-
-        if os.path.exists(self.db_dir):
-            print("Loading existing Chroma vector database...")
-            self.vector_store = Chroma(
-                persist_directory=self.db_dir,
-                embedding_function=self.embeddings,
-            )
-            return
-
-        print("Creating new knowledge base with Indian Finance context...")
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-        chunks = text_splitter.split_text(financial_knowledge_base)
-        self.vector_store = Chroma.from_texts(
-            texts=chunks,
-            embedding=self.embeddings,
-            persist_directory=self.db_dir,
-        )
-        print("Knowledge base created successfully.")
 
     def get_financial_advice(
         self,
@@ -79,7 +44,7 @@ class RAGFinanceService:
         chat_history: list | None = None,
         user_data: dict | None = None,
     ) -> str:
-        if self.embeddings is None or self.vector_store is None or self.llm is None:
+        if self.llm is None:
             return "AI Service is initializing. Please wait a moment and try again!"
 
         if chat_history is None:
@@ -93,8 +58,6 @@ class RAGFinanceService:
         greetings = ["hi", "hello", "hey", "hi ai", "namaste", "good morning", "good evening"]
         if query.lower().strip() in greetings:
             return "Namaste! 🙏 I'm your Finance AI Assistant. I can help you with Indian Tax planning, SIPs, Mutual Funds, and Loan calculations. How can I assist you today?"
-
-        retriever = self.vector_store.as_retriever(search_kwargs={"k": 3})
 
         user_data_str = "No specific user data provided."
         if isinstance(user_data, dict):
@@ -180,12 +143,9 @@ Educational Guidance:"""
             input_variables=["context", "question", "history", "user_data"],
         )
 
-        def format_docs(docs):
-            return "\n\n".join(doc.page_content for doc in docs)
-
         chain = (
             {
-                "context": retriever | format_docs,
+                "context": lambda _: financial_knowledge_base,
                 "question": RunnablePassthrough(),
                 "history": lambda _: history_str,
                 "user_data": lambda _: user_data_str,
