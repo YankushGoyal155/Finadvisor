@@ -80,15 +80,6 @@ export default function Sidebar({
           <button className="new-chat-btn" onClick={onNewChat}>
             <span>+</span> New Chat
           </button>
-          
-          <select 
-            value={selectedModel || 'gemini-1.5-flash'} 
-            onChange={(e) => setSelectedModel(e.target.value)}
-            className="model-select"
-          >
-            <option value="gemini-1.5-flash">⚡ Gemini Flash</option>
-            <option value="gemini-1.5-pro">🧠 Gemini Pro</option>
-          </select>
         </div>
       )}
 

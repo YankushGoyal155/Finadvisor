@@ -201,16 +201,14 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, thread
       <div className="chat-header">
         <div className="chat-header-left">
           <div className="chat-ai-avatar">
-            <span className="avatar-rupee">
-              {selectedModel.includes('mistral') ? 'M' : '₹'}
-            </span>
+            <span className="avatar-rupee">₹</span>
             <span className="avatar-pulse"></span>
           </div>
           <div>
             <h2>Finance AI Adviser</h2>
             <div className="chat-status">
               <span className="status-dot"></span>
-              <span>Online • Powered by RAG + {selectedModel.includes('mistral') ? 'Mistral' : 'Llama 3'}</span>
+              <span>Online • Powered by Azure AI</span>
             </div>
           </div>
         </div>
