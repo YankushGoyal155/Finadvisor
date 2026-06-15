@@ -2,10 +2,11 @@ import os
 import shutil
 import random
 import uvicorn
+from pathlib import Path
 from dotenv import load_dotenv
 from fastapi import FastAPI, File, UploadFile
 
-load_dotenv()
+load_dotenv(dotenv_path=Path(__file__).parent / '.env', override=True)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -18,6 +19,7 @@ from db import (
     delete_thread, delete_user_history
 )
 from utils import send_otp_email
+from blob_service import blob_service
 
 app = FastAPI(title="Finance AI API", version="1.0.0")
 
@@ -51,7 +53,7 @@ class ThreadRequest(BaseModel):
 
 class ChatMessage(BaseModel):
     message: str
-    model: str = "gpt-4o-mini"
+    model: str = "gpt-4o"
     user_id: int | None = None
     thread_id: int | None = None
     user_data: dict | None = None
@@ -67,7 +69,7 @@ def startup_event():
 
 @app.get("/")
 def home():
-    return {"status": "ok", "message": "Finance AI Backend is active! Azure GPT-4o-mini is ready."}
+    return {"status": "ok", "message": "Finance AI Backend is active! Azure GPT-4o is ready."}
 
 @app.post("/register")
 def handle_register(credentials: UserCredentials):
@@ -163,6 +165,21 @@ def handle_chat(chat: ChatMessage):
             # Save AI response (including thread_id if provided)
             save_message(chat.user_id, "ai", reply, thread_id=chat.thread_id)
             
+            # --- BLOB STORAGE BACKUP ---
+            # Backup thread messages to Azure Blob Storage so the user's data is safely stored
+            if chat.thread_id:
+                try:
+                    updated_history = get_thread_messages(chat.thread_id)
+                    backup_data = {
+                        "user_id": chat.user_id,
+                        "thread_id": chat.thread_id,
+                        "messages": updated_history
+                    }
+                    blob_name = f"users/user_{chat.user_id}/thread_{chat.thread_id}.json"
+                    blob_service.upload_json(backup_data, blob_name)
+                except Exception as e:
+                    print(f"Failed to perform Blob Storage backup: {e}")
+            
         return {"response": reply}
     except Exception as e:
         error_msg = f"An error occurred: {str(e)}"
@@ -178,6 +195,13 @@ async def upload_file(file: UploadFile = File(...)):
     file_path = f"uploads/{file.filename}"
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
+        
+    # --- BLOB STORAGE UPLOAD ---
+    # Upload the user's file to Azure Blob Storage
+    try:
+        blob_service.upload_file(file_path, f"documents/{file.filename}")
+    except Exception as e:
+        print(f"Failed to upload document to blob: {e}")
     try:
         add_document_to_brain(file_path)
         if ai_service:
@@ -187,4 +211,4 @@ async def upload_file(file: UploadFile = File(...)):
         return {"response": f"Error: {str(e)}"}
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

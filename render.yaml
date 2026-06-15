@@ -14,7 +14,7 @@ services:
       - key: AZURE_OPENAI_ENDPOINT
         sync: false          # e.g. https://your-resource.openai.azure.com/
       - key: AZURE_OPENAI_DEPLOYMENT_NAME
-        sync: false          # e.g. gpt-4o-mini
+        sync: false          # e.g. gpt-4o
       - key: AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT_NAME
         sync: false          # e.g. text-embedding-3-small
       - key: AZURE_OPENAI_API_VERSION

@@ -22,3 +22,6 @@ chromadb==0.6.3
 
 # === File Upload ===
 python-multipart==0.0.20
+
+# === Azure Blob Storage ===
+azure-storage-blob==12.24.1
