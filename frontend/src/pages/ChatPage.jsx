@@ -213,8 +213,6 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, thread
           </div>
         </div>
         <div className="chat-header-right">
-          <span className="header-badge premium-badge">💎 PREMIUM FEATURE</span>
-          <span className="header-badge limits-badge">2 Free Questions Left</span>
           <span className="header-badge green">🇮🇳 India-Focused</span>
         </div>
       </div>
