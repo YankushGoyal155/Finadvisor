@@ -3,6 +3,8 @@ import './ProfileDropdown.css';
 
 export default function ProfileDropdown({ user, onLogout }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
@@ -18,75 +20,143 @@ export default function ProfileDropdown({ user, onLogout }) {
 
   const initials = user?.username ? user.username.substring(0, 2).toUpperCase() : 'FP';
   const displayName = user?.username || 'Finance Pro';
-  const displayEmail = user?.email || '';
+  const displayEmail = user?.email || 'user@example.com';
+  const joinDate = new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 
   return (
-    <div className="profile-menu-wrap" ref={dropdownRef}>
-      <button
-        className="profile-trigger"
-        onClick={() => setDropdownOpen(prev => !prev)}
-        title="Profile"
-      >
-        <div className="user-avatar">{initials}</div>
-        <span className="user-name">{displayName}</span>
-        <svg
-          className={`chevron-icon ${dropdownOpen ? 'open' : ''}`}
-          width="14" height="14" viewBox="0 0 24 24"
-          fill="none" stroke="currentColor" strokeWidth="2.5"
-          strokeLinecap="round" strokeLinejoin="round"
+    <>
+      <div className="profile-menu-wrap" ref={dropdownRef}>
+        <button
+          className="profile-trigger"
+          onClick={() => setDropdownOpen(prev => !prev)}
+          title="Profile"
         >
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-      </button>
+          <div className="user-avatar">{initials}</div>
+          <span className="user-name">{displayName}</span>
+          <svg
+            className={`chevron-icon ${dropdownOpen ? 'open' : ''}`}
+            width="14" height="14" viewBox="0 0 24 24"
+            fill="none" stroke="currentColor" strokeWidth="2.5"
+            strokeLinecap="round" strokeLinejoin="round"
+          >
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </button>
 
-      {dropdownOpen && (
-        <div className="profile-dropdown">
-          {/* User Info Header */}
-          <div className="dropdown-header">
-            <div className="dropdown-avatar">{initials}</div>
-            <div className="dropdown-user-info">
-              <span className="dropdown-name">{displayName}</span>
-              {displayEmail && <span className="dropdown-email">{displayEmail}</span>}
+        {dropdownOpen && (
+          <div className="profile-dropdown">
+            {/* User Info Header */}
+            <div className="dropdown-header">
+              <div className="dropdown-avatar">{initials}</div>
+              <div className="dropdown-user-info">
+                <span className="dropdown-name">{displayName}</span>
+                {displayEmail && <span className="dropdown-email">{displayEmail}</span>}
+              </div>
+            </div>
+
+            <div className="dropdown-divider"></div>
+
+            {/* Menu Items */}
+            <div className="dropdown-items">
+              <button 
+                className="dropdown-item" 
+                onClick={() => { setDropdownOpen(false); setShowProfileModal(true); }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                My Profile
+              </button>
+
+              <button 
+                className="dropdown-item"
+                onClick={() => { setDropdownOpen(false); setShowSettingsModal(true); }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+                Settings
+              </button>
+            </div>
+
+            <div className="dropdown-divider"></div>
+
+            {/* Logout */}
+            <button
+              className="dropdown-item logout-item"
+              onClick={() => { setDropdownOpen(false); if(onLogout) onLogout(); }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              Sign Out
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Profile Modal */}
+      {showProfileModal && (
+        <div className="profile-modal-overlay" onClick={() => setShowProfileModal(false)}>
+          <div className="profile-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>My Profile</h3>
+              <button className="close-btn" onClick={() => setShowProfileModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="profile-card-large">
+                <div className="avatar-large">{initials}</div>
+                <div className="profile-details-large">
+                  <h2>{displayName}</h2>
+                  <p className="email-lbl">{displayEmail}</p>
+                  <span className="join-badge">Member since {joinDate}</span>
+                </div>
+              </div>
+              <div className="profile-stats-mock">
+                <div className="stat-box">
+                  <strong>Plan</strong>
+                  <span>Free Trial</span>
+                </div>
+                <div className="stat-box">
+                  <strong>Status</strong>
+                  <span style={{color:'var(--saffron)'}}>Active</span>
+                </div>
+              </div>
             </div>
           </div>
-
-          <div className="dropdown-divider"></div>
-
-          {/* Menu Items */}
-          <div className="dropdown-items">
-            <button className="dropdown-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-              My Profile
-            </button>
-
-            <button className="dropdown-item">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-              Settings
-            </button>
-          </div>
-
-          <div className="dropdown-divider"></div>
-
-          {/* Logout */}
-          <button
-            className="dropdown-item logout-item"
-            onClick={() => { setDropdownOpen(false); if(onLogout) onLogout(); }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            Sign Out
-          </button>
         </div>
       )}
-    </div>
+
+      {/* Settings Modal */}
+      {showSettingsModal && (
+        <div className="profile-modal-overlay" onClick={() => setShowSettingsModal(false)}>
+          <div className="profile-modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>App Settings</h3>
+              <button className="close-btn" onClick={() => setShowSettingsModal(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="setting-row">
+                <label>Dark Mode</label>
+                <input type="checkbox" defaultChecked disabled />
+              </div>
+              <div className="setting-row">
+                <label>Notification Alerts</label>
+                <input type="checkbox" defaultChecked />
+              </div>
+              <div className="setting-row">
+                <label>Data Privacy</label>
+                <button className="btn-secondary" style={{padding: '5px 10px', fontSize:'12px'}}>Turn Off Analytics</button>
+              </div>
+              <p className="settings-note">Note: More settings will be available in V2.</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
