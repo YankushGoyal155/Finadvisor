@@ -11,13 +11,13 @@
   flex: 1;
   margin-left: 260px;
   height: 100vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 0;
   position: relative;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
+  overflow: hidden; /* Prevent double scrollbars on the main wrapper */
 }
 
 .main-content.expanded {
@@ -28,7 +28,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow-y: auto; /* Let the individual pages handle their own scrolling */
   position: relative;
   z-index: 1;
 }
