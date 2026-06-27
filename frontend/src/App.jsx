@@ -64,8 +64,8 @@ export default function App() {
 
   const renderPage = () => {
     switch (activePage) {
-      case 'chat':      return <ChatPage selectedModel={selectedModel} user={user} threadId={activeThreadId} setThreadId={setActiveThreadId} setActivePage={setActivePage} />
-      case 'dashboard': return <DashboardPage setActivePage={setActivePage} />
+      case 'chat':      return <ChatPage selectedModel={selectedModel} user={user} onLogout={handleLogout} threadId={activeThreadId} setThreadId={setActiveThreadId} setActivePage={setActivePage} />
+      case 'dashboard': return <DashboardPage setActivePage={setActivePage} user={user} onLogout={handleLogout} />
       case 'tax':       return <TaxPlannerPage />
       case 'invest':    return <InvestmentPage />
       case 'emi':       return <EMICalculatorPage />
@@ -74,7 +74,7 @@ export default function App() {
       case 'retirement':return <RetirementPage />
       case 'checkin':   return <MonthlyCheckinPage />
       case 'afford':    return <AffordabilityPage />
-      default:          return <ChatPage selectedModel={selectedModel} user={user} threadId={activeThreadId} setThreadId={setActiveThreadId} setActivePage={setActivePage} />
+      default:          return <ChatPage selectedModel={selectedModel} user={user} onLogout={handleLogout} threadId={activeThreadId} setThreadId={setActiveThreadId} setActivePage={setActivePage} />
     }
   }
 

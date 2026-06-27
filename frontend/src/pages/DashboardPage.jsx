@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { useNotification } from '../context/NotificationContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import ProfileDropdown from '../components/ProfileDropdown';
 import './ToolPage.css';
 
-export default function DashboardPage({ setActivePage }) {
+export default function DashboardPage({ setActivePage, user, onLogout }) {
   const { emiData, taxData, investData, goalsData, onboardingData } = useDashboard();
   const { showToast, showModal } = useNotification();
   
@@ -132,6 +133,7 @@ export default function DashboardPage({ setActivePage }) {
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
           <div className="ai-status-badge">Habit Builder Active</div>
           <span className="badge badge-gold" style={{ padding: '8px 16px', fontSize: '12px' }}>🎯 {goalPct}% Goal Progress</span>
+          <ProfileDropdown user={user} onLogout={onLogout} />
         </div>
       </div>
 

@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useDashboard } from '../context/DashboardContext'
+import ProfileDropdown from '../components/ProfileDropdown'
 import './ChatPage.css'
 
-export default function ChatPage({ selectedModel = 'llama3:latest', user, threadId, setThreadId, setActivePage }) {
+export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogout, threadId, setThreadId, setActivePage }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -213,7 +214,7 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, thread
           </div>
         </div>
         <div className="chat-header-right">
-          <span className="header-badge green">🇮🇳 India-Focused</span>
+          <ProfileDropdown user={user} onLogout={onLogout} />
         </div>
       </div>
 
