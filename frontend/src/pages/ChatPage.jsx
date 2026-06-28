@@ -305,7 +305,7 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
             </svg>
           </button>
         </div>
-        <p className="chat-disclaimer">Important: Finance AI provides general educational tools and is <strong>not a SEBI-registered advisory service</strong>. Always consult a certified RIA for personalized advice.</p>
+        <p className="chat-disclaimer">AI can make mistakes. Check facts before relying.</p>
       </div>
     </div>
   )
