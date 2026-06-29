@@ -146,25 +146,25 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
           
           if (action.type === 'EMI_UPDATE' && action.data) {
             updateEmi(action.data);
-            if (action.navigate) setActivePage('emi');
+            setActivePage('emi');
           } else if (action.type === 'MF_FILTER' && action.data) {
             updateMfFilters(action.data);
-            if (action.navigate) setActivePage('mf');
+            setActivePage('mf');
           } else if (action.type === 'TAX_UPDATE' && action.data) {
             updateTax(action.data);
-            if (action.navigate) setActivePage('tax');
+            setActivePage('tax');
           } else if (action.type === 'INVEST_UPDATE' && action.data) {
             updateInvest(action.data);
-            if (action.navigate) setActivePage('invest');
+            setActivePage('invest');
           } else if (action.type === 'GOALS_UPDATE' && action.data) {
             updateGoals(action.data);
-            if (action.navigate) setActivePage('goals');
+            setActivePage('goals');
           } else if (action.type === 'RETIREMENT_UPDATE' && action.data) {
             updateRetirement(action.data);
-            if (action.navigate) setActivePage('retirement');
+            setActivePage('retirement');
           } else if (action.type === 'AFFORD_UPDATE' && action.data) {
             updateAfford(action.data);
-            if (action.navigate) setActivePage('afford');
+            setActivePage('afford');
           } else if (action.type === 'NAVIGATE' && action.page) {
             // Only navigate if the user explicitly asked to go to a page
             setActivePage(action.page);
