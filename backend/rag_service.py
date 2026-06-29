@@ -4,12 +4,14 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent / '.env', override=True)
 
-from langchain_openai import AzureChatOpenAI
+from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
+from langchain_community.vectorstores import Chroma
 
-financial_knowledge_base = """
+# ─── Fallback Knowledge ────────────────────────────────────────────────
+FALLBACK_KNOWLEDGE = """
 The old tax regime offers lower tax rates across different income brackets but requires taxpayers to let go of many tax exemptions and deductions such as HRA, LTA, 80C, 80D, etc. 
 The new tax regime has no tax up to Rs 7 lakh. The standard deduction of Rs 50,000 was introduced in the new tax regime in Budget 2023. In Budget 2024-25, standard deduction was increased to Rs 75,000 for the new tax regime.
 For FY 2025-26 under the new tax regime, slabs are: 0 to 4L is Nil. 4L to 8L is 5%. 8L to 12L is 10%. 12L to 16L is 15%. 16L to 20L is 20%. 20L to 24L is 25%. Above 24L is 30%. Rebate under 87A allows zero tax for income up to Rs 12 lakh under the new tax regime.
@@ -20,22 +22,85 @@ SIP (Systematic Investment Plan) is a method of investing in mutual funds. Large
 Always maintain an emergency fund equivalent to 6 months of living expenses.
 """
 
+CHROMA_DB_DIR = "./chroma_db"
+
 
 class RAGFinanceService:
     def __init__(self):
+        self.llm = None
+        self.embeddings = None
+        self.vector_store = None
+
+        # ── Initialize LLM ──
         try:
-            print("Connecting to Azure OpenAI...")
+            print("Connecting to Azure OpenAI (Chat)...")
             self.llm = AzureChatOpenAI(
                 azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o-mini"),
                 api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview"),
                 temperature=0.2,
                 api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-                azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+                azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
             )
-            print("✅ Azure OpenAI initialized successfully.")
+            print("✅ Azure OpenAI Chat initialized successfully.")
         except Exception as e:
-            print(f"❌ Error initializing Azure OpenAI: {e}")
-            self.llm = None
+            print(f"❌ Error initializing Azure OpenAI Chat: {e}")
+
+        # ── Initialize Embeddings ──
+        try:
+            print("Connecting to Azure OpenAI (Embeddings)...")
+            self.embeddings = AzureOpenAIEmbeddings(
+                azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT_NAME", "text-embedding-3-small"),
+                api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview"),
+                api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+                azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+            )
+            print("✅ Azure OpenAI Embeddings initialized successfully.")
+        except Exception as e:
+            print(f"❌ Error initializing Azure Embeddings: {e}")
+
+        # ── Connect Vector Store ──
+        self._initialize_knowledge()
+
+    def _initialize_knowledge(self):
+        """Load or reload the ChromaDB vector store."""
+        if not self.embeddings:
+            print("⚠️ Embeddings not available. Vector search disabled.")
+            return
+
+        try:
+            if os.path.exists(CHROMA_DB_DIR):
+                self.vector_store = Chroma(
+                    persist_directory=CHROMA_DB_DIR,
+                    embedding_function=self.embeddings,
+                )
+                doc_count = self.vector_store._collection.count()
+                print(f"✅ ChromaDB loaded with {doc_count} document chunks.")
+            else:
+                print("⚠️ ChromaDB directory not found. RAG will use fallback knowledge.")
+                self.vector_store = None
+        except Exception as e:
+            print(f"❌ Error loading ChromaDB: {e}")
+            self.vector_store = None
+
+    def _retrieve_context(self, query: str, k: int = 4) -> str:
+        retrieved_chunks = []
+
+        if self.vector_store:
+            try:
+                results = self.vector_store.similarity_search(query, k=k)
+                if results:
+                    retrieved_chunks = [doc.page_content for doc in results]
+                    print(f"🔍 Retrieved {len(retrieved_chunks)} chunks from ChromaDB")
+            except Exception as e:
+                print(f"⚠️ Vector search failed: {e}")
+
+        if retrieved_chunks:
+            context = "RETRIEVED FROM KNOWLEDGE BASE:\n"
+            context += "\n---\n".join(retrieved_chunks)
+            context += "\n\nADDITIONAL REFERENCE:\n" + FALLBACK_KNOWLEDGE
+            return context
+        else:
+            return FALLBACK_KNOWLEDGE
 
     def get_financial_advice(
         self,
@@ -80,45 +145,55 @@ CRITICAL SEBI COMPLIANCE RULES:
 4. If a user asks for personalized investment advice, you MUST politely decline and state that you provide educational information only, advising them to consult a SEBI-registered professional.
 
 DASHBOARD CONTROL CAPABILITIES:
-You have the ability to update the user's dashboard and calculators based on the conversation. 
-If the user wants to calculate an EMI, see a mutual fund, or navigate to a page, you MUST include a special action tag at the very end of your response.
+You can update the user's dashboard calculators by including a special action tag at the END of your response.
+But you must follow these STRICT RULES:
+
+WHEN TO USE ACTION TAGS:
+- ONLY when the user EXPLICITLY asks you to calculate something (e.g., "calculate my EMI for 50 lakh loan")
+- ONLY when the user EXPLICITLY asks to navigate to a page (e.g., "show me my dashboard", "take me to EMI calculator")
+- ONLY when the user EXPLICITLY asks to search for a mutual fund (e.g., "search for Quant Small Cap fund")
+
+WHEN TO NEVER USE ACTION TAGS:
+- Do NOT add action tags just because you MENTIONED a topic like dashboard, EMI, tax, or mutual funds in your answer.
+- Do NOT add action tags for general advice, explanations, or educational responses.
+- Do NOT add action tags just to be helpful or proactive. Wait for the user to ask.
+- Do NOT add NAVIGATE actions unless the user says words like "show me", "take me to", "open", "go to".
+- If the user asks a question like "What is SIP?" or "How does tax work?", just answer. NO action tag.
+- If the user says "Hi" or has a casual conversation, NEVER add any action tag.
 
 Action Tag Format: [[ACTION: {{"type": "ACTION_TYPE", "data": {{ ... }}, "navigate": true/false}}]]
+Set "navigate" to true ONLY if the user explicitly asked to GO TO or SEE that page. Default is false.
 
 Supported Actions:
-1. EMI_UPDATE: Updates the EMI calculator.
+1. EMI_UPDATE: Updates the EMI calculator. Only use when user asks to CALCULATE an EMI.
    Data: {{"principal": number, "rate": number, "tenure": number}}
    Example: [[ACTION: {{"type": "EMI_UPDATE", "data": {{"principal": 5000000, "rate": 8.5, "tenure": 20}}, "navigate": true}}]]
 
-2. MF_FILTER: Searches for a mutual fund.
+2. MF_FILTER: Searches for a mutual fund. Only use when user asks to SEARCH or FIND a specific fund.
    Data: {{"search": "fund name"}}
    Example: [[ACTION: {{"type": "MF_FILTER", "data": {{"search": "Quant Small Cap"}}, "navigate": true}}]]
 
-3. TAX_UPDATE: Updates the tax planner.
+3. TAX_UPDATE: Updates the tax planner. Only use when user asks to CALCULATE their tax.
    Data: {{"income": number, "deductions": number}}
    Example: [[ACTION: {{"type": "TAX_UPDATE", "data": {{"income": 1500000, "deductions": 150000}}, "navigate": true}}]]
 
-4. INVEST_UPDATE: Updates investment planning.
+4. INVEST_UPDATE: Updates investment planning. Only use when user asks to PLAN or CALCULATE investments.
    Data: {{"monthlyAmount": number, "expectedReturn": number, "timeHorizon": number}}
    Example: [[ACTION: {{"type": "INVEST_UPDATE", "data": {{"monthlyAmount": 25000, "expectedReturn": 14, "timeHorizon": 15}}, "navigate": true}}]]
 
-5. GOALS_UPDATE: Updates the financial goals list.
+5. GOALS_UPDATE: Updates the financial goals list. Only use when user asks to SET or UPDATE their goals.
    Data: Array of goals: [{{"title": string, "target": number, "current": number, "deadline": "YYYY-MM"}}]
    Example: [[ACTION: {{"type": "GOALS_UPDATE", "data": [{{"title": "House", "target": 5000000, "current": 100000, "deadline": "2030-01"}}], "navigate": true}}]]
 
-6. RETIREMENT_UPDATE: Updates retirement planning.
+6. RETIREMENT_UPDATE: Updates retirement planning. Only use when user asks to PLAN retirement.
    Data: {{"currentAge": number, "retirementAge": number, "monthlyExpense": number, "inflationRate": number, "expectedReturn": number}}
    Example: [[ACTION: {{"type": "RETIREMENT_UPDATE", "data": {{"currentAge": 25, "retirementAge": 55, "monthlyExpense": 60000}}, "navigate": true}}]]
 
-7. NAVIGATE: Switches to a specific page.
-   Data: {{}} 
-   Example: [[ACTION: {{"type": "NAVIGATE", "page": "dashboard"}}]] (Pages: dashboard, tax, invest, emi, goals, mf, retirement, afford)
-
-8. AFFORD_UPDATE: Updates the affordability calculator based on a user's prompt about a purchase.
+7. AFFORD_UPDATE: Updates the affordability calculator. Only use when user asks "Can I afford X?".
    Data: {{"itemName": string, "itemPrice": number}}
    Example: [[ACTION: {{"type": "AFFORD_UPDATE", "data": {{"itemName": "iPhone 16", "itemPrice": 80000}}, "navigate": true}}]]
 
-Use these actions sparingly and only when the user explicitly asks for calculations, searches, or to see a specific page.
+REMEMBER: Most of your responses should NOT contain any action tags. Only use them when the user explicitly requests a calculation or navigation.
 
 USER PERSONAL CONTEXT (CRITICAL):
 The user has provided their real personal financial data below. 
@@ -143,9 +218,11 @@ Educational Guidance:"""
             input_variables=["context", "question", "history", "user_data"],
         )
 
+        retrieved_context = self._retrieve_context(query)
+
         chain = (
             {
-                "context": lambda _: financial_knowledge_base,
+                "context": lambda _: retrieved_context,
                 "question": RunnablePassthrough(),
                 "history": lambda _: history_str,
                 "user_data": lambda _: user_data_str,
@@ -157,3 +234,4 @@ Educational Guidance:"""
 
         print(f"Asking Azure OpenAI: {query}")
         return chain.invoke(query)
+

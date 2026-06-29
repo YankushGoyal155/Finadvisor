@@ -128,43 +128,47 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
       const data = await response.json()
       let reply = data.response;
 
-      // Step 3: Parse Action Tags
+      // Step 3: Parse and strip ALL Action Tags
       // Format: [[ACTION: {"type": "...", "data": {...}}]]
-      const actionRegex = /\[\[ACTION:\s*({.*?})\s*\]\]/s;
-      const match = reply.match(actionRegex);
+      const actionRegex = /\[\[ACTION:\s*(\{.*?\})\s*\]\]/gs;
+      const matches = [...reply.matchAll(actionRegex)];
       
-      if (match) {
+      // Always strip action tags from visible text first
+      reply = reply.replace(actionRegex, '').trim();
+      // Also clean up any malformed/partial action tags the AI might have left
+      reply = reply.replace(/\[\[ACTION:.*?\]\]/gs, '').trim();
+      reply = reply.replace(/\[\[ACTION:.*$/gm, '').trim();
+      
+      for (const match of matches) {
         try {
           const action = JSON.parse(match[1]);
-          console.log("AI trigger action:", action);
+          console.log("AI triggered action:", action);
           
-          if (action.type === 'EMI_UPDATE') {
+          if (action.type === 'EMI_UPDATE' && action.data) {
             updateEmi(action.data);
             if (action.navigate) setActivePage('emi');
-          } else if (action.type === 'MF_FILTER') {
+          } else if (action.type === 'MF_FILTER' && action.data) {
             updateMfFilters(action.data);
             if (action.navigate) setActivePage('mf');
-          } else if (action.type === 'TAX_UPDATE') {
+          } else if (action.type === 'TAX_UPDATE' && action.data) {
             updateTax(action.data);
             if (action.navigate) setActivePage('tax');
-          } else if (action.type === 'INVEST_UPDATE') {
+          } else if (action.type === 'INVEST_UPDATE' && action.data) {
             updateInvest(action.data);
             if (action.navigate) setActivePage('invest');
-          } else if (action.type === 'GOALS_UPDATE') {
+          } else if (action.type === 'GOALS_UPDATE' && action.data) {
             updateGoals(action.data);
             if (action.navigate) setActivePage('goals');
-          } else if (action.type === 'RETIREMENT_UPDATE') {
+          } else if (action.type === 'RETIREMENT_UPDATE' && action.data) {
             updateRetirement(action.data);
             if (action.navigate) setActivePage('retirement');
-          } else if (action.type === 'AFFORD_UPDATE') {
+          } else if (action.type === 'AFFORD_UPDATE' && action.data) {
             updateAfford(action.data);
             if (action.navigate) setActivePage('afford');
-          } else if (action.type === 'NAVIGATE') {
+          } else if (action.type === 'NAVIGATE' && action.page) {
+            // Only navigate if the user explicitly asked to go to a page
             setActivePage(action.page);
           }
-          
-          // Remove the action tag from the visible reply
-          reply = reply.replace(actionRegex, '').trim();
         } catch (e) {
           console.error("Failed to parse AI action:", e);
         }
@@ -312,7 +316,11 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
 }
 
 function formatMarkdown(text) {
+  // Strip any action tags that might be in historical messages
+  text = text.replace(/\[\[ACTION:.*?\]\]/gs, '');
+  text = text.replace(/\[\[ACTION:.*$/gm, '');
   return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n\n/g, '<br/><br/>')
     .replace(/\n/g, '<br/>')
+    .trim();
 }
