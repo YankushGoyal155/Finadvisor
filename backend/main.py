@@ -182,7 +182,16 @@ def handle_chat(chat: ChatMessage):
             
         return {"response": reply}
     except Exception as e:
-        error_msg = f"An error occurred: {str(e)}"
+        print(f"Chat error: {str(e)}")  # Log full error on server
+        error_str = str(e).lower()
+        if "rate_limit" in error_str or "429" in error_str or "too_many_requests" in error_str:
+            error_msg = "I'm receiving too many requests right now. Please wait a moment and try again! 🙏"
+        elif "timeout" in error_str or "timed out" in error_str:
+            error_msg = "The request took too long. Please try again with a shorter question."
+        elif "content_filter" in error_str:
+            error_msg = "Your message was flagged by the content filter. Please rephrase your question."
+        else:
+            error_msg = "Something went wrong on my end. Please try again in a moment!"
         if chat.user_id:
             save_message(chat.user_id, "ai", error_msg, thread_id=chat.thread_id)
         return {"response": error_msg}
