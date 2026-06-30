@@ -41,7 +41,7 @@ export default function GoalsPage() {
 
   const totalTarget = goals.reduce((s, g) => s + g.target, 0);
   const totalSaved = goals.reduce((s, g) => s + g.saved, 0);
-  const overallPct = Math.round((totalSaved / totalTarget) * 100);
+  const overallPct = totalTarget > 0 ? Math.round((totalSaved / totalTarget) * 100) : 0;
 
   return (
     <div className="tool-page fade-in">
