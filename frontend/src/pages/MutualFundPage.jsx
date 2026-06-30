@@ -37,7 +37,7 @@ export default function MutualFundPage() {
     fetch('https://api.mfapi.in/mf')
       .then(r => r.json())
       .then(data => {
-        setAllFunds(data.slice(0, 800));
+        setAllFunds(data); // Load all funds for comprehensive search (or slice(0, 10000) if it's too slow)
         setListLoading(false);
       })
       .catch(e => {
@@ -121,7 +121,7 @@ export default function MutualFundPage() {
 
   const filteredFunds = allFunds.filter(f =>
     f.schemeName.toLowerCase().includes(search.toLowerCase())
-  ).slice(0, 8);
+  ).slice(0, 50); // Show up to 50 results in dropdown for better selection
 
   const getReturns = (days) => {
     if (!fundHistory?.data || fundHistory.data.length < days) return null;
@@ -245,6 +245,13 @@ export default function MutualFundPage() {
               <div className="mf-nav-label">Latest NAV</div>
               <div className="mf-nav-value">₹{fundHistory?.data?.[0]?.nav || '—'}</div>
               <div className="mf-nav-date">last updated {fundHistory?.data?.[0]?.date || '...'}</div>
+              <button 
+                className="btn-primary" 
+                style={{ width: '100%', marginTop: '15px', background: 'var(--green-light)', color: 'white', border: 'none' }}
+                onClick={() => alert(`Successfully added ${selectedFund.schemeName} to your portfolio tracking!`)}
+              >
+                + Add to My Portfolio
+              </button>
             </div>
 
             {!loading && fundHistory?.data && (

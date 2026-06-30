@@ -1,0 +1,30 @@
+sequenceDiagram
+    participant User as User
+    participant React as ChatPage.jsx
+    participant API as main.py
+    participant RAG as rag_service.py
+    participant SQLite as SQLite DB
+    participant Blob as Azure Blob
+    participant Embed as Azure Embeddings
+    participant Chroma as ChromaDB
+    participant GPT as Azure GPT-4o
+
+    User->>React: "What deductions can I claim under 80D?"
+    React->>API: POST /chat {message, user_id, thread_id, user_data}
+    API->>SQLite: save_message(user_msg)
+    API->>SQLite: get_thread_messages() → history
+    API->>RAG: get_financial_advice(query, history, user_data)
+
+    Note over RAG, Chroma: NEW TRUE RAG FLOW
+    RAG->>Embed: Convert query → vector embedding
+    Embed-->>RAG: query vector [0.012, -0.45, ...]
+    RAG->>Chroma: similarity_search(query_vector, k=4)
+    Chroma-->>RAG: Top 4 most relevant document chunks
+    
+    RAG->>GPT: Prompt + RETRIEVED Context + History + User Data
+    GPT-->>RAG: Precise, document-backed AI response
+    RAG-->>API: response text
+    API->>SQLite: save_message(ai_response)
+    API->>Blob: backup thread as JSON
+    API-->>React: {response: "..."}
+    React-->>User: Displays message to User

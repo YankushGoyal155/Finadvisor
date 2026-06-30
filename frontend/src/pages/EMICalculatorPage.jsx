@@ -53,17 +53,35 @@ export default function EMICalculatorPage() {
           <h3 className="card-title">✍️ Loan Details</h3>
           
           <div className="input-group">
-            <div className="input-label"><span>Loan Amount (Principal)</span><span>₹{principal.toLocaleString('en-IN')}</span></div>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Loan Amount (Principal)</span>
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                <span style={{color: 'var(--text-muted)'}}>₹</span>
+                <input type="number" value={principal} onChange={(e) => setPrincipal(Number(e.target.value) || 0)} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+              </div>
+            </div>
             <input type="range" min="100000" max="20000000" step="50000" value={principal} onChange={(e) => setPrincipal(Number(e.target.value))} />
           </div>
 
           <div className="input-group">
-            <div className="input-label"><span>Interest Rate (%)</span><span>{rate}%</span></div>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Interest Rate (%)</span>
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                <input type="number" step="0.1" value={rate} onChange={(e) => setRate(Number(e.target.value) || 0)} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <span style={{color: 'var(--text-muted)'}}>%</span>
+              </div>
+            </div>
             <input type="range" min="1" max="25" step="0.1" value={rate} onChange={(e) => setRate(Number(e.target.value))} />
           </div>
 
           <div className="input-group">
-            <div className="input-label"><span>Tenure (Years)</span><span>{tenure}y</span></div>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Tenure (Years)</span>
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                <input type="number" value={tenure} onChange={(e) => setTenure(Number(e.target.value) || 0)} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <span style={{color: 'var(--text-muted)'}}>y</span>
+              </div>
+            </div>
             <input type="range" min="1" max="30" step="1" value={tenure} onChange={(e) => setTenure(Number(e.target.value))} />
           </div>
 ...

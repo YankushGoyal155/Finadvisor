@@ -30,11 +30,7 @@ export function DashboardProvider({ children }) {
   });
 
   // 5. Financial Goals Data
-  const [goalsData, setGoalsData] = useState([
-    { id: 1, title: 'Dream Home', target: 8000000, current: 1500000, deadline: '2030-06' },
-    { id: 2, title: 'Child Education', target: 2500000, current: 400000, deadline: '2035-12' },
-    { id: 3, title: 'New Car', target: 1200000, current: 200000, deadline: '2027-04' }
-  ]);
+  const [goalsData, setGoalsData] = useState([]);
 
   // 6. Retirement Planning Data
   const [retirementData, setRetirementData] = useState({

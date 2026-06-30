@@ -53,17 +53,35 @@ export default function InvestmentPage() {
           <h3 className="card-title">⚙️ Investment Parameters</h3>
           
           <div className="input-group">
-            <div className="input-label"><span>Monthly SIP Amount</span><span>₹{monthly.toLocaleString('en-IN')}</span></div>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Monthly SIP Amount</span>
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                <span style={{color: 'var(--text-muted)'}}>₹</span>
+                <input type="number" value={monthly} onChange={(e) => setMonthly(Number(e.target.value) || 0)} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+              </div>
+            </div>
             <input type="range" min="500" max="200000" step="500" value={monthly} onChange={(e) => setMonthly(Number(e.target.value))} />
           </div>
 
           <div className="input-group">
-            <div className="input-label"><span>Expected Return (Annual %)</span><span>{rate}%</span></div>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Expected Return (Annual)</span>
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                <input type="number" step="0.5" value={rate} onChange={(e) => setRate(Number(e.target.value) || 0)} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <span style={{color: 'var(--text-muted)'}}>%</span>
+              </div>
+            </div>
             <input type="range" min="1" max="30" step="0.5" value={rate} onChange={(e) => setRate(Number(e.target.value))} />
           </div>
 
           <div className="input-group">
-            <div className="input-label"><span>Time Horizon (Years)</span><span>{years}y</span></div>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Time Horizon (Years)</span>
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                <input type="number" value={years} onChange={(e) => setYears(Number(e.target.value) || 0)} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <span style={{color: 'var(--text-muted)'}}>y</span>
+              </div>
+            </div>
             <input type="range" min="1" max="40" step="1" value={years} onChange={(e) => setYears(Number(e.target.value))} />
           </div>
 

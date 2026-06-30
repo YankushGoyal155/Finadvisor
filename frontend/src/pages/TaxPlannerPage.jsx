@@ -4,27 +4,48 @@ import './ToolPage.css';
 
 export default function TaxPlannerPage() {
   const { taxData } = useDashboard();
-  const [income, setIncome] = useState(taxData.income);
-  const [deductions, setDeductions] = useState(taxData.deductions);
+  const [income, setIncome] = useState(taxData.income || 1200000);
+  
+  // Deductions
+  const [sec80C, setSec80C] = useState(taxData.deductions || 150000);
+  const [sec80D, setSec80D] = useState(0); // Health Insurance
+  const [sec80CCD1B, setSec80CCD1B] = useState(0); // NPS
+  const [hra, setHra] = useState(0); // HRA
+  const [other, setOther] = useState(0); // Other (LTA, 80G, etc)
 
   useEffect(() => {
-    setIncome(taxData.income);
-    setDeductions(taxData.deductions);
+    if (taxData) {
+      setIncome(taxData.income);
+      setSec80C(taxData.deductions);
+    }
   }, [taxData]);
 
-  const calcOldRegime = (inc, ded) => {
-    const taxable = Math.max(0, inc - ded - 50000);
+  const calcOldRegime = (inc, c80, d80, nps, hraDed, otherDed) => {
+    const val = (num) => isNaN(num) ? 0 : Number(num);
+    
+    let totalDed = 50000; // standard deduction
+    totalDed += Math.min(150000, val(c80)); // Max 1.5L
+    totalDed += Math.min(100000, val(d80)); // Max ~1L (Self + Parents)
+    totalDed += Math.min(50000, val(nps)); // Max 50k
+    totalDed += val(hraDed);
+    totalDed += val(otherDed);
+    
+    const taxable = Math.max(0, inc - totalDed);
+    
     let tax = 0;
-    if (taxable > 1000000) tax += (taxable - 1000000) * 0.30;
-    if (taxable > 500000) tax += Math.min(taxable - 500000, 500000) * 0.20;
-    if (taxable > 250000) tax += Math.min(taxable - 250000, 250000) * 0.05;
+    if (taxable > 1000000) tax += (taxable - 1000000) * 0.30 + 112500;
+    else if (taxable > 500000) tax += (taxable - 500000) * 0.20 + 12500;
+    else if (taxable > 250000) tax += (taxable - 250000) * 0.05;
+
+    // Rebate 87A
     if (taxable <= 500000) tax = 0;
+    
     const cess = tax * 0.04;
     return Math.round(tax + cess);
   };
 
   const calcNewRegime = (inc) => {
-    const taxable = Math.max(0, inc - 75000);
+    const taxable = Math.max(0, inc - 75000); // Standard deduction 75k new regime
     const slabs = [
       [400000, 0.00], [400000, 0.05], [400000, 0.10],
       [400000, 0.15], [400000, 0.20], [400000, 0.25], [Infinity, 0.30]
@@ -36,14 +57,20 @@ export default function TaxPlannerPage() {
       rem -= amt;
       if (rem <= 0) break;
     }
+    // Rebate up to 12L
     if (taxable <= 1200000) tax = 0;
     return Math.round(tax + (tax * 0.04));
   };
 
-  const oldTax = calcOldRegime(income, deductions);
+  const oldTax = calcOldRegime(income, sec80C, sec80D, sec80CCD1B, hra, other);
   const newTax = calcNewRegime(income);
   const winner = oldTax < newTax ? 'Old' : 'New';
   const savings = Math.abs(oldTax - newTax);
+
+  const formatDed = (d) => {
+     let v = 50000 + Math.min(150000, (sec80C || 0)) + Math.min(100000, (sec80D || 0)) + Math.min(50000, (sec80CCD1B || 0)) + (hra || 0) + (other || 0);
+     return v;
+  }
 
   return (
     <div className="tool-page fade-in">
@@ -54,37 +81,59 @@ export default function TaxPlannerPage() {
 
       <div className="tool-grid">
         <div className="glass-card" style={{ padding: '28px' }}>
-          <h3 className="card-title">⌨️ Your Income Details</h3>
+          <h3 className="card-title">⌨️ Income & Deductions</h3>
           
           <div className="input-group">
-            <div className="input-label">
+            <div className="input-label" style={{alignItems: 'center'}}>
               <span>Annual Salary Income</span>
-              <span>₹{income.toLocaleString('en-IN')}</span>
+              <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
+                <span style={{color: 'var(--text-muted)'}}>₹</span>
+                <input type="number" value={income} onChange={(e) => setIncome(Number(e.target.value) || 0)} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white'}} />
+              </div>
             </div>
             <input type="range" min="300000" max="10000000" step="10000" value={income} onChange={(e) => setIncome(Number(e.target.value))} />
           </div>
 
-          <div className="input-group">
-            <div className="input-label">
-              <span>Section 80C Deductions</span>
-              <span>₹{deductions.toLocaleString('en-IN')}</span>
+          <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600' }}>Old Regime Deductions</p>
+          
+          <div className="input-group" style={{ marginBottom: '12px' }}>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Section 80C (PPF, ELSS, etc.)</span>
+              <input type="number" value={sec80C} onChange={(e) => setSec80C(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
             </div>
-            <input type="range" min="0" max="150000" step="5000" value={deductions} onChange={(e) => setDeductions(Number(e.target.value))} />
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>* Max ₹1,50,000 under 80C (PPF, ELSS, LIC, etc.)</p>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>* Max ₹1,50,000</p>
           </div>
 
-          {/* Tax Slab Info */}
-          <div style={{ marginTop: '24px', padding: '16px', background: 'var(--navy-hover)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--navy-border)' }}>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '10px', fontWeight: '600' }}>New Regime Slabs (FY 2025-26)</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '12px', color: 'var(--text-secondary)' }}>
-              <span>0 – 4L: <strong style={{ color: 'var(--green-light)' }}>Nil</strong></span>
-              <span>4 – 8L: <strong style={{ color: 'var(--text-primary)' }}>5%</strong></span>
-              <span>8 – 12L: <strong style={{ color: 'var(--text-primary)' }}>10%</strong></span>
-              <span>12 – 16L: <strong style={{ color: 'var(--text-primary)' }}>15%</strong></span>
-              <span>16 – 20L: <strong style={{ color: 'var(--saffron)' }}>20%</strong></span>
-              <span>Above 24L: <strong style={{ color: 'var(--red-accent)' }}>30%</strong></span>
+          <div className="input-group" style={{ marginBottom: '12px' }}>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Section 80D (Health Ins.)</span>
+              <input type="number" value={sec80D} onChange={(e) => setSec80D(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>* Max ~₹75,000 to ₹1,00,000</p>
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '12px' }}>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Section 80CCD(1B) (NPS)</span>
+              <input type="number" value={sec80CCD1B} onChange={(e) => setSec80CCD1B(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
+            </div>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>* Max ₹50,000</p>
+          </div>
+
+          <div className="input-group" style={{ marginBottom: '12px' }}>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Exempt HRA</span>
+              <input type="number" value={hra} onChange={(e) => setHra(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
             </div>
           </div>
+          
+          <div className="input-group" style={{ marginBottom: '12px' }}>
+            <div className="input-label" style={{alignItems: 'center'}}>
+              <span>Other (80E, 80G, LTA, etc)</span>
+              <input type="number" value={other} onChange={(e) => setOther(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
+            </div>
+          </div>
+
         </div>
 
         <div className="results-card">
@@ -101,7 +150,7 @@ export default function TaxPlannerPage() {
             {winner === 'Old' && <div className="badge badge-green" style={{ position: 'absolute', top: '16px', right: '16px' }}>✅ Recommended</div>}
             <div className="result-label">Old Tax Regime</div>
             <div className="result-value" style={{ fontSize: '40px' }}>₹{oldTax.toLocaleString('en-IN')}</div>
-            <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>Includes ₹50k Std. Deduction + ₹{deductions/1000}k 80C.</div>
+            <div style={{ marginTop: '10px', fontSize: '12px', color: 'var(--text-secondary)' }}>Includes ₹50k Std. Ded. + ₹{(formatDed() - 50000).toLocaleString('en-IN')} deductions.</div>
           </div>
 
           {/* Savings */}
