@@ -250,6 +250,19 @@ export default function MutualFundPage() {
       ) : (
         <div className="mf-content fade-in">
           <div className="mf-sidebar">
+            <div className="glass-card mf-ai-card">
+              <div className="mf-section-title">✨ AI Advisor Insight</div>
+              <div className="mf-ai-content">
+                {aiLoading ? (
+                  <div className="typing-indicator">
+                    <span></span><span></span><span></span>
+                  </div>
+                ) : (
+                  <p>{aiSuggestion}</p>
+                )}
+              </div>
+            </div>
+
             <div className="glass-card mf-meta-card">
               <div className="mf-meta-header">
                 <div className="mf-meta-icon">📊</div>
@@ -292,19 +305,6 @@ export default function MutualFundPage() {
                 </div>
               </div>
             )}
-
-            <div className="glass-card mf-ai-card">
-              <div className="mf-section-title">✨ AI Advisor Insight</div>
-              <div className="mf-ai-content">
-                {aiLoading ? (
-                  <div className="typing-indicator">
-                    <span></span><span></span><span></span>
-                  </div>
-                ) : (
-                  <p>{aiSuggestion}</p>
-                )}
-              </div>
-            </div>
           </div>
 
           <div className="mf-chart-area">
