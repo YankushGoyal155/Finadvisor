@@ -17,6 +17,8 @@ export default function MutualFundPage() {
   const [search, setSearch] = useState(mfFilters.search || '');
   const [selectedFund, setSelectedFund] = useState(null);
   const [fundHistory, setFundHistory] = useState(null);
+  const [aiSuggestion, setAiSuggestion] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   // Sync with AI search
   useEffect(() => {
@@ -50,6 +52,9 @@ export default function MutualFundPage() {
     if (!selectedFund) return;
     setLoading(true);
     setFundHistory(null);
+    setAiSuggestion('');
+    setAiLoading(true);
+
     fetch(`https://api.mfapi.in/mf/${selectedFund.schemeCode}`)
       .then(r => r.json())
       .then(data => {
@@ -60,6 +65,28 @@ export default function MutualFundPage() {
         console.error('Failed to load history', e);
         setLoading(false);
       });
+
+    // Fetch AI suggestion statelessly via the chat endpoint
+    fetch(`${import.meta.env.VITE_API_URL}/chat`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        message: `The user just opened the mutual fund/stock: ${selectedFund.schemeName}. Provide a very brief 2-3 sentence financial insight, specific risk factor, or useful analytical detail about this fund. Do NOT mention that you are an AI. Give actionable or analytical info directly. Do NOT include any ACTION tags.`, 
+        model: 'gpt-4o'
+      }),
+    })
+    .then(r => r.json())
+    .then(data => {
+      let reply = data.response || 'No insights available.';
+      reply = reply.replace(/\[\[ACTION.*?\]\]/gs, '').trim();
+      setAiSuggestion(reply);
+      setAiLoading(false);
+    })
+    .catch(e => {
+      console.error('AI Suggestion error', e);
+      setAiSuggestion('Could not load AI insights at this time.');
+      setAiLoading(false);
+    });
   }, [selectedFund]);
 
   useEffect(() => {
@@ -265,6 +292,19 @@ export default function MutualFundPage() {
                 </div>
               </div>
             )}
+
+            <div className="glass-card mf-ai-card">
+              <div className="mf-section-title">✨ AI Advisor Insight</div>
+              <div className="mf-ai-content">
+                {aiLoading ? (
+                  <div className="typing-indicator">
+                    <span></span><span></span><span></span>
+                  </div>
+                ) : (
+                  <p>{aiSuggestion}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="mf-chart-area">
