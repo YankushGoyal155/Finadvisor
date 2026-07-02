@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useDashboard } from '../context/DashboardContext'
-import ProfileDropdown from '../components/ProfileDropdown'
 import './ChatPage.css'
 
 export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogout, threadId, setThreadId, setActivePage }) {
@@ -204,30 +203,14 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
 
   return (
     <div className={`chat-page ${isWelcome ? 'chat-page-welcome' : ''}`}>
-      {/* Sticky Header */}
-      <div className="chat-header">
-        <div className="chat-header-left">
-          <div className="chat-ai-avatar">
-            <span className="avatar-rupee">₹</span>
-            <span className="avatar-pulse"></span>
-          </div>
-          <div>
-            <h2>Finance AI Adviser</h2>
-            <div className="chat-status">
-              <span className="status-dot"></span>
-              <span>Online • Powered by Azure AI</span>
-            </div>
-          </div>
-        </div>
-        <div className="chat-header-right">
-          <ProfileDropdown user={user} onLogout={onLogout} />
-        </div>
-      </div>
-
       {isWelcome ? (
         /* ── ChatGPT-Style Centered Welcome ── */
         <div className="chat-center-wrap">
           <div className="chat-center-content">
+            <div className="chat-ai-avatar" style={{ margin: '0 auto', width: '56px', height: '56px', marginBottom: '16px' }}>
+              <span className="avatar-rupee" style={{ fontSize: '24px' }}>₹</span>
+              <span className="avatar-pulse"></span>
+            </div>
             <h1 className="chat-center-heading">What can I help you with? 🙏</h1>
 
             {/* Input in the center */}
