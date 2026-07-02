@@ -200,8 +200,10 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
     }
   }
 
+  const isWelcome = messages.length === 0;
+
   return (
-    <div className="chat-page">
+    <div className={`chat-page ${isWelcome ? 'chat-page-welcome' : ''}`}>
       {/* Sticky Header */}
       <div className="chat-header">
         <div className="chat-header-left">
@@ -222,45 +224,49 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div className="chat-messages">
-        {messages.length === 0 ? (
-          <div className="chat-welcome">
-            <div className="welcome-hero">
-              <div className="welcome-avatar-ring">
-                <div className="welcome-avatar">₹</div>
-              </div>
-              <h1>Namaste! 🙏</h1>
-              <p className="welcome-tagline">Your AI-Powered Financial Adviser for India</p>
-              <p className="welcome-sub">Ask me about tax planning, investments, mutual funds, insurance, loans, and more.</p>
-            </div>
+      {isWelcome ? (
+        /* ── ChatGPT-Style Centered Welcome ── */
+        <div className="chat-center-wrap">
+          <div className="chat-center-content">
+            <h1 className="chat-center-heading">What can I help you with? 🙏</h1>
 
-            <div className="suggestions-section">
-              <div className="suggestions-label">✨ Personalized Just For You</div>
-              <div className="suggestions-grid">
-                {dynamicSuggestions.map((s, i) => (
-                  <button key={i} className="suggestion-card" onClick={() => handleSend(s.desc)}>
-                    <div className="suggestion-icon-wrap">
-                      <span>{s.icon}</span>
-                    </div>
-                    <div className="suggestion-text">
-                      <strong>{s.title}</strong>
-                      <p>{s.desc}</p>
-                    </div>
-                    <span className="suggestion-arrow">→</span>
-                  </button>
-                ))}
+            {/* Input in the center */}
+            <div className="chat-center-input">
+              <div className="chat-input-container">
+                <textarea
+                  ref={textareaRef}
+                  className="chat-input"
+                  placeholder="Ask about tax, investments, loans, insurance..."
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  rows={1}
+                />
+                <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim()}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
+                </button>
               </div>
             </div>
 
-            <div className="welcome-features">
-              <div className="feature-pill"><span className="feature-dot pink"></span>Powered by Your Data</div>
-              <div className="feature-pill"><span className="feature-dot blue"></span>Hyper-Personalized</div>
-              <div className="feature-pill premium-pill"><span className="feature-dot gold"></span>Premium Advisor</div>
+            {/* Suggestion Chips */}
+            <div className="chat-center-chips">
+              {dynamicSuggestions.map((s, i) => (
+                <button key={i} className="chat-chip" onClick={() => handleSend(s.desc)}>
+                  <span className="chat-chip-icon">{s.icon}</span>
+                  {s.title}
+                </button>
+              ))}
             </div>
           </div>
-        ) : (
-          <>
+          <p className="chat-disclaimer">AI can make mistakes. Check facts before relying.</p>
+        </div>
+      ) : (
+        /* ── Chat Conversation Mode ── */
+        <>
+          <div className="chat-messages">
             {messages.map((msg, i) => (
               <div key={i} className={`message ${msg.role} slide-in`}>
                 {msg.role === 'ai' && (
@@ -285,32 +291,32 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
                 </div>
               </div>
             )}
-          </>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+            <div ref={messagesEndRef} />
+          </div>
 
-      {/* Input Area */}
-      <div className="chat-input-area">
-        <div className="chat-input-container">
-          <textarea
-            ref={textareaRef}
-            className="chat-input"
-            placeholder="Ask about tax, investments, loans, insurance..."
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            rows={1}
-          />
-          <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim()}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13"></line>
-              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-            </svg>
-          </button>
-        </div>
-        <p className="chat-disclaimer">AI can make mistakes. Check facts before relying.</p>
-      </div>
+          {/* Input at bottom when chatting */}
+          <div className="chat-input-area">
+            <div className="chat-input-container">
+              <textarea
+                ref={textareaRef}
+                className="chat-input"
+                placeholder="Ask about tax, investments, loans, insurance..."
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                rows={1}
+              />
+              <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim()}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
+            <p className="chat-disclaimer">AI can make mistakes. Check facts before relying.</p>
+          </div>
+        </>
+      )}
     </div>
   )
 }
