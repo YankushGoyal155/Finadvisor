@@ -108,6 +108,28 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
     { name: 'EMI Load', value: hasHighEmi ? 35 : 10, fill: 'url(#3DGradient4)' }
   ];
 
+  const getAIChartSuggestion = () => {
+    const expand = [];
+    if (!hasHealthIns) expand.push("Insurance slice");
+    if (!hasEmergency) expand.push("Emergency slice");
+    
+    let msg = "";
+    if (expand.length > 0) {
+      msg += `Expand your ${expand.join(" and ")}`;
+    }
+    
+    if (hasHighEmi) {
+      if (msg) msg += " while shrinking your EMI Load slice";
+      else msg += "Shrink your EMI Load slice";
+    }
+    
+    if (msg) {
+      return msg + " for a healthier financial ratio.";
+    }
+    
+    return "Your pie chart is perfectly balanced! Focus on growing your Investments slice.";
+  };
+
   const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
     const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
@@ -215,8 +237,16 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
           </div>
         </div>
         
-        <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'flex-end' }}>
-          <button className="btn-primary pulse-glow" style={{ background: 'var(--gold)', color: '#000' }} onClick={() => setActivePage && setActivePage('checkin')}>
+        <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
+          {/* AI Suggestion for Pie Chart */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: 'rgba(255, 215, 0, 0.08)', padding: '14px 18px', borderRadius: '10px', border: '1px solid rgba(255, 215, 0, 0.2)', flex: '1 1 300px' }}>
+            <span style={{ fontSize: '20px', marginTop: '1px' }}>✨</span>
+            <p style={{ color: 'var(--gold)', fontSize: '0.95rem', margin: 0, lineHeight: '1.4' }}>
+              <strong>AI Pie Chart Suggestion:</strong> {getAIChartSuggestion()}
+            </p>
+          </div>
+
+          <button className="btn-primary pulse-glow" style={{ background: 'var(--gold)', color: '#000', whiteSpace: 'nowrap' }} onClick={() => setActivePage && setActivePage('checkin')}>
             Update Monthly Check-in 📅
           </button>
         </div>
