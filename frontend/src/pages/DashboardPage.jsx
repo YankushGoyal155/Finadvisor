@@ -159,34 +159,34 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
         </div>
       </div>
 
-      {/* Financial Health Score (Hero Section) */}
-      <div className="glass-card" style={{ padding: '30px', margin: '24px 0', border: 'none', background: 'var(--navy-mid)', borderLeft: '4px solid var(--gold)' }}>
-        
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div style={{ position: 'relative', width: '100px', height: '100px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: `conic-gradient(var(--gold) ${healthScore}%, rgba(255,255,255,0.1) 0)` }}>
-              <div style={{ position: 'absolute', width: '85px', height: '85px', background: 'var(--navy-mid)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                <strong style={{ fontSize: '1.8rem', color: 'var(--gold)' }}>{healthScore}</strong><span style={{ fontSize: '0.7rem', color: '#888' }}>/100</span>
+      {/* Hero Section Grid (Scoreboard + Smart Alerts) */}
+      <div className="tool-grid" style={{ marginTop: '24px', marginBottom: '24px' }}>
+        {/* Financial Health Score (Left Half) */}
+        <div className="glass-card" style={{ padding: '24px', margin: 0, border: 'none', background: 'var(--navy-mid)', borderLeft: '4px solid var(--gold)', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '15px', flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+              <div style={{ position: 'relative', width: '90px', height: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', background: `conic-gradient(var(--gold) ${healthScore}%, rgba(255,255,255,0.1) 0)` }}>
+                <div style={{ position: 'absolute', width: '77px', height: '77px', background: 'var(--navy-mid)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                  <strong style={{ fontSize: '1.6rem', color: 'var(--gold)' }}>{healthScore}</strong><span style={{ fontSize: '0.6rem', color: '#888' }}>/100</span>
+                </div>
+              </div>
+              <div>
+                <h2 style={{ marginBottom: '4px', fontSize: '1.4rem' }}>Overall Score</h2>
+                <p style={{ color: '#aaa', fontSize: '0.9rem', margin: '0 0 8px 0' }}>Financial Health: <strong>{healthScore}/100</strong></p>
+                
+                {!hasHealthIns ? (
+                  <p style={{ color: 'var(--color-red)', fontSize: '0.85rem', margin: 0, fontWeight: 'bold' }}>
+                    🚨 Missing health insurance risk.
+                  </p>
+                ) : (
+                  <p style={{ color: 'var(--color-green)', fontSize: '0.85rem', margin: 0, fontWeight: 'bold' }}>
+                    🌟 Better than 65% of peers.
+                  </p>
+                )}
               </div>
             </div>
-            <div>
-              <h2 style={{ marginBottom: '5px' }}>Overall Score</h2>
-              <p style={{ color: '#aaa', fontSize: '0.95rem', margin: '0 0 10px 0' }}>Your Financial Health: <strong>{healthScore}/100</strong></p>
-              
-              {!hasHealthIns ? (
-                <p style={{ color: 'var(--color-red)', fontSize: '0.9rem', margin: 0, fontWeight: 'bold' }}>
-                  🚨 You are financially at risk due to missing health insurance.
-                </p>
-              ) : (
-                <p style={{ color: 'var(--color-green)', fontSize: '0.9rem', margin: 0, fontWeight: 'bold' }}>
-                  🌟 You are doing better than 65% of people in your income range.
-                </p>
-              )}
-            </div>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-            {/* 3D Recharts Pie Chart taking the right side */}
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '360px', height: '260px' }}>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '220px', height: '180px', margin: '0 auto' }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <defs>
@@ -207,19 +207,19 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                       <stop offset="100%" stopColor="#E63946" />
                     </radialGradient>
                     <filter id="pieShadow">
-                      <feDropShadow dx="3" dy="5" stdDeviation="5" floodColor="#000" floodOpacity="0.6"/>
+                      <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#000" floodOpacity="0.5"/>
                     </filter>
                   </defs>
                   <Tooltip 
-                    contentStyle={{ backgroundColor: 'rgba(15, 22, 41, 0.95)', border: '1px solid #1E2A40', borderRadius: '12px', boxShadow: '0 8px 32px rgba(0,0,0,0.5)', color: '#fff' }}
+                    contentStyle={{ backgroundColor: 'rgba(15, 22, 41, 0.95)', border: '1px solid #1E2A40', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', color: '#fff', fontSize: '12px' }}
                     itemStyle={{ color: '#F0F4FF' }}
                   />
                   <Pie
                     data={chartData}
                     cx="50%"
                     cy="50%"
-                    outerRadius={115}
-                    innerRadius={30} /* slight donut effect for 3D depth */
+                    outerRadius={85}
+                    innerRadius={25}
                     dataKey="value"
                     stroke="#141B2D"
                     strokeWidth={2}
@@ -235,20 +235,41 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
               </ResponsiveContainer>
             </div>
           </div>
-        </div>
-        
-        <div style={{ marginTop: '25px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px' }}>
-          {/* AI Suggestion for Pie Chart */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: 'rgba(255, 215, 0, 0.08)', padding: '14px 18px', borderRadius: '10px', border: '1px solid rgba(255, 215, 0, 0.2)', flex: '1 1 300px' }}>
-            <span style={{ fontSize: '20px', marginTop: '1px' }}>✨</span>
-            <p style={{ color: 'var(--gold)', fontSize: '0.95rem', margin: 0, lineHeight: '1.4' }}>
-              <strong>AI Pie Chart Suggestion:</strong> {getAIChartSuggestion()}
-            </p>
-          </div>
+          
+          <div style={{ marginTop: '20px', paddingTop: '15px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', background: 'rgba(255, 215, 0, 0.08)', padding: '12px 14px', borderRadius: '8px', border: '1px solid rgba(255, 215, 0, 0.2)', flex: '1 1 200px' }}>
+              <span style={{ fontSize: '16px', marginTop: '1px' }}>✨</span>
+              <p style={{ color: 'var(--gold)', fontSize: '0.85rem', margin: 0, lineHeight: '1.4' }}>
+                <strong>AI Pie Chart Suggestion:</strong> {getAIChartSuggestion()}
+              </p>
+            </div>
 
-          <button className="btn-primary pulse-glow" style={{ background: 'var(--gold)', color: '#000', whiteSpace: 'nowrap' }} onClick={() => setActivePage && setActivePage('checkin')}>
-            Update Monthly Check-in 📅
-          </button>
+            <button className="btn-primary pulse-glow" style={{ background: 'var(--gold)', color: '#000', whiteSpace: 'nowrap', padding: '10px 16px', fontSize: '13px' }} onClick={() => setActivePage && setActivePage('checkin')}>
+              Update Check-in 📅
+            </button>
+          </div>
+        </div>
+
+        {/* Smart Alerts (Right Half) */}
+        <div className="glass-card" style={{ padding: 0, overflow: 'hidden', margin: 0, display: 'flex', flexDirection: 'column' }}>
+          <div className="dash-news-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '20px 24px', background: 'var(--navy-mid)' }}>
+            <h3 className="card-title" style={{ margin: 0 }}>🚨 Smart Alerts for You</h3>
+          </div>
+          <div className="dash-news-list" style={{ padding: '20px', overflowY: 'auto' }}>
+            {smartAlerts.map((alert, i) => (
+              <div key={i} className="dash-news-item" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '10px', marginBottom: '12px', borderLeft: `3px solid var(--color-${alert.badgeClass.split('-')[1]})` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                  <span className={`badge ${alert.badgeClass}`} style={{ fontSize: '11px', padding: '4px 8px' }}>{alert.title}</span>
+                </div>
+                <p style={{ fontSize: '13px', lineHeight: '1.4', margin: '8px 0', color: 'var(--text-secondary)' }}>{alert.desc}</p>
+                {alert.actionText && (
+                  <button onClick={() => handleAlertAction(alert)} style={{ background: 'transparent', border: 'none', color: alert.badgeClass.includes('gold') ? 'var(--gold)' : 'var(--saffron)', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: 'bold', marginTop: '4px' }}>
+                    {alert.actionText} →
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -267,27 +288,8 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
         ))}
       </div>
 
-      {/* Bottom Grid */}
+      {/* Bottom Grid for Actions */}
       <div className="tool-grid">
-        <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
-          <div className="dash-news-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-            <h3 className="card-title" style={{ margin: 0 }}>🚨 Smart Alerts for You</h3>
-          </div>
-          <div className="dash-news-list" style={{ padding: '20px' }}>
-            {smartAlerts.map((alert, i) => (
-              <div key={i} className="dash-news-item" style={{ background: 'rgba(255,255,255,0.03)', padding: '15px', borderRadius: '12px', marginBottom: '15px', borderLeft: `3px solid var(--color-${alert.badgeClass.split('-')[1]})` }}>
-                <span className={`badge ${alert.badgeClass}`} style={{ marginBottom: '8px', display: 'inline-block' }}>{alert.title}</span>
-                <p style={{ fontSize: '14px', lineHeight: '1.4', marginBottom: alert.actionText ? '10px' : '0' }}>{alert.desc}</p>
-                {alert.actionText && (
-                  <button onClick={() => handleAlertAction(alert)} style={{ background: 'transparent', border: 'none', color: 'var(--saffron)', cursor: 'pointer', padding: 0, fontSize: '13px', fontWeight: 'bold' }}>
-                    {alert.actionText} →
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
         <div className="glass-card" style={{ padding: '28px' }}>
           <h3 className="card-title">🚀 Action Center</h3>
           <p style={{ fontSize: '14px', color: '#888', marginBottom: '20px' }}>Daily tools to keep you on track.</p>
@@ -300,22 +302,24 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
               </button>
             ))}
           </div>
+        </div>
 
-          <div style={{ marginTop: '20px', padding: '20px', background: 'linear-gradient(135deg, rgba(255,107,0,0.1), rgba(255,215,0,0.1))', borderRadius: '12px', border: '1px solid var(--saffron)' }}>
-            <h4 style={{ color: 'var(--gold)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="glass-card" style={{ padding: '24px', background: 'linear-gradient(135deg, rgba(255,107,0,0.1), rgba(255,215,0,0.1))', borderRadius: '12px', border: '1px solid rgba(255,107,0,0.3)', margin: 0 }}>
+            <h4 style={{ color: 'var(--gold)', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '16px' }}>
               💎 Ask AI about your finances
             </h4>
-            <p style={{ fontSize: '13px', color: '#ccc', marginBottom: '15px' }}>
-              Your personalized advisor knows your salary, expenses, and goals. Ask anything.
+            <p style={{ fontSize: '13px', color: '#ccc', marginBottom: '18px', lineHeight: '1.5' }}>
+              Your personalized advisor knows your salary, expenses, and goals. Ask anything to stay ahead.
             </p>
             <button className="btn-primary pulse-glow" style={{ width: '100%', background: 'var(--gradient-saffron)' }} onClick={() => setActivePage && setActivePage('chat')}>
               Talk to AI Advisor ✨
             </button>
           </div>
           
-          <div style={{ marginTop: '20px', padding: '20px', background: 'rgba(255,153,51,0.05)', borderRadius: '12px', border: '1px solid rgba(255,153,51,0.1)' }}>
-            <h4 style={{ color: 'var(--saffron)', marginBottom: '8px' }}>Got a new expense?</h4>
-            <p style={{ fontSize: '13px', color: '#aaa', marginBottom: '15px' }}>Before buying that new phone, ask the AI if you can truly afford it.</p>
+          <div className="glass-card" style={{ padding: '24px', background: 'rgba(255,153,51,0.05)', borderRadius: '12px', border: '1px solid rgba(255,153,51,0.1)', margin: 0 }}>
+            <h4 style={{ color: 'var(--saffron)', marginBottom: '10px', fontSize: '15px' }}>Got a new expense?</h4>
+            <p style={{ fontSize: '13px', color: '#aaa', marginBottom: '18px', lineHeight: '1.5' }}>Before buying that new phone or car, ask the AI if you can truly afford it.</p>
             <button className="btn-secondary" style={{ width: '100%' }} onClick={() => setActivePage && setActivePage('afford')}>Check Affordability</button>
           </div>
         </div>
