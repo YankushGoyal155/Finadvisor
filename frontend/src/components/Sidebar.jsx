@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import './Sidebar.css';
 
+import {
+  MessageSquarePlus,
+  Bot,
+  LayoutDashboard,
+  CalendarDays,
+  Wallet,
+  Target,
+  TrendingUp,
+  ReceiptIndianRupee,
+  PieChart,
+  Calculator,
+  Flame
+} from "lucide-react";
+
 const navItems = [
-  { id: 'chat',      label: 'AI Adviser',    icon: '🤖', badge: 'AI',   badgeType: 'saffron', bg: 'linear-gradient(135deg, #6366f1, #a855f7)' },
-  { id: 'dashboard', label: 'Dashboard',     icon: '📊', bg: 'linear-gradient(135deg, #3b82f6, #2dd4bf)' },
-  { id: 'checkin',   label: 'Monthly Check-in', icon: '📅', badge: 'New',  badgeType: 'gold', bg: 'linear-gradient(135deg, #ec4899, #f43f5e)' },
-  { id: 'afford',    label: 'Can I Afford It?', icon: '🛍️', bg: 'linear-gradient(135deg, #10b981, #14b8a6)' },
-  { id: 'goals',     label: 'Goals',         icon: '🎯', bg: 'linear-gradient(135deg, #f59e0b, #ef4444)' },
-  { id: 'mf',        label: 'Mutual Funds',  icon: '💹', bg: 'linear-gradient(135deg, #10b981, #059669)' },
-  { id: 'tax',       label: 'Tax Planner',   icon: '🧾', bg: 'linear-gradient(135deg, #8b5cf6, #3b82f6)' },
-  { id: 'invest',    label: 'Investments',   icon: '📈', bg: 'linear-gradient(135deg, #06b6d4, #3b82f6)' },
-  { id: 'emi',       label: 'EMI Calculator', icon: '🏦', bg: 'linear-gradient(135deg, #64748b, #94a3b8)' },
-  { id: 'retirement',label: 'FIRE Planner',  icon: '🏝️', bg: 'linear-gradient(135deg, #f97316, #eab308)' },
+  { id: 'chat',      label: 'AI Adviser',    icon: <Bot size={20} />, badge: 'AI',   badgeType: 'saffron' },
+  { id: 'dashboard', label: 'Dashboard',     icon: <LayoutDashboard size={20} />                                      },
+  { id: 'checkin',   label: 'Monthly Check-in', icon: <CalendarDays size={20} />, badge: 'New',  badgeType: 'gold' },
+  { id: 'afford',    label: 'Can I Afford It?', icon: <Wallet size={20} /> },
+  { id: 'goals',     label: 'Goals',         icon: <Target size={20} />                                      },
+  { id: 'mf',        label: 'Mutual Funds',  icon: <TrendingUp size={20} />                                      },
+  { id: 'tax',       label: 'Tax Planner',   icon: <ReceiptIndianRupee size={20} />                                      },
+  { id: 'invest',    label: 'Investments',   icon: <PieChart size={20} />                                      },
+  { id: 'emi',       label: 'EMI Calculator', icon: <Calculator size={20} />                                     },
+  { id: 'retirement',label: 'FIRE Planner',  icon: <Flame size={20} />                                      },
 ];
 
 export default function Sidebar({ 
@@ -77,11 +91,8 @@ export default function Sidebar({
 
       {!collapsed && (
         <div className="sidebar-actions fade-in">
-          <button className="new-chat-btn" onClick={onNewChat} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div className="nav-icon-wrapper" style={{ background: 'linear-gradient(135deg, #10b981, #06b6d4)', width: '28px', height: '28px' }}>
-              <span className="nav-icon" style={{ fontSize: '0.9rem' }}>💬</span>
-            </div>
-            New Chat
+          <button className="new-chat-btn" onClick={onNewChat} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <MessageSquarePlus size={18} /> New Chat
           </button>
         </div>
       )}
@@ -99,7 +110,7 @@ export default function Sidebar({
               }}
               title={collapsed ? item.label : ''}
             >
-              <div className="nav-icon-wrapper" style={{ background: item.bg }}>
+              <div className="nav-icon-wrapper">
                 <span className="nav-icon">{item.icon}</span>
               </div>
               {!collapsed && <span className="nav-label">{item.label}</span>}
@@ -132,7 +143,7 @@ export default function Sidebar({
                       setActivePage('chat');
                     }}
                   >
-                    <span className="history-icon" style={{ display: 'flex', alignItems: 'center', opacity: 0.7 }}>💬</span>
+                    <span className="history-icon" style={{ display: 'flex', alignItems: 'center', opacity: 0.7 }}><MessageSquarePlus size={16} /></span>
                     <span className="history-title">{thread.title}</span>
                   </button>
                   <button 
