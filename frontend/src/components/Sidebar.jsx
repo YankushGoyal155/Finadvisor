@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import './Sidebar.css';
 
+import {
+  MessageSquarePlus,
+  Bot,
+  LayoutDashboard,
+  CalendarDays,
+  Wallet,
+  Target,
+  TrendingUp,
+  ReceiptIndianRupee,
+  PieChart,
+  Calculator,
+  Flame
+} from "lucide-react";
+
 const navItems = [
-  { id: 'chat',      label: 'AI Adviser',    icon: '🤖', badge: 'AI',   badgeType: 'saffron' },
-  { id: 'dashboard', label: 'Dashboard',     icon: '📊'                                      },
-  { id: 'checkin',   label: 'Monthly Check-in', icon: '📅', badge: 'New',  badgeType: 'gold' },
-  { id: 'afford',    label: 'Can I Afford It?', icon: '🛍️' },
-  { id: 'goals',     label: 'Goals',         icon: '🎯'                                      },
-  { id: 'mf',        label: 'Mutual Funds',  icon: '💹'                                      },
-  { id: 'tax',       label: 'Tax Planner',   icon: '🧾'                                      },
-  { id: 'invest',    label: 'Investments',   icon: '📈'                                      },
-  { id: 'emi',       label: 'EMI Calculator', icon: '🏦'                                     },
-  { id: 'retirement',label: 'FIRE Planner',  icon: '🏝️'                                      },
+  { id: 'chat',      label: 'AI Adviser',    icon: <Bot size={20} />, badge: 'AI',   badgeType: 'saffron' },
+  { id: 'dashboard', label: 'Dashboard',     icon: <LayoutDashboard size={20} />                                      },
+  { id: 'checkin',   label: 'Monthly Check-in', icon: <CalendarDays size={20} />, badge: 'New',  badgeType: 'gold' },
+  { id: 'afford',    label: 'Can I Afford It?', icon: <Wallet size={20} /> },
+  { id: 'goals',     label: 'Goals',         icon: <Target size={20} />                                      },
+  { id: 'mf',        label: 'Mutual Funds',  icon: <TrendingUp size={20} />                                      },
+  { id: 'tax',       label: 'Tax Planner',   icon: <ReceiptIndianRupee size={20} />                                      },
+  { id: 'invest',    label: 'Investments',   icon: <PieChart size={20} />                                      },
+  { id: 'emi',       label: 'EMI Calculator', icon: <Calculator size={20} />                                     },
+  { id: 'retirement',label: 'FIRE Planner',  icon: <Flame size={20} />                                      },
 ];
 
 export default function Sidebar({ 
@@ -77,8 +91,8 @@ export default function Sidebar({
 
       {!collapsed && (
         <div className="sidebar-actions fade-in">
-          <button className="new-chat-btn" onClick={onNewChat}>
-            <span>+</span> New Chat
+          <button className="new-chat-btn" onClick={onNewChat} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <MessageSquarePlus size={18} /> New Chat
           </button>
         </div>
       )}
@@ -129,7 +143,7 @@ export default function Sidebar({
                       setActivePage('chat');
                     }}
                   >
-                    <span className="history-icon">💬</span>
+                    <span className="history-icon" style={{ display: 'flex', alignItems: 'center', opacity: 0.7 }}><MessageSquarePlus size={16} /></span>
                     <span className="history-title">{thread.title}</span>
                   </button>
                   <button 
