@@ -3,15 +3,6 @@ import { useDashboard } from '../context/DashboardContext';
 import { useNotification } from '../context/NotificationContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import ProfileDropdown from '../components/ProfileDropdown';
-import {
-  CalendarDays,
-  Wallet,
-  Target,
-  TrendingUp,
-  ReceiptIndianRupee,
-  PieChart as PieChartIcon,
-  Calculator
-} from "lucide-react";
 import './ToolPage.css';
 
 export default function DashboardPage({ setActivePage, user, onLogout }) {
@@ -73,16 +64,16 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   const goalPct = totalGoalsTarget > 0 ? Math.round((totalSaved / totalGoalsTarget) * 100) : 0;
 
   const stats = [
-    { label: 'Estimated Tax (Monthly)', value: `₹${estimatedTax.toLocaleString('en-IN')}`, color: 'saffron', icon: <ReceiptIndianRupee size={22} />, trend: 'Optimize in planner', trendDir: 'down' },
-    { label: 'Monthly SIPs', value: `₹${monthlySip.toLocaleString('en-IN')}`, color: 'green', icon: <PieChartIcon size={22} />, trend: '+5% step-up soon', trendDir: 'up' },
-    { label: 'Active Loans EMI', value: `₹${monthlyEmi.toLocaleString('en-IN')}`, color: 'red', icon: <Calculator size={22} />, trend: 'Stable', trendDir: 'neutral' },
+    { label: 'Estimated Tax (Monthly)', value: `₹${estimatedTax.toLocaleString('en-IN')}`, color: 'saffron', icon: '🧾', trend: 'Optimize in planner', trendDir: 'down' },
+    { label: 'Monthly SIPs', value: `₹${monthlySip.toLocaleString('en-IN')}`, color: 'green', icon: '📈', trend: '+5% step-up soon', trendDir: 'up' },
+    { label: 'Active Loans EMI', value: `₹${monthlyEmi.toLocaleString('en-IN')}`, color: 'red', icon: '🏦', trend: 'Stable', trendDir: 'neutral' },
   ];
 
   const quickActions = [
-    { title: 'Log check-in', icon: <CalendarDays size={22} />, desc: 'Update details', event: 'checkin' },
-    { title: 'Affordability', icon: <Wallet size={22} />, desc: 'Can I buy it?', event: 'afford' },
-    { title: 'Fund Picker', icon: <TrendingUp size={22} />, desc: 'Find mutual funds', event: 'mf' },
-    { title: 'Goal Planner', icon: <Target size={22} />, desc: 'Track milestones', event: 'goals' },
+    { title: 'Log check-in', icon: '📅', desc: 'Update details', event: 'checkin' },
+    { title: 'Affordability', icon: '🛍️', desc: 'Can I buy it?', event: 'afford' },
+    { title: 'Fund Picker', icon: '💹', desc: 'Find mutual funds', event: 'mf' },
+    { title: 'Goal Planner', icon: '🎯', desc: 'Track milestones', event: 'goals' },
   ];
 
   const smartAlerts = [
