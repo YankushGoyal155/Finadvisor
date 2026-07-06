@@ -14,6 +14,22 @@ export function useNotification() {
 export function NotificationProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const [modal, setModal] = useState(null);
+  const [inboxNotifications, setInboxNotifications] = useState([
+    { id: '1', title: 'Welcome to Finance AI', message: 'Your smart adviser is ready to assist you.', date: new Date().toISOString(), read: false }
+  ]);
+
+  const addInboxNotification = useCallback((notif) => {
+    setInboxNotifications(prev => [{
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      read: false,
+      ...notif
+    }, ...prev]);
+  }, []);
+
+  const markAllRead = useCallback(() => {
+    setInboxNotifications(prev => prev.map(n => ({...n, read: true})));
+  }, []);
 
   const showToast = useCallback((message, type = 'info', duration = 4000) => {
     const id = Date.now().toString();
@@ -39,7 +55,7 @@ export function NotificationProvider({ children }) {
   }, []);
 
   return (
-    <NotificationContext.Provider value={{ showToast, showModal, closeModal }}>
+    <NotificationContext.Provider value={{ showToast, showModal, closeModal, inboxNotifications, addInboxNotification, markAllRead }}>
       {children}
       
       {/* Toast Container */}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDashboard } from '../context/DashboardContext';
+import { useNotification } from '../context/NotificationContext';
 import './MutualFundPage.css';
 
 const FAMOUS_FUNDS = [
@@ -13,12 +14,21 @@ const FAMOUS_FUNDS = [
 
 export default function MutualFundPage() {
   const { mfFilters } = useDashboard();
+  const { addInboxNotification } = useNotification();
   const [allFunds, setAllFunds] = useState([]);
   const [search, setSearch] = useState(mfFilters.search || '');
   const [selectedFund, setSelectedFund] = useState(null);
   const [fundHistory, setFundHistory] = useState(null);
   const [aiSuggestion, setAiSuggestion] = useState('');
   const [aiLoading, setAiLoading] = useState(false);
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [portfolioForm, setPortfolioForm] = useState({
+    fundName: '',
+    startDate: '',
+    sipStartDate: '',
+    sipAmount: ''
+  });
 
   // Sync with AI search
   useEffect(() => {
@@ -288,7 +298,10 @@ export default function MutualFundPage() {
               <button 
                 className="btn-primary" 
                 style={{ width: '100%', marginTop: '15px', background: 'var(--green-light)', color: 'white', border: 'none' }}
-                onClick={() => alert(`Successfully added ${selectedFund.schemeName} to your portfolio tracking!`)}
+                onClick={() => {
+                  setPortfolioForm({ ...portfolioForm, fundName: selectedFund.schemeName });
+                  setShowAddModal(true);
+                }}
               >
                 + Add to My Portfolio
               </button>
@@ -342,6 +355,68 @@ export default function MutualFundPage() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {showAddModal && (
+        <div className="mf-modal-overlay">
+          <div className="glass-card mf-modal">
+            <div className="mf-modal-header">
+              <h3>Portfolio Details</h3>
+              <button className="mf-close-btn" onClick={() => setShowAddModal(false)}>✕</button>
+            </div>
+            <div className="mf-modal-body">
+              <div className="form-group">
+                <label>In which mutual fund you are doing SIPs on?</label>
+                <input 
+                  type="text" 
+                  value={portfolioForm.fundName} 
+                  onChange={e => setPortfolioForm({...portfolioForm, fundName: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
+                <label>When you started the mutual fund? (Date)</label>
+                <input 
+                  type="date" 
+                  value={portfolioForm.startDate} 
+                  onChange={e => setPortfolioForm({...portfolioForm, startDate: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
+                <label>When you started the SIP? (Date)</label>
+                <input 
+                  type="date" 
+                  value={portfolioForm.sipStartDate} 
+                  onChange={e => setPortfolioForm({...portfolioForm, sipStartDate: e.target.value})} 
+                />
+              </div>
+              <div className="form-group">
+                <label>What is the amount of SIP? (₹)</label>
+                <input 
+                  type="number" 
+                  placeholder="e.g. 5000"
+                  value={portfolioForm.sipAmount} 
+                  onChange={e => setPortfolioForm({...portfolioForm, sipAmount: e.target.value})} 
+                />
+              </div>
+              <button 
+                className="btn-primary" 
+                style={{ width: '100%', marginTop: '20px', background: 'var(--gold)', color: '#000', border: 'none', padding: '14px', fontWeight: 'bold' }}
+                onClick={() => {
+                  if (portfolioForm.fundName && portfolioForm.sipAmount) {
+                    addInboxNotification({
+                      title: 'Portfolio Goal Added 🎯',
+                      message: `New SIP saved for ${portfolioForm.fundName} (₹${portfolioForm.sipAmount}). ACTION TODAY: Ensure your bank Auto-Pay mandate is verified. IN ONE MONTH: Review the fund's 30-day volatility compared to the category average.`
+                    });
+                  }
+                  alert('SIP details successfully saved!');
+                  setShowAddModal(false);
+                }}
+              >
+                Save Details
+              </button>
+            </div>
           </div>
         </div>
       )}

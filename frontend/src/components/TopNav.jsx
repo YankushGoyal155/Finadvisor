@@ -1,9 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNotification } from '../context/NotificationContext';
 import './TopNav.css';
 
 export default function TopNav({ activePage, sidebarCollapsed, setSidebarCollapsed, user, onLogout }) {
+  const { inboxNotifications, markAllRead } = useNotification();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const notifRef = useRef(null);
+  const unreadCount = inboxNotifications?.filter(n => !n.read).length || 0;
 
   const pageTitles = {
     chat: 'AI Adviser Chat',
@@ -23,6 +28,9 @@ export default function TopNav({ activePage, sidebarCollapsed, setSidebarCollaps
     function handleClickOutside(e) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setDropdownOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -51,19 +59,51 @@ export default function TopNav({ activePage, sidebarCollapsed, setSidebarCollaps
 
       <div className="top-nav-right">
         {/* Notification Bell */}
-        <button className="icon-btn" title="Notifications">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-            <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-          </svg>
-          <span className="notif-badge"></span>
-        </button>
+        <div className="profile-menu-wrap" ref={notifRef}>
+          <button 
+            className="icon-btn" 
+            title="Notifications"
+            onClick={() => {
+              setNotifOpen(!notifOpen);
+              if (!notifOpen && unreadCount > 0) markAllRead();
+              setDropdownOpen(false);
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+            {unreadCount > 0 && <span className="notif-badge" style={{ position: 'absolute', top: '8px', right: '8px', width: '8px', height: '8px', background: '#ef4444', borderRadius: '50%' }}></span>}
+          </button>
+
+          {notifOpen && (
+            <div className="profile-dropdown" style={{ right: 0, width: '320px', maxHeight: '400px', overflowY: 'auto', padding: 0 }}>
+              <div className="dropdown-header" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <strong style={{ fontSize: '1rem', color: '#fff' }}>Notifications</strong>
+              </div>
+              
+              <div style={{ padding: '8px' }}>
+                {inboxNotifications?.length > 0 ? (
+                  inboxNotifications.map(n => (
+                    <div key={n.id} style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', background: n.read ? 'transparent' : 'rgba(59, 130, 246, 0.05)', marginBottom: '4px' }}>
+                      <div style={{ fontWeight: 'bold', marginBottom: '4px', color: '#fff', fontSize: '0.9rem' }}>{n.title}</div>
+                      <div style={{ fontSize: '0.85rem', lineHeight: '1.4', color: '#cbd5e1' }}>{n.message}</div>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '8px' }}>{new Date(n.date).toLocaleDateString()} at {new Date(n.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div style={{ padding: '20px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>No new notifications</div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Profile Dropdown */}
         <div className="profile-menu-wrap" ref={dropdownRef}>
           <button
             className="profile-trigger"
-            onClick={() => setDropdownOpen(prev => !prev)}
+            onClick={() => { setDropdownOpen(!dropdownOpen); setNotifOpen(false); }}
             title="Profile"
           >
             <div className="user-avatar">{initials}</div>
