@@ -3,7 +3,8 @@ import { useDashboard } from '../context/DashboardContext';
 import './ToolPage.css';
 
 export default function EMICalculatorPage() {
-  const { emiData, updateEmi } = useDashboard();
+  const { emiData, updateEmi, onboardingData } = useDashboard();
+  const isBusiness = onboardingData?.persona === 'business';
   
   const [principal, setPrincipal] = useState(emiData.principal);
   const [rate, setRate] = useState(emiData.rate);
@@ -28,7 +29,12 @@ export default function EMICalculatorPage() {
   const totalInterest = totalPayment - principal;
   const interestPct = Math.round((totalInterest / totalPayment) * 100);
 
-  const presets = [
+  const presets = isBusiness ? [
+    { name: 'Working Capital', p: 5000000, r: 11.5, t: 5, icon: '🏢' },
+    { name: 'Equipment Financing', p: 1500000, r: 10.5, t: 7, icon: '⚙️' },
+    { name: 'Commercial Real Estate', p: 15000000, r: 9.0, t: 15, icon: '🏗️' },
+    { name: 'Business Overdraft', p: 800000, r: 12.0, t: 2, icon: '💳' },
+  ] : [
     { name: 'Home Loan', p: 5000000, r: 8.5, t: 20, icon: '🏠' },
     { name: 'Car Loan', p: 800000, r: 9.5, t: 7, icon: '🚗' },
     { name: 'Education', p: 1500000, r: 10.5, t: 10, icon: '🎓' },
@@ -43,8 +49,8 @@ export default function EMICalculatorPage() {
   return (
     <div className="tool-page fade-in">
       <div className="tool-header">
-        <h1>Loan EMI <span className="gradient-text">Calculator</span> 🏦</h1>
-        <p>Estimate your monthly payments for home, car, or personal loans.</p>
+        <h1>{isBusiness ? 'Business EMI' : 'Loan EMI'} <span className="gradient-text">Calculator</span> 🏦</h1>
+        <p>{isBusiness ? 'Estimate monthly payments for Working Capital, Machinery, and Business Term Loans.' : 'Estimate your monthly payments for home, car, or personal loans.'}</p>
         <div className="ai-status-badge">✨ AI-Controlled</div>
       </div>
 
@@ -131,6 +137,15 @@ export default function EMICalculatorPage() {
               <span style={{ color: 'var(--red-accent)' }}>Interest: {interestPct}%</span>
             </div>
           </div>
+
+          {isBusiness && (
+            <div className="glass-card fade-in" style={{ padding: '16px', marginTop: '16px', background: 'rgba(255, 179, 71, 0.08)', border: '1px solid rgba(255, 179, 71, 0.3)' }}>
+              <div style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', color: '#ffb347' }}>💡 Business Tax Write-Off</div>
+              <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
+                You can potentially claim the total interest of <strong>₹{Math.round(totalInterest).toLocaleString('en-IN')}</strong> as a business expense against your corporate revenue, effectively reducing your corporate tax liability!
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
