@@ -54,6 +54,11 @@ export function DashboardProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
+  // 9. User Persona ('personal' or 'business')
+  const [persona, setPersona] = useState(() => {
+    return localStorage.getItem('finance_user_persona') || 'personal';
+  });
+
   // Action Updaters
   const updateEmi = (newData) => setEmiData(prev => ({ ...prev, ...newData }));
   const updateMfFilters = (newFilters) => setMfFilters(prev => ({ ...prev, ...newFilters }));
@@ -63,6 +68,10 @@ export function DashboardProvider({ children }) {
   const updateRetirement = (newData) => setRetirementData(prev => ({ ...prev, ...newData }));
   const updateAfford = (newData) => setAffordData(prev => ({ ...prev, ...newData }));
   const updateOnboardingData = (newData) => setOnboardingData(prev => ({ ...prev, ...newData }));
+  const updatePersona = (newPersona) => {
+    setPersona(newPersona);
+    localStorage.setItem('finance_user_persona', newPersona);
+  };
 
   return (
     <DashboardContext.Provider value={{
@@ -73,7 +82,8 @@ export function DashboardProvider({ children }) {
       goalsData, updateGoals,
       retirementData, updateRetirement,
       affordData, updateAfford,
-      onboardingData, updateOnboardingData
+      onboardingData, updateOnboardingData,
+      persona, updatePersona
     }}>
       {children}
     </DashboardContext.Provider>

@@ -3,10 +3,11 @@ import { useDashboard } from '../context/DashboardContext';
 import './ToolPage.css';
 
 export default function OnboardingPage({ onComplete, user }) {
-  const { updateOnboardingData } = useDashboard();
+  const { updateOnboardingData, updatePersona } = useDashboard();
+  const [selectedPersona, setSelectedPersona] = useState('personal');
   
   const [formData, setFormData] = useState({
-    persona: 'personal', // 'personal' or 'business'
+    // Personal fields
     monthlySalary: '',
     monthlyExpenses: '',
     hasEmi: 'no',
@@ -19,13 +20,14 @@ export default function OnboardingPage({ onComplete, user }) {
     lifeInsurance: 'no',
     lifeAmount: '',
     financialGoal: '',
-    // Business specific
+    // Business fields
     monthlyRevenue: '',
     operatingExpenses: '',
     hasBusinessLoan: 'no',
     businessLoanAmount: '',
     businessLoanPurpose: '',
-    gstRegistered: 'no'
+    gstRegistered: 'no',
+    businessGoal: ''
   });
 
   const handleChange = (e) => {
@@ -35,45 +37,69 @@ export default function OnboardingPage({ onComplete, user }) {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const dataToSave = { ...formData, persona: selectedPersona };
     if (updateOnboardingData) {
-      updateOnboardingData(formData);
+      updateOnboardingData(dataToSave);
     }
-    // Also save to local storage for persistence
-    localStorage.setItem(`finance_onboarding_data_${user?.user_id}`, JSON.stringify(formData));
+    updatePersona(selectedPersona);
+    localStorage.setItem(`finance_onboarding_data_${user?.user_id}`, JSON.stringify(dataToSave));
     onComplete();
   };
 
+  const isBusiness = selectedPersona === 'business';
+
   return (
     <div className="tool-page fade-in" style={{ padding: '40px 20px' }}>
-      <div className="glass-card" style={{ maxWidth: '600px', width: '100%', padding: '40px', margin: '0 auto' }}>
+      <div className="glass-card" style={{ maxWidth: '640px', width: '100%', padding: '40px', margin: '0 auto' }}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <h1 style={{ marginBottom: '10px' }}>Welcome to <span className="gradient-text">Finance AI</span></h1>
           <p style={{ color: '#aaa' }}>Let's set up your profile to generate your instant Financial Score.</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '15px', marginBottom: '30px', justifyContent: 'center' }}>
-          <button 
-            type="button"
-            className="btn-primary"
-            style={{ flex: 1, padding: '16px', fontSize: '1.05rem', background: formData.persona === 'personal' ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' : 'rgba(255,255,255,0.05)', color: formData.persona === 'personal' ? '#fff' : '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', transition: '0.3s' }}
-            onClick={() => setFormData(prev => ({ ...prev, persona: 'personal' }))}
-          >
-            👤 Personal Wealth
-          </button>
-          <button 
-            type="button"
-            className="btn-primary"
-            style={{ flex: 1, padding: '16px', fontSize: '1.05rem', background: formData.persona === 'business' ? 'linear-gradient(135deg, #ffb347, #ffcc33)' : 'rgba(255,255,255,0.05)', color: formData.persona === 'business' ? '#000' : '#94a3b8', border: '1px solid rgba(255,255,255,0.1)', fontWeight: formData.persona === 'business' ? 'bold' : 'normal', transition: '0.3s' }}
-            onClick={() => setFormData(prev => ({ ...prev, persona: 'business' }))}
-          >
-            🏢 Business Finance
-          </button>
+        {/* Persona Toggle */}
+        <div style={{ marginBottom: '30px' }}>
+          <p style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.1em', fontWeight: 700, marginBottom: '12px', textAlign: 'center' }}>How are you using Finance AI?</p>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button 
+              type="button"
+              onClick={() => setSelectedPersona('personal')}
+              style={{
+                flex: 1, padding: '18px 16px', borderRadius: '16px', cursor: 'pointer',
+                background: !isBusiness ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' : 'rgba(255,255,255,0.04)',
+                color: !isBusiness ? '#fff' : '#94a3b8',
+                border: !isBusiness ? '1px solid rgba(59,130,246,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                fontWeight: !isBusiness ? 800 : 500,
+                fontSize: '1rem', fontFamily: 'inherit', transition: 'all 0.3s ease',
+                boxShadow: !isBusiness ? '0 8px 30px rgba(59,130,246,0.25)' : 'none'
+              }}
+            >
+              <span style={{ fontSize: '1.5rem', display: 'block', marginBottom: '6px' }}>👤</span>
+              Personal Wealth
+            </button>
+            <button 
+              type="button"
+              onClick={() => setSelectedPersona('business')}
+              style={{
+                flex: 1, padding: '18px 16px', borderRadius: '16px', cursor: 'pointer',
+                background: isBusiness ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : 'rgba(255,255,255,0.04)',
+                color: isBusiness ? '#fff' : '#94a3b8',
+                border: isBusiness ? '1px solid rgba(245,158,11,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                fontWeight: isBusiness ? 800 : 500,
+                fontSize: '1rem', fontFamily: 'inherit', transition: 'all 0.3s ease',
+                boxShadow: isBusiness ? '0 8px 30px rgba(245,158,11,0.25)' : 'none'
+              }}
+            >
+              <span style={{ fontSize: '1.5rem', display: 'block', marginBottom: '6px' }}>🏢</span>
+              Business Finance
+            </button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {formData.persona === 'personal' ? (
+          {!isBusiness ? (
             <>
+              {/* ── PERSONAL FIELDS (unchanged) ── */}
               <div style={{ display: 'flex', gap: '20px' }}>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label>Monthly Salary (₹)</label>
@@ -154,9 +180,10 @@ export default function OnboardingPage({ onComplete, user }) {
             </>
           ) : (
             <>
+              {/* ── BUSINESS FIELDS ── */}
               <div style={{ display: 'flex', gap: '20px' }}>
                 <div className="form-group" style={{ flex: 1 }}>
-                  <label>Estimated Monthly Revenue (₹)</label>
+                  <label>Monthly Revenue (₹)</label>
                   <input type="number" name="monthlyRevenue" required value={formData.monthlyRevenue} onChange={handleChange} placeholder="e.g. 500000" />
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
@@ -166,7 +193,7 @@ export default function OnboardingPage({ onComplete, user }) {
               </div>
 
               <div className="form-group">
-                <label>Active Business Loans or Overdraft?</label>
+                <label>Active Business Loans / Overdraft?</label>
                 <select name="hasBusinessLoan" value={formData.hasBusinessLoan} onChange={handleChange}>
                   <option value="no">No</option>
                   <option value="yes">Yes</option>
@@ -195,13 +222,13 @@ export default function OnboardingPage({ onComplete, user }) {
 
               <div className="form-group">
                 <label>Primary Business Goal (Optional)</label>
-                <input type="text" name="financialGoal" value={formData.financialGoal} onChange={handleChange} placeholder="e.g. Increase margins, Setup new branch" />
+                <input type="text" name="businessGoal" value={formData.businessGoal} onChange={handleChange} placeholder="e.g. Increase margins, Setup new branch" />
               </div>
             </>
           )}
 
-          <button type="submit" className="btn-primary pulse-glow" style={{ marginTop: '10px', background: formData.persona === 'business' ? 'linear-gradient(135deg, #10b981, #059669)' : '' }}>
-            Get Instant Financial Score 🚀
+          <button type="submit" className="btn-primary pulse-glow" style={{ marginTop: '10px', background: isBusiness ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : '' }}>
+            {isBusiness ? 'Get Business Financial Score 🚀' : 'Get Instant Financial Score 🚀'}
           </button>
         </form>
       </div>

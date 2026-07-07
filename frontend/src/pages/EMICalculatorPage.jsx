@@ -3,8 +3,8 @@ import { useDashboard } from '../context/DashboardContext';
 import './ToolPage.css';
 
 export default function EMICalculatorPage() {
-  const { emiData, updateEmi, onboardingData } = useDashboard();
-  const isBusiness = onboardingData?.persona === 'business';
+  const { emiData, updateEmi, persona } = useDashboard();
+  const isBusiness = persona === 'business';
   
   const [principal, setPrincipal] = useState(emiData.principal);
   const [rate, setRate] = useState(emiData.rate);
@@ -29,17 +29,21 @@ export default function EMICalculatorPage() {
   const totalInterest = totalPayment - principal;
   const interestPct = Math.round((totalInterest / totalPayment) * 100);
 
-  const presets = isBusiness ? [
-    { name: 'Working Capital', p: 5000000, r: 11.5, t: 5, icon: '🏢' },
-    { name: 'Equipment Financing', p: 1500000, r: 10.5, t: 7, icon: '⚙️' },
-    { name: 'Commercial Real Estate', p: 15000000, r: 9.0, t: 15, icon: '🏗️' },
-    { name: 'Business Overdraft', p: 800000, r: 12.0, t: 2, icon: '💳' },
-  ] : [
+  const personalPresets = [
     { name: 'Home Loan', p: 5000000, r: 8.5, t: 20, icon: '🏠' },
     { name: 'Car Loan', p: 800000, r: 9.5, t: 7, icon: '🚗' },
     { name: 'Education', p: 1500000, r: 10.5, t: 10, icon: '🎓' },
     { name: 'Personal', p: 500000, r: 12.0, t: 5, icon: '💳' },
   ];
+
+  const businessPresets = [
+    { name: 'Working Capital', p: 2000000, r: 11.0, t: 5, icon: '💼' },
+    { name: 'Equipment Finance', p: 3000000, r: 10.0, t: 7, icon: '🏗️' },
+    { name: 'Business Expansion', p: 10000000, r: 9.5, t: 10, icon: '📈' },
+    { name: 'Vehicle (Commercial)', p: 1500000, r: 9.0, t: 5, icon: '🚛' },
+  ];
+
+  const presets = isBusiness ? businessPresets : personalPresets;
 
   const handleManualChange = (setter, key, value) => {
     setter(value);
@@ -49,9 +53,9 @@ export default function EMICalculatorPage() {
   return (
     <div className="tool-page fade-in">
       <div className="tool-header">
-        <h1>{isBusiness ? 'Business EMI' : 'Loan EMI'} <span className="gradient-text">Calculator</span> 🏦</h1>
-        <p>{isBusiness ? 'Estimate monthly payments for Working Capital, Machinery, and Business Term Loans.' : 'Estimate your monthly payments for home, car, or personal loans.'}</p>
-        <div className="ai-status-badge">✨ AI-Controlled</div>
+        <h1>{isBusiness ? 'Business' : 'Loan'} EMI <span className="gradient-text">Calculator</span> {isBusiness ? '💼' : '🏦'}</h1>
+        <p>{isBusiness ? 'Estimate repayments for working capital, equipment, or expansion loans.' : 'Estimate your monthly payments for home, car, or personal loans.'}</p>
+        <div className="ai-status-badge">{isBusiness ? '🏢 Business Mode' : '✨ AI-Controlled'}</div>
       </div>
 
       <div className="tool-grid">
@@ -139,11 +143,11 @@ export default function EMICalculatorPage() {
           </div>
 
           {isBusiness && (
-            <div className="glass-card fade-in" style={{ padding: '16px', marginTop: '16px', background: 'rgba(255, 179, 71, 0.08)', border: '1px solid rgba(255, 179, 71, 0.3)' }}>
-              <div style={{ fontSize: '13px', fontWeight: '800', marginBottom: '8px', color: '#ffb347' }}>💡 Business Tax Write-Off</div>
-              <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5' }}>
-                You can potentially claim the total interest of <strong>₹{Math.round(totalInterest).toLocaleString('en-IN')}</strong> as a business expense against your corporate revenue, effectively reducing your corporate tax liability!
-              </div>
+            <div className="glass-card" style={{ padding: '20px', border: '1px solid rgba(16, 185, 129, 0.2)', background: 'rgba(16, 185, 129, 0.05)' }}>
+              <div style={{ fontSize: '13px', fontWeight: '700', marginBottom: '10px', color: '#10b981' }}>💡 Business Tax Benefit</div>
+              <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.6', margin: 0 }}>
+                The interest component of <strong style={{ color: '#10b981' }}>₹{Math.round(totalInterest).toLocaleString('en-IN')}</strong> on this business loan is typically deductible as a business expense under Section 36(1)(iii) of the Income Tax Act, effectively reducing your taxable profit.
+              </p>
             </div>
           )}
         </div>
