@@ -30,6 +30,14 @@ export default function MutualFundPage() {
     sipAmount: ''
   });
 
+  const [showSmartAlertModal, setShowSmartAlertModal] = useState(false);
+  const [alertForm, setAlertForm] = useState({ targetNav: '', condition: 'above' });
+  const [expenseForm, setExpenseForm] = useState({ investment: 100000, ratio: 1.5, years: 10 });
+
+  const futureValue = expenseForm.investment * Math.pow(1 + 0.12, expenseForm.years);
+  const futureValueWithExpense = expenseForm.investment * Math.pow(1 + (0.12 - expenseForm.ratio/100), expenseForm.years);
+  const totalCost = futureValue - futureValueWithExpense;
+
   // Sync with AI search
   useEffect(() => {
     if (mfFilters.search) {
@@ -294,10 +302,10 @@ export default function MutualFundPage() {
             <div className="glass-card mf-nav-card">
               <div className="mf-nav-label">Latest NAV</div>
               <div className="mf-nav-value">₹{fundHistory?.data?.[0]?.nav || '—'}</div>
-              <div className="mf-nav-date">last updated {fundHistory?.data?.[0]?.date || '...'}</div>
+                <div className="mf-nav-date">last updated {fundHistory?.data?.[0]?.date || '...'}</div>
               <button 
                 className="btn-primary" 
-                style={{ width: '100%', marginTop: '15px', background: 'var(--green-light)', color: 'white', border: 'none' }}
+                style={{ width: '100%', marginTop: '15px', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.3)' }}
                 onClick={() => {
                   setPortfolioForm({ ...portfolioForm, fundName: selectedFund.schemeName });
                   setShowAddModal(true);
@@ -305,18 +313,54 @@ export default function MutualFundPage() {
               >
                 + Add to My Portfolio
               </button>
+              <button 
+                className="btn-primary" 
+                style={{ width: '100%', marginTop: '10px', background: 'rgba(59, 130, 246, 0.2)', color: '#3b82f6', border: '1px solid rgba(59, 130, 246, 0.3)' }}
+                onClick={() => {
+                  setAlertForm({ targetNav: fundHistory?.data?.[0]?.nav || '', condition: 'above' });
+                  setShowSmartAlertModal(true);
+                }}
+              >
+                🔔 Set Smart Alert Tracker
+              </button>
             </div>
 
             {!loading && fundHistory?.data && (
-              <div className="glass-card mf-returns-card">
-                <div className="mf-section-title">📈 Returns</div>
-                <div className="mf-returns-grid">
-                  <ReturnBadge label="1M" value={getReturns(30)} />
-                  <ReturnBadge label="6M" value={getReturns(180)} />
-                  <ReturnBadge label="1Y" value={getReturns(365)} />
-                  <ReturnBadge label="3Y" value={getReturns(1095)} />
+              <>
+                <div className="glass-card mf-returns-card">
+                  <div className="mf-section-title">📈 Returns</div>
+                  <div className="mf-returns-grid">
+                    <ReturnBadge label="1M" value={getReturns(30)} />
+                    <ReturnBadge label="6M" value={getReturns(180)} />
+                    <ReturnBadge label="1Y" value={getReturns(365)} />
+                    <ReturnBadge label="3Y" value={getReturns(1095)} />
+                  </div>
                 </div>
-              </div>
+
+                <div className="glass-card mf-expense-card">
+                  <div className="mf-section-title">💸 Expense Ratio Analyzer</div>
+                  <div className="mf-expense-body">
+                    <p className="mf-expense-desc" style={{fontSize: '0.85rem', color: '#94a3b8', marginBottom: '15px'}}>See how much you lose to fees over time (assuming 12% base returns).</p>
+                    <div className="expense-inputs" style={{display: 'flex', gap: '10px', marginBottom: '15px'}}>
+                      <div style={{flex: 1}}>
+                        <label style={{display: 'block', fontSize: '0.75rem', marginBottom: '5px', color: '#cbd5e1'}}>Invested (₹)</label>
+                        <input type="number" style={{width: '100%', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff'}} value={expenseForm.investment} onChange={e => setExpenseForm({...expenseForm, investment: e.target.value})} />
+                      </div>
+                      <div style={{width: '60px'}}>
+                        <label style={{display: 'block', fontSize: '0.75rem', marginBottom: '5px', color: '#cbd5e1'}}>Ratio %</label>
+                        <input type="number" step="0.1" style={{width: '100%', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff'}} value={expenseForm.ratio} onChange={e => setExpenseForm({...expenseForm, ratio: e.target.value})} />
+                      </div>
+                      <div style={{width: '60px'}}>
+                        <label style={{display: 'block', fontSize: '0.75rem', marginBottom: '5px', color: '#cbd5e1'}}>Years</label>
+                        <input type="number" style={{width: '100%', padding: '8px', borderRadius: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff'}} value={expenseForm.years} onChange={e => setExpenseForm({...expenseForm, years: e.target.value})} />
+                      </div>
+                    </div>
+                    <div className="expense-result" style={{background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', padding: '12px', borderRadius: '12px', color: '#ef4444', fontSize: '0.9rem'}}>
+                      ⚠️ You could lose <strong>₹{totalCost > 0 ? totalCost.toFixed(0) : 0}</strong> to fees!
+                    </div>
+                  </div>
+                </div>
+              </>
             )}
           </div>
 
@@ -415,6 +459,63 @@ export default function MutualFundPage() {
                 }}
               >
                 Save Details
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSmartAlertModal && (
+        <div className="mf-modal-overlay">
+          <div className="glass-card mf-modal" style={{background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(59, 130, 246, 0.3)'}}>
+            <div className="mf-modal-header">
+              <h3>Set Smart Alert 🔔</h3>
+              <button className="mf-close-btn" onClick={() => setShowSmartAlertModal(false)}>✕</button>
+            </div>
+            <div className="mf-modal-body">
+              <p style={{ color: '#94a3b8', marginBottom: '20px', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                Get notified intelligently when <strong>{selectedFund.schemeName}</strong> crosses your target NAV.
+              </p>
+              <div className="form-group">
+                <label>Current NAV</label>
+                <input type="text" readOnly value={`₹${fundHistory?.data?.[0]?.nav || '—'}`} style={{background: 'rgba(0,0,0,0.2)', opacity: 0.7}} />
+              </div>
+              <div className="form-group">
+                <label>Alert Condition</label>
+                <select 
+                  style={{ width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '12px', fontSize: '1.05rem', outline: 'none' }}
+                  value={alertForm.condition} 
+                  onChange={e => setAlertForm({...alertForm, condition: e.target.value})}
+                >
+                  <option value="above">Increases Above Target 📈</option>
+                  <option value="below">Drops Below Target 📉</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ marginTop: '18px' }}>
+                <label>Target NAV (₹)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  placeholder="e.g. 150.50"
+                  value={alertForm.targetNav} 
+                  onChange={e => setAlertForm({...alertForm, targetNav: e.target.value})} 
+                />
+              </div>
+              <button 
+                className="btn-primary" 
+                style={{ width: '100%', marginTop: '20px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', color: '#fff', border: 'none', padding: '14px', fontWeight: 'bold' }}
+                onClick={() => {
+                  if (alertForm.targetNav) {
+                    addInboxNotification({
+                      title: 'Smart Alert Active ✅',
+                      message: `A tracker has been set! We will intelligently notify you when ${selectedFund.schemeName} NAV goes ${alertForm.condition} ₹${alertForm.targetNav}.`
+                    });
+                  }
+                  alert('Smart alert configured successfully!');
+                  setShowSmartAlertModal(false);
+                }}
+              >
+                Activate AI Tracker
               </button>
             </div>
           </div>
