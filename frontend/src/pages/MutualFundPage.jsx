@@ -244,7 +244,7 @@ export default function MutualFundPage() {
       {!selectedFund ? (
         <div className="mf-empty-state">
           <div className="mf-welcome-section">
-            <div className="mf-empty-icon">📊</div>
+            <div className="mf-empty-icon" style={{ fontWeight: '900', fontFamily: 'Inter, sans-serif' }}>₹</div>
             <h2>Discover Top Indian Mutual Funds</h2>
             <p>Track real-time performance and historical trends across categories.</p>
           </div>
