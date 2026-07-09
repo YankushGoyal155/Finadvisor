@@ -161,6 +161,8 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: float 4s ease-in-out infinite;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 @keyframes float {
