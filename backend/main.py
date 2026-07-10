@@ -222,29 +222,109 @@ async def upload_file(file: UploadFile = File(...)):
     except Exception as e:
         return {"response": f"Error: {str(e)}"}
 
-@app.post("/setu/token")
-def get_setu_token():
-    url = "https://orgservice-prod.setu.co/v1/users/login"
-    payload = {
-        "clientID": "7ae0553f-f10f-475d-88ea-4a5f94ff3723",
-        "grant_type": "client_credentials",
-        "secret": "1qfpRYp0pgQFuRUrIzIOvBj6vku15Yc2"
-    }
-    
-    data = json.dumps(payload).encode('utf-8')
-    headers = {
+# ============== SETU ACCOUNT AGGREGATOR API ==============
+SETU_BASE_URL  = os.getenv("SETU_AA_BASE_URL", "https://fiu-sandbox.setu.co")
+SETU_CLIENT_ID = os.getenv("SETU_CLIENT_ID", "")
+SETU_SECRET    = os.getenv("SETU_CLIENT_SECRET", "")
+SETU_PRODUCT_ID= os.getenv("SETU_PRODUCT_INSTANCE_ID", "")
+
+def _setu_headers():
+    return {
         "Content-Type": "application/json",
-        "client": "bridge"
+        "x-client-id": SETU_CLIENT_ID,
+        "x-client-secret": SETU_SECRET,
+        "x-product-instance-id": SETU_PRODUCT_ID,
     }
-    
-    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+
+class ConsentRequest(BaseModel):
+    mobile: str  # user's 10 digit mobile number
+
+@app.post("/setu/create-consent")
+def create_setu_consent(req: ConsentRequest):
+    """Create a data consent request and return the redirect URL for user approval."""
+    if not SETU_CLIENT_ID or not SETU_SECRET:
+        return {"status": "error", "message": "Setu API credentials are not configured. Please set SETU_CLIENT_ID and SETU_CLIENT_SECRET in your backend .env file."}
+
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+
+    payload = {
+        "consentDuration": {"unit": "MONTH", "value": "6"},
+        "vua":  req.mobile,
+        "dataRange": {
+            "from": (now - timedelta(days=365)).strftime("%Y-%m-%dT00:00:00Z"),
+            "to":  now.strftime("%Y-%m-%dT00:00:00Z"),
+        },
+        "context": [],
+    }
+
+    url = f"{SETU_BASE_URL}/consents"
+    data = json.dumps(payload).encode("utf-8")
+
+    http_req = urllib.request.Request(url, data=data, headers=_setu_headers(), method="POST")
     try:
-        with urllib.request.urlopen(req) as response:
-            res_data = response.read()
-            return {"status": "success", "data": json.loads(res_data)}
+        with urllib.request.urlopen(http_req) as resp:
+            body = json.loads(resp.read())
+            return {
+                "status": "success",
+                "consent_id": body.get("id"),
+                "redirect_url": body.get("url"),
+                "consent_status": body.get("status"),
+            }
     except urllib.error.HTTPError as e:
-        error_msg = e.read().decode('utf-8')
-        return {"status": "error", "message": error_msg}
+        err = e.read().decode("utf-8")
+        print(f"Setu create-consent error ({e.code}): {err}")
+        return {"status": "error", "message": f"Setu API error ({e.code}): {err}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/setu/consent-status/{consent_id}")
+def get_consent_status(consent_id: str):
+    """Check the status of a previously created consent."""
+    if not SETU_CLIENT_ID:
+        return {"status": "error", "message": "Setu credentials not configured."}
+
+    url = f"{SETU_BASE_URL}/consents/{consent_id}"
+    http_req = urllib.request.Request(url, headers=_setu_headers(), method="GET")
+    try:
+        with urllib.request.urlopen(http_req) as resp:
+            body = json.loads(resp.read())
+            return {"status": "success", "data": body}
+    except urllib.error.HTTPError as e:
+        err = e.read().decode("utf-8")
+        return {"status": "error", "message": f"Setu API error ({e.code}): {err}"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.post("/setu/fetch-data/{consent_id}")
+def fetch_setu_data(consent_id: str):
+    """Create a data session and fetch financial data for an approved consent."""
+    if not SETU_CLIENT_ID:
+        return {"status": "error", "message": "Setu credentials not configured."}
+
+    # Step 1 — Create a data session
+    session_payload = {"consentId": consent_id, "format": "json"}
+    url = f"{SETU_BASE_URL}/sessions"
+    data = json.dumps(session_payload).encode("utf-8")
+    http_req = urllib.request.Request(url, data=data, headers=_setu_headers(), method="POST")
+    try:
+        with urllib.request.urlopen(http_req) as resp:
+            session_body = json.loads(resp.read())
+
+        session_id = session_body.get("id")
+        if not session_id:
+            return {"status": "error", "message": "Could not create data session.", "details": session_body}
+
+        # Step 2 — Fetch the data
+        fetch_url = f"{SETU_BASE_URL}/sessions/{session_id}"
+        fetch_req = urllib.request.Request(fetch_url, headers=_setu_headers(), method="GET")
+        with urllib.request.urlopen(fetch_req) as resp2:
+            fi_data = json.loads(resp2.read())
+            return {"status": "success", "session_id": session_id, "data": fi_data}
+
+    except urllib.error.HTTPError as e:
+        err = e.read().decode("utf-8")
+        return {"status": "error", "message": f"Setu API error ({e.code}): {err}"}
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
