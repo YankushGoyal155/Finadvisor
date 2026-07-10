@@ -1,6 +1,9 @@
 import os
 import shutil
 import random
+import json
+import urllib.request
+import urllib.error
 import uvicorn
 from pathlib import Path
 from dotenv import load_dotenv
@@ -218,6 +221,32 @@ async def upload_file(file: UploadFile = File(...)):
         return {"response": f"Successfully learned {file.filename}!"}
     except Exception as e:
         return {"response": f"Error: {str(e)}"}
+
+@app.post("/setu/token")
+def get_setu_token():
+    url = "https://orgservice-prod.setu.co/v1/users/login"
+    payload = {
+        "clientID": "7ae0553f-f10f-475d-88ea-4a5f94ff3723",
+        "grant_type": "client_credentials",
+        "secret": "1qfpRYp0pgQFuRUrIzIOvBj6vku15Yc2"
+    }
+    
+    data = json.dumps(payload).encode('utf-8')
+    headers = {
+        "Content-Type": "application/json",
+        "client": "bridge"
+    }
+    
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req) as response:
+            res_data = response.read()
+            return {"status": "success", "data": json.loads(res_data)}
+    except urllib.error.HTTPError as e:
+        error_msg = e.read().decode('utf-8')
+        return {"status": "error", "message": error_msg}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)

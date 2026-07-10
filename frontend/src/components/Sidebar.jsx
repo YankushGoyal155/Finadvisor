@@ -12,7 +12,8 @@ import {
   ReceiptIndianRupee,
   PieChart,
   Calculator,
-  Flame
+  Flame,
+  Database
 } from "lucide-react";
 
 const navItems = [
@@ -26,6 +27,7 @@ const navItems = [
   { id: 'invest',    label: 'Investments',   icon: <PieChart size={20} />                                      },
   { id: 'emi',       label: 'EMI Calculator', icon: <Calculator size={20} />                                     },
   { id: 'retirement',label: 'FIRE Planner',  icon: <Flame size={20} />                                      },
+  { id: 'data_sync', label: 'Data Sync (Setu)', icon: <Database size={20} />, badge: 'API', badgeType: 'blue' },
 ];
 
 export default function Sidebar({ 
