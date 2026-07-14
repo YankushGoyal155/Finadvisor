@@ -7,8 +7,7 @@ export default function AuthPage({ onLogin }) {
     username: '',
     email: '',
     password: '',
-    otp: '',
-    incomeSource: ''
+    otp: ''
   });
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -110,10 +109,6 @@ export default function AuthPage({ onLogin }) {
               <div className="form-group">
                 <label>Password</label>
                 <input name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleInputChange} required />
-              </div>
-              <div className="form-group">
-                <label>What is your income source?</label>
-                <input name="incomeSource" type="text" placeholder="e.g. Salary, Business, Crypto..." value={formData.incomeSource} onChange={handleInputChange} />
               </div>
             </>
           )}

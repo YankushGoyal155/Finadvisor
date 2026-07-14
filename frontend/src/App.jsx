@@ -14,6 +14,7 @@ import AffordabilityPage from './pages/AffordabilityPage'
 import MonthlyCheckinPage from './pages/MonthlyCheckinPage'
 import OnboardingPage from './pages/OnboardingPage'
 import AccountAggregatorPage from './pages/AccountAggregatorPage'
+import CorporateTaxPage from './pages/CorporateTaxPage'
 import { DashboardProvider } from './context/DashboardContext'
 import { NotificationProvider } from './context/NotificationContext'
 import './App.css'
@@ -76,6 +77,7 @@ export default function App() {
       case 'checkin':   return <MonthlyCheckinPage />
       case 'afford':    return <AffordabilityPage />
       case 'data_sync': return <AccountAggregatorPage />
+      case 'corp_tax':  return <CorporateTaxPage />
       default:          return <ChatPage selectedModel={selectedModel} user={user} onLogout={handleLogout} threadId={activeThreadId} setThreadId={setActiveThreadId} setActivePage={setActivePage} />
     }
   }

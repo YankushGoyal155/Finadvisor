@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useDashboard } from '../context/DashboardContext';
 import './Sidebar.css';
 
 import {
@@ -13,7 +14,8 @@ import {
   PieChart,
   Calculator,
   Flame,
-  Database
+  Database,
+  Building2
 } from "lucide-react";
 
 const navItems = [
@@ -23,7 +25,8 @@ const navItems = [
   { id: 'afford',    label: 'Can I Afford It?', icon: <Wallet size={20} /> },
   { id: 'goals',     label: 'Goals',         icon: <Target size={20} />                                      },
   { id: 'mf',        label: 'Mutual Funds',  icon: <TrendingUp size={20} />                                      },
-  { id: 'tax',       label: 'Tax Planner',   icon: <ReceiptIndianRupee size={20} />                                      },
+  { id: 'tax',       label: 'Personal Tax',  icon: <ReceiptIndianRupee size={20} />                                      },
+  { id: 'corp_tax',  label: 'Corporate Tax', icon: <Building2 size={20} /> },
   { id: 'invest',    label: 'Investments',   icon: <PieChart size={20} />                                      },
   { id: 'emi',       label: 'EMI Calculator', icon: <Calculator size={20} />                                     },
   { id: 'retirement',label: 'FIRE Planner',  icon: <Flame size={20} />                                      },
@@ -34,7 +37,14 @@ export default function Sidebar({
   activePage, setActivePage, collapsed, setCollapsed, 
   selectedModel, setSelectedModel, user, activeThreadId, setActiveThreadId, onNewChat, onLogout
 }) {
+  const { persona } = useDashboard();
   const [threads, setThreads] = useState([]);
+
+  // Dynamically filter links based on personal vs business persona
+  const filteredNavItems = navItems.filter(item => {
+    if (persona === 'business') return true; // Business gets BOTH personal & corporate taxes
+    return !['corp_tax', 'data_sync'].includes(item.id); // Personal hides corporate & setu
+  });
 
   useEffect(() => {
     if (user?.user_id) {
@@ -102,7 +112,7 @@ export default function Sidebar({
       <div className="sidebar-content">
         <nav className="sidebar-nav">
           <div className="nav-section-label">{collapsed ? '•' : 'Main Menu'}</div>
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <button
               key={item.id}
               className={`nav-item ${activePage === item.id && !activeThreadId ? 'active' : ''}`}
