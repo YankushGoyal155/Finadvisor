@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useDashboard } from '../context/DashboardContext';
 import './ProfileDropdown.css';
 
 export default function ProfileDropdown({ user, onLogout }) {
@@ -6,6 +7,8 @@ export default function ProfileDropdown({ user, onLogout }) {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const dropdownRef = useRef(null);
+  
+  const { persona, onboardingData } = useDashboard();
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -118,9 +121,38 @@ export default function ProfileDropdown({ user, onLogout }) {
               </div>
               <div className="profile-stats-mock">
                 <div className="stat-box">
-                  <strong>Plan</strong>
-                  <span>Free Trial</span>
+                  <strong>Mode</strong>
+                  <span>{persona === 'business' ? '🏢 Business' : '👤 Personal'}</span>
                 </div>
+                {onboardingData?.incomeSource && (
+                  <div className="stat-box">
+                    <strong>Primary Source</strong>
+                    <span>{onboardingData.incomeSource}</span>
+                  </div>
+                )}
+                {persona === 'business' ? (
+                  <>
+                    <div className="stat-box">
+                      <strong>Monthly Revenue</strong>
+                      <span>₹{Number(onboardingData?.monthlyRevenue || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="stat-box">
+                      <strong>GST Registered</strong>
+                      <span>{onboardingData?.gstRegistered === 'yes' ? 'Yes' : 'No'}</span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="stat-box">
+                      <strong>Monthly Income</strong>
+                      <span>₹{Number(onboardingData?.monthlySalary || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="stat-box">
+                      <strong>Health Insurance</strong>
+                      <span>{onboardingData?.healthInsurance === 'yes' ? 'Active ✅' : 'Missing ⚠️'}</span>
+                    </div>
+                  </>
+                )}
                 <div className="stat-box">
                   <strong>Status</strong>
                   <span style={{color:'var(--saffron)'}}>Active</span>

@@ -15,18 +15,119 @@ import {
   BarChart3,
   AlertTriangle,
   Landmark,
-  Receipt
+  Receipt,
+  Pencil,
+  X,
+  Save,
+  RotateCcw
 } from "lucide-react";
 import './ToolPage.css';
 
 export default function DashboardPage({ setActivePage, user, onLogout }) {
-  const { emiData, taxData, investData, goalsData, onboardingData, persona } = useDashboard();
+  const { emiData, updateEmi, taxData, updateTax, investData, updateInvest, goalsData, onboardingData, updateOnboardingData, persona } = useDashboard();
   const { showToast, showModal } = useNotification();
   const isBusiness = persona === 'business';
   
   // Health Score calculation (Habit builder)
   const [healthScore, setHealthScore] = useState(58);
-  const [allocationLoss, setAllocationLoss] = useState(2500);
+  const [allocationLoss, setAllocationLoss] = useState(0);
+
+  // ══════════════════════════════════════════
+  //  MANUAL EDIT MODAL STATE
+  // ══════════════════════════════════════════
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({});
+
+  const openEditModal = () => {
+    if (isBusiness) {
+      setEditForm({
+        monthlyRevenue: onboardingData?.monthlyRevenue || '',
+        operatingExpenses: onboardingData?.operatingExpenses || '',
+        businessLoanAmount: onboardingData?.businessLoanAmount || '',
+        hasBusinessLoan: onboardingData?.hasBusinessLoan || 'no',
+        gstRegistered: onboardingData?.gstRegistered || 'no',
+      });
+    } else {
+      setEditForm({
+        monthlySalary: onboardingData?.monthlySalary || '',
+        monthlyExpenses: onboardingData?.monthlyExpenses || '',
+        hasEmi: onboardingData?.hasEmi || 'no',
+        emiAmount: onboardingData?.emiAmount || '',
+        emergencySavings: onboardingData?.emergencySavings || 'no',
+        healthInsurance: onboardingData?.healthInsurance || 'no',
+        // Extra calculator values
+        loanPrincipal: emiData?.principal || '',
+        loanRate: emiData?.rate || '',
+        loanTenure: emiData?.tenure || '',
+        sipAmount: investData?.monthlyAmount || '',
+        sipReturn: investData?.expectedReturn || '',
+        sipYears: investData?.timeHorizon || '',
+        taxIncome: taxData?.income || '',
+        taxDeductions: taxData?.deductions || '',
+      });
+    }
+    setShowEditModal(true);
+  };
+
+  const handleEditChange = (key, value) => {
+    setEditForm(prev => ({ ...prev, [key]: value }));
+  };
+
+  const saveEdits = () => {
+    if (isBusiness) {
+      const updatedOnboarding = {
+        ...onboardingData,
+        monthlyRevenue: editForm.monthlyRevenue,
+        operatingExpenses: editForm.operatingExpenses,
+        businessLoanAmount: editForm.businessLoanAmount,
+        hasBusinessLoan: editForm.hasBusinessLoan,
+        gstRegistered: editForm.gstRegistered,
+      };
+      updateOnboardingData(updatedOnboarding);
+      localStorage.setItem('finance_onboarding_data', JSON.stringify(updatedOnboarding));
+    } else {
+      const updatedOnboarding = {
+        ...onboardingData,
+        monthlySalary: editForm.monthlySalary,
+        monthlyExpenses: editForm.monthlyExpenses,
+        hasEmi: editForm.hasEmi,
+        emiAmount: editForm.emiAmount,
+        emergencySavings: editForm.emergencySavings,
+        healthInsurance: editForm.healthInsurance,
+      };
+      updateOnboardingData(updatedOnboarding);
+      localStorage.setItem('finance_onboarding_data', JSON.stringify(updatedOnboarding));
+
+      // Update calculator states
+      if (editForm.loanPrincipal || editForm.loanRate || editForm.loanTenure) {
+        updateEmi({
+          principal: Number(editForm.loanPrincipal) || 0,
+          rate: Number(editForm.loanRate) || 0,
+          tenure: Number(editForm.loanTenure) || 0,
+        });
+      }
+      if (editForm.sipAmount || editForm.sipReturn || editForm.sipYears) {
+        updateInvest({
+          monthlyAmount: Number(editForm.sipAmount) || 0,
+          expectedReturn: Number(editForm.sipReturn) || 0,
+          timeHorizon: Number(editForm.sipYears) || 0,
+        });
+      }
+      if (editForm.taxIncome || editForm.taxDeductions) {
+        updateTax({
+          income: Number(editForm.taxIncome) || 0,
+          deductions: Number(editForm.taxDeductions) || 0,
+        });
+      }
+    }
+
+    // Clear cached health score so it recalculates
+    const scoreKey = isBusiness ? 'business_health_score' : 'financial_health_score';
+    localStorage.removeItem(scoreKey);
+
+    setShowEditModal(false);
+    showToast('Dashboard updated successfully! ✅', 'success');
+  };
 
   
   useEffect(() => {
@@ -88,18 +189,31 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   }, [showToast, isBusiness]);
 
   // ══════════════════════════════════════════
-  //  PERSONAL MODE (original logic)
+  //  PERSONAL MODE (original logic) — now handles zero/empty gracefully
   // ══════════════════════════════════════════
   const hasHealthIns = onboardingData?.healthInsurance === 'yes';
   const hasEmergency = onboardingData?.emergencySavings === 'yes';
   const hasHighEmi = onboardingData?.hasEmi === 'yes';
 
-  const monthlyEmi = Math.round((emiData.principal * (emiData.rate/12/100) * Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12)) / (Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12) - 1)) || 0;
+  let fallbackEmiTotal = 0;
+  if (onboardingData?.emis?.length) {
+    fallbackEmiTotal = onboardingData.emis.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  } else if (onboardingData?.emiAmount) {
+    fallbackEmiTotal = Number(onboardingData.emiAmount) || 0;
+  }
+
+  const monthlyEmi = (emiData.principal > 0 && emiData.rate > 0 && emiData.tenure > 0)
+    ? Math.round((emiData.principal * (emiData.rate/12/100) * Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12)) / (Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12) - 1))
+    : fallbackEmiTotal;
   const monthlySip = investData.monthlyAmount || 0;
-  const estimatedTax = Math.round((taxData.income || 0) * 0.15 / 12);
+  const estimatedTax = (taxData.income > 0) ? Math.round((taxData.income) * 0.15 / 12) : 0;
   const totalGoalsTarget = goalsData.reduce((s, g) => s + g.target, 0);
   const totalSaved = goalsData.reduce((s, g) => s + (g.current || g.saved || 0), 0);
   const goalPct = totalGoalsTarget > 0 ? Math.round((totalSaved / totalGoalsTarget) * 100) : 0;
+
+  // Check if data is populated
+  const hasPersonalData = monthlySip > 0 || monthlyEmi > 0 || estimatedTax > 0;
+  const hasSalaryData = onboardingData?.monthlySalary && Number(onboardingData.monthlySalary) > 0;
 
   // ══════════════════════════════════════════
   //  BUSINESS MODE — derived metrics
@@ -108,22 +222,55 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   const bizExpenses = Number(onboardingData?.operatingExpenses) || 0;
   const bizProfit = bizRevenue - bizExpenses;
   const bizProfitMargin = bizRevenue > 0 ? ((bizProfit / bizRevenue) * 100).toFixed(1) : 0;
-  const bizLoanEmi = Number(onboardingData?.businessLoanAmount) || 0;
+  
+  let bizLoanEmi = 0;
+  if (onboardingData?.businessLoans?.length) {
+    bizLoanEmi = onboardingData.businessLoans.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+  } else if (onboardingData?.businessLoanAmount) {
+    bizLoanEmi = Number(onboardingData.businessLoanAmount) || 0;
+  }
+
   const bizGstRegistered = onboardingData?.gstRegistered === 'yes';
   const bizHasLoan = onboardingData?.hasBusinessLoan === 'yes';
 
-  // ── Personal stats ──
+  const hasBusinessData = bizRevenue > 0;
+
+  // ── Personal stats — show "Not Set" if no data ──
   const personalStats = [
-    { label: 'Estimated Tax (Monthly)', value: `₹${estimatedTax.toLocaleString('en-IN')}`, color: 'saffron', icon: <ReceiptIndianRupee size={22} />, trend: 'Optimize in planner', trendDir: 'down' },
-    { label: 'Monthly SIPs', value: `₹${monthlySip.toLocaleString('en-IN')}`, color: 'green', icon: <PieChartIcon size={22} />, trend: '+5% step-up soon', trendDir: 'up' },
-    { label: 'Active Loans EMI', value: `₹${monthlyEmi.toLocaleString('en-IN')}`, color: 'red', icon: <Calculator size={22} />, trend: 'Stable', trendDir: 'neutral' },
+    { 
+      label: 'Estimated Tax (Monthly)', 
+      value: estimatedTax > 0 ? `₹${estimatedTax.toLocaleString('en-IN')}` : 'Not set', 
+      color: estimatedTax > 0 ? 'saffron' : 'neutral', 
+      icon: <ReceiptIndianRupee size={22} />, 
+      trend: estimatedTax > 0 ? 'Optimize in planner' : 'Set in Tax Planner', 
+      trendDir: estimatedTax > 0 ? 'down' : 'neutral',
+      isEmpty: estimatedTax === 0
+    },
+    { 
+      label: 'Monthly SIPs', 
+      value: monthlySip > 0 ? `₹${monthlySip.toLocaleString('en-IN')}` : 'Not set', 
+      color: monthlySip > 0 ? 'green' : 'neutral', 
+      icon: <PieChartIcon size={22} />, 
+      trend: monthlySip > 0 ? '+5% step-up soon' : 'Set up SIP',
+      trendDir: monthlySip > 0 ? 'up' : 'neutral',
+      isEmpty: monthlySip === 0
+    },
+    { 
+      label: 'Active Loans EMI', 
+      value: monthlyEmi > 0 ? `₹${monthlyEmi.toLocaleString('en-IN')}` : hasHighEmi ? 'Set details' : 'None', 
+      color: monthlyEmi > 0 ? 'red' : 'green', 
+      icon: <Calculator size={22} />, 
+      trend: monthlyEmi > 0 ? 'Stable' : (hasHighEmi ? 'Configure EMI' : 'Debt-free ✨'), 
+      trendDir: monthlyEmi > 0 ? 'neutral' : 'up',
+      isEmpty: monthlyEmi === 0 && hasHighEmi
+    },
   ];
 
   // ── Business stats ──
   const businessStats = [
-    { label: 'Monthly Revenue', value: `₹${bizRevenue.toLocaleString('en-IN')}`, color: 'green', icon: <IndianRupee size={22} />, trend: 'From profile', trendDir: 'up' },
-    { label: 'Profit Margin', value: `${bizProfitMargin}%`, color: Number(bizProfitMargin) > 15 ? 'green' : 'saffron', icon: <BarChart3 size={22} />, trend: Number(bizProfitMargin) > 20 ? 'Healthy' : 'Needs improvement', trendDir: Number(bizProfitMargin) > 20 ? 'up' : 'down' },
-    { label: 'Business Loan EMI', value: bizHasLoan ? `₹${bizLoanEmi.toLocaleString('en-IN')}` : 'None', color: bizHasLoan ? 'red' : 'green', icon: <Landmark size={22} />, trend: bizHasLoan ? 'Active' : 'Debt-free ✨', trendDir: bizHasLoan ? 'neutral' : 'up' },
+    { label: 'Monthly Revenue', value: bizRevenue > 0 ? `₹${bizRevenue.toLocaleString('en-IN')}` : 'Not set', color: bizRevenue > 0 ? 'green' : 'neutral', icon: <IndianRupee size={22} />, trend: bizRevenue > 0 ? 'From profile' : 'Set revenue', trendDir: bizRevenue > 0 ? 'up' : 'neutral', isEmpty: bizRevenue === 0 },
+    { label: 'Profit Margin', value: bizRevenue > 0 ? `${bizProfitMargin}%` : 'N/A', color: Number(bizProfitMargin) > 15 ? 'green' : 'saffron', icon: <BarChart3 size={22} />, trend: Number(bizProfitMargin) > 20 ? 'Healthy' : (bizRevenue > 0 ? 'Needs improvement' : 'Set revenue first'), trendDir: Number(bizProfitMargin) > 20 ? 'up' : 'down', isEmpty: bizRevenue === 0 },
+    { label: 'Business Loan EMI', value: bizHasLoan ? (bizLoanEmi > 0 ? `₹${bizLoanEmi.toLocaleString('en-IN')}` : 'Set details') : 'None', color: bizHasLoan ? 'red' : 'green', icon: <Landmark size={22} />, trend: bizHasLoan ? 'Active' : 'Debt-free ✨', trendDir: bizHasLoan ? 'neutral' : 'up', isEmpty: false },
   ];
 
   const stats = isBusiness ? businessStats : personalStats;
@@ -147,11 +294,45 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   const quickActions = isBusiness ? businessActions : personalActions;
 
   // ── Personal alerts ──
-  const personalAlerts = [
-    { type: 'warning', badgeClass: 'badge-red', title: 'Overspending Risk', desc: `Your EMI (₹${monthlyEmi.toLocaleString('en-IN')}) is 40% of standard income. Avoid new debts this month.`, hasPopup: true, actionText: 'View Details' },
-    { type: 'opportunity', badgeClass: 'badge-green', title: 'Saving Opportunity', desc: 'You haven\'t maximized your 80C deductions yet. Adding ₹2,500 more to ELSS saves tax.', action: 'tax', actionText: 'View Tax Planner' },
-    { type: 'habit', badgeClass: 'badge-gold', title: 'Check-in Due', desc: 'Your monthly financial check-in is pending for 2 days. Complete it to boost your Health Score!', action: 'checkin', actionText: 'Do Check-in Now' },
-  ];
+  const personalAlerts = [];
+
+  // Only show data-driven alerts if data exists
+  if (hasSalaryData && monthlyEmi > 0) {
+    const salary = Number(onboardingData.monthlySalary);
+    const emiRatio = (monthlyEmi / salary) * 100;
+    if (emiRatio > 40) {
+      personalAlerts.push({ 
+        type: 'warning', badgeClass: 'badge-red', title: 'Overspending Risk', 
+        desc: `Your EMI (₹${monthlyEmi.toLocaleString('en-IN')}) is ${emiRatio.toFixed(0)}% of your salary. Keep it below 40%.`, 
+        hasPopup: true, actionText: 'View Details' 
+      });
+    }
+  }
+
+  if (estimatedTax > 0) {
+    personalAlerts.push({ 
+      type: 'opportunity', badgeClass: 'badge-green', title: 'Saving Opportunity', 
+      desc: 'You haven\'t maximized your 80C deductions yet. Adding ₹2,500 more to ELSS saves tax.', 
+      action: 'tax', actionText: 'View Tax Planner' 
+    });
+  }
+
+  // Always show check-in reminder
+  personalAlerts.push({ 
+    type: 'habit', badgeClass: 'badge-gold', title: 'Check-in Due', 
+    desc: 'Your monthly financial check-in is pending. Complete it to boost your Health Score!', 
+    action: 'checkin', actionText: 'Do Check-in Now' 
+  });
+
+  // Show setup prompts for missing data
+  if (!hasPersonalData && !isBusiness) {
+    personalAlerts.unshift({
+      type: 'setup', badgeClass: 'badge-saffron', title: '📝 Complete Your Profile',
+      desc: 'Your dashboard cards show "Not set" because you haven\'t configured your financial tools yet. Use the edit button (✏️) above or visit each tool to set your values.',
+      action: null, actionText: 'Edit Dashboard ✏️',
+      customAction: () => openEditModal()
+    });
+  }
 
   // ── Business alerts ──
   const businessAlerts = [];
@@ -188,6 +369,15 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
       action: 'tax', actionText: 'View Tax Details'
     });
   }
+
+  if (!hasBusinessData && isBusiness) {
+    businessAlerts.unshift({
+      type: 'setup', badgeClass: 'badge-saffron', title: '📝 Complete Your Profile',
+      desc: 'Your business metrics are showing defaults. Use the edit button (✏️) to add your real revenue, expenses, and loan data.',
+      action: null, actionText: 'Edit Dashboard ✏️',
+      customAction: () => openEditModal()
+    });
+  }
   
   if (businessAlerts.length === 0) {
     businessAlerts.push({
@@ -200,6 +390,10 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   const smartAlerts = isBusiness ? businessAlerts : personalAlerts;
 
   const handleAlertAction = (alert) => {
+    if (alert.customAction) {
+      alert.customAction();
+      return;
+    }
     if (alert.hasPopup) {
       showModal({
         title: alert.title,
@@ -225,7 +419,7 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   const personalChartData = [
     { name: 'Emergency', value: hasEmergency ? 25 : 5, fill: 'url(#3DGradient1)' },
     { name: 'Insurance', value: hasHealthIns ? 25 : 5, fill: 'url(#3DGradient2)' },
-    { name: 'Investments', value: 15, fill: 'url(#3DGradient3)' },
+    { name: 'Investments', value: monthlySip > 0 ? 25 : 5, fill: 'url(#3DGradient3)' },
     { name: 'EMI Load', value: hasHighEmi ? 35 : 10, fill: 'url(#3DGradient4)' }
   ];
 
@@ -240,6 +434,9 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
 
   const getAIChartSuggestion = () => {
     if (isBusiness) {
+      if (!hasBusinessData) {
+        return "Add your revenue & expenses using the ✏️ Edit button to get personalized AI insights.";
+      }
       const parts = [];
       if (bizRevenue > 0 && Number(bizProfitMargin) < 15) {
         parts.push("increase your Profit slice by reducing operational overhead");
@@ -254,6 +451,9 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
     }
 
     // Personal (original)
+    if (!hasPersonalData && !hasSalaryData) {
+      return "Click the ✏️ Edit button to add your income, SIP, EMI, and tax details for a personalized dashboard.";
+    }
     const expand = [];
     if (!hasHealthIns) expand.push("Insurance slice");
     if (!hasEmergency) expand.push("Emergency slice");
@@ -279,20 +479,254 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
     );
   };
 
+  // ══════════════════════════════════════════
+  //  EDIT MODAL — Inline editing of dashboard data
+  // ══════════════════════════════════════════
+  const inputStyle = {
+    width: '100%',
+    padding: '12px 14px',
+    background: 'rgba(0,0,0,0.3)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '10px',
+    color: '#fff',
+    fontSize: '14px',
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  };
+
+  const labelStyle = {
+    display: 'block',
+    fontSize: '13px',
+    color: '#94a3b8',
+    marginBottom: '6px',
+    fontWeight: 600,
+  };
+
+  const toggleBtnStyle = (active) => ({
+    flex: 1,
+    padding: '10px',
+    borderRadius: '10px',
+    cursor: 'pointer',
+    border: active ? '1px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(255,255,255,0.1)',
+    background: active ? 'rgba(16, 185, 129, 0.1)' : 'rgba(255,255,255,0.03)',
+    color: active ? '#10b981' : '#94a3b8',
+    fontWeight: 600,
+    fontSize: '13px',
+    transition: 'all 0.2s',
+  });
+
+  const renderEditModal = () => {
+    if (!showEditModal) return null;
+    return (
+      <div style={{
+        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+        background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 10000, padding: '20px',
+      }}
+        onClick={(e) => { if (e.target === e.currentTarget) setShowEditModal(false); }}
+      >
+        <div style={{
+          background: 'linear-gradient(180deg, #141b2d 0%, #0f1729 100%)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '20px',
+          maxWidth: '560px', width: '100%',
+          maxHeight: '85vh', overflowY: 'auto',
+          padding: '32px',
+          boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
+        }}>
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', fontSize: '1.3rem' }}>
+              <Pencil size={20} color={isBusiness ? '#f59e0b' : '#3b82f6'} />
+              Edit Dashboard Data
+            </h2>
+            <button onClick={() => setShowEditModal(false)} style={{ background: 'rgba(255,255,255,0.05)', border: 'none', borderRadius: '50%', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#94a3b8' }}>
+              <X size={18} />
+            </button>
+          </div>
+
+          {isBusiness ? (
+            /* ═══ BUSINESS EDIT FORM ═══ */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              <div style={{ padding: '14px', background: 'rgba(245,158,11,0.08)', borderRadius: '12px', border: '1px solid rgba(245,158,11,0.2)' }}>
+                <span style={{ color: '#f59e0b', fontWeight: 'bold', fontSize: '13px' }}>🏢 Business Profile</span>
+              </div>
+              
+              <div>
+                <label style={labelStyle}>Monthly Revenue (₹)</label>
+                <input type="number" value={editForm.monthlyRevenue} onChange={(e) => handleEditChange('monthlyRevenue', e.target.value)} placeholder="e.g. 500000" style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Operating Expenses (₹)</label>
+                <input type="number" value={editForm.operatingExpenses} onChange={(e) => handleEditChange('operatingExpenses', e.target.value)} placeholder="e.g. 300000" style={inputStyle} />
+              </div>
+              <div>
+                <label style={labelStyle}>Has Business Loan?</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button type="button" onClick={() => handleEditChange('hasBusinessLoan', 'yes')} style={toggleBtnStyle(editForm.hasBusinessLoan === 'yes')}>Yes</button>
+                  <button type="button" onClick={() => handleEditChange('hasBusinessLoan', 'no')} style={toggleBtnStyle(editForm.hasBusinessLoan === 'no')}>No</button>
+                </div>
+              </div>
+              {editForm.hasBusinessLoan === 'yes' && (
+                <div>
+                  <label style={labelStyle}>Monthly Loan EMI (₹)</label>
+                  <input type="number" value={editForm.businessLoanAmount} onChange={(e) => handleEditChange('businessLoanAmount', e.target.value)} placeholder="e.g. 50000" style={inputStyle} />
+                </div>
+              )}
+              <div>
+                <label style={labelStyle}>GST Registered?</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button type="button" onClick={() => handleEditChange('gstRegistered', 'yes')} style={toggleBtnStyle(editForm.gstRegistered === 'yes')}>Yes</button>
+                  <button type="button" onClick={() => handleEditChange('gstRegistered', 'no')} style={toggleBtnStyle(editForm.gstRegistered === 'no')}>No</button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* ═══ PERSONAL EDIT FORM ═══ */
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+              {/* Profile Section */}
+              <div style={{ padding: '14px', background: 'rgba(59,130,246,0.08)', borderRadius: '12px', border: '1px solid rgba(59,130,246,0.2)' }}>
+                <span style={{ color: '#3b82f6', fontWeight: 'bold', fontSize: '13px' }}>👤 Profile Data</span>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={labelStyle}>Monthly Salary (₹)</label>
+                  <input type="number" value={editForm.monthlySalary} onChange={(e) => handleEditChange('monthlySalary', e.target.value)} placeholder="e.g. 80000" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Living Expenses (₹)</label>
+                  <input type="number" value={editForm.monthlyExpenses} onChange={(e) => handleEditChange('monthlyExpenses', e.target.value)} placeholder="e.g. 40000" style={inputStyle} />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <label style={labelStyle}>Emergency Fund?</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button type="button" onClick={() => handleEditChange('emergencySavings', 'yes')} style={toggleBtnStyle(editForm.emergencySavings === 'yes')}>Yes</button>
+                    <button type="button" onClick={() => handleEditChange('emergencySavings', 'no')} style={toggleBtnStyle(editForm.emergencySavings === 'no')}>No</button>
+                  </div>
+                </div>
+                <div>
+                  <label style={labelStyle}>Health Insurance?</label>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button type="button" onClick={() => handleEditChange('healthInsurance', 'yes')} style={toggleBtnStyle(editForm.healthInsurance === 'yes')}>Yes</button>
+                    <button type="button" onClick={() => handleEditChange('healthInsurance', 'no')} style={toggleBtnStyle(editForm.healthInsurance === 'no')}>No</button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Calculators Section */}
+              <div style={{ padding: '14px', background: 'rgba(255,215,0,0.06)', borderRadius: '12px', border: '1px solid rgba(255,215,0,0.15)', marginTop: '8px' }}>
+                <span style={{ color: 'var(--gold)', fontWeight: 'bold', fontSize: '13px' }}>📊 Calculator Values</span>
+              </div>
+
+              {/* EMI */}
+              <div>
+                <label style={{ ...labelStyle, color: '#f87171' }}>🏦 Loan / EMI</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button type="button" onClick={() => handleEditChange('hasEmi', 'yes')} style={toggleBtnStyle(editForm.hasEmi === 'yes')}>Has EMI</button>
+                  <button type="button" onClick={() => handleEditChange('hasEmi', 'no')} style={toggleBtnStyle(editForm.hasEmi === 'no')}>No EMI</button>
+                </div>
+              </div>
+              {editForm.hasEmi === 'yes' && (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={labelStyle}>Principal (₹)</label>
+                    <input type="number" value={editForm.loanPrincipal} onChange={(e) => handleEditChange('loanPrincipal', e.target.value)} placeholder="50L" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Rate (%)</label>
+                    <input type="number" step="0.1" value={editForm.loanRate} onChange={(e) => handleEditChange('loanRate', e.target.value)} placeholder="8.5" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Tenure (yr)</label>
+                    <input type="number" value={editForm.loanTenure} onChange={(e) => handleEditChange('loanTenure', e.target.value)} placeholder="20" style={inputStyle} />
+                  </div>
+                </div>
+              )}
+
+              {/* SIP */}
+              <div>
+                <label style={{ ...labelStyle, color: '#34d399' }}>📈 SIP / Investment</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={labelStyle}>Monthly (₹)</label>
+                    <input type="number" value={editForm.sipAmount} onChange={(e) => handleEditChange('sipAmount', e.target.value)} placeholder="20000" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Return (%)</label>
+                    <input type="number" step="0.5" value={editForm.sipReturn} onChange={(e) => handleEditChange('sipReturn', e.target.value)} placeholder="12" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Years</label>
+                    <input type="number" value={editForm.sipYears} onChange={(e) => handleEditChange('sipYears', e.target.value)} placeholder="10" style={inputStyle} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Tax */}
+              <div>
+                <label style={{ ...labelStyle, color: '#fbbf24' }}>💰 Tax Details</label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                  <div>
+                    <label style={labelStyle}>Annual Income (₹)</label>
+                    <input type="number" value={editForm.taxIncome} onChange={(e) => handleEditChange('taxIncome', e.target.value)} placeholder="1200000" style={inputStyle} />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Deductions (₹)</label>
+                    <input type="number" value={editForm.taxDeductions} onChange={(e) => handleEditChange('taxDeductions', e.target.value)} placeholder="150000" style={inputStyle} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '12px', marginTop: '28px' }}>
+            <button onClick={() => setShowEditModal(false)} 
+              style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)', color: '#94a3b8', cursor: 'pointer', fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+              <X size={16} /> Cancel
+            </button>
+            <button onClick={saveEdits}
+              style={{ flex: 2, padding: '14px', borderRadius: '12px', border: 'none', background: isBusiness ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'linear-gradient(135deg, #3b82f6, #6366f1)', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
+              <Save size={16} /> Save Changes
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="tool-page fade-in">
+      {renderEditModal()}
+
       <div className="tool-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1>{isBusiness ? 'Your ' : 'Your Active '}<span className="gradient-text">{isBusiness ? 'Business Command Center' : 'Financial Companion'}</span> {isBusiness ? '🏢' : '👋'}</h1>
           <p>{isBusiness ? 'Monitor revenue, margins, and tax strategy — all in one place.' : 'Navigating your wealth journey, step by step.'}</p>
-          <div style={{ marginTop: '10px', padding: '8px 12px', background: isBusiness ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255, 68, 68, 0.1)', border: `1px solid ${isBusiness ? 'rgba(245, 158, 11, 0.4)' : 'var(--color-red)'}`, borderRadius: '6px', display: 'inline-block' }}>
-            <span style={{ color: isBusiness ? '#f59e0b' : 'var(--color-red)', fontWeight: 'bold' }}>{isBusiness ? '📊 Insight:' : '⚠️ Warning:'}</span>
-            {isBusiness 
-              ? ` Your monthly operating expenses are ₹${bizExpenses.toLocaleString('en-IN')} — optimize to improve margin.`
-              : ` You are currently losing approx ₹${allocationLoss.toLocaleString('en-IN')}/month due to poor allocation.`}
-          </div>
+          {(allocationLoss > 0) && (
+            <div style={{ marginTop: '10px', padding: '8px 12px', background: isBusiness ? 'rgba(245, 158, 11, 0.1)' : 'rgba(255, 68, 68, 0.1)', border: `1px solid ${isBusiness ? 'rgba(245, 158, 11, 0.4)' : 'var(--color-red)'}`, borderRadius: '6px', display: 'inline-block' }}>
+              <span style={{ color: isBusiness ? '#f59e0b' : 'var(--color-red)', fontWeight: 'bold' }}>{isBusiness ? '📊 Insight:' : '⚠️ Warning:'}</span>
+              {isBusiness 
+                ? ` Your monthly operating expenses are ₹${bizExpenses.toLocaleString('en-IN')} — optimize to improve margin.`
+                : ` You are currently losing approx ₹${allocationLoss.toLocaleString('en-IN')}/month due to poor allocation.`}
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          {/* ═══ MANUAL EDIT BUTTON ═══ */}
+          <button 
+            onClick={openEditModal}
+            className="btn-secondary"
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '10px 16px', fontSize: '13px', borderRadius: '10px', cursor: 'pointer', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.15)', color: '#e2e8f0', fontWeight: 600, transition: 'all 0.2s' }}
+            title="Manually edit dashboard values"
+          >
+            <Pencil size={16} /> Edit Dashboard
+          </button>
+
           {isBusiness 
             ? <div className="ai-status-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>🏢 Business Mode</div>
             : <div className="ai-status-badge">Habit Builder Active</div>
@@ -321,7 +755,7 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                 {isBusiness ? (
                   Number(bizProfitMargin) < 15 ? (
                     <p style={{ color: 'var(--color-red)', fontSize: '0.85rem', margin: 0, fontWeight: 'bold' }}>
-                      🚨 Profit margin below 15% threshold.
+                      🚨 {bizRevenue > 0 ? 'Profit margin below 15% threshold.' : 'Add revenue data to track margins.'}
                     </p>
                   ) : (
                     <p style={{ color: 'var(--color-green)', fontSize: '0.85rem', margin: 0, fontWeight: 'bold' }}>
@@ -436,14 +870,20 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
       {/* Stats Cards */}
       <div className="dash-stats">
         {stats.map((s, i) => (
-          <div key={i} className="glass-card dash-stat-card">
+          <div key={i} className={`glass-card dash-stat-card ${s.isEmpty ? 'dash-stat-empty' : ''}`} style={s.isEmpty ? { borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.1)', opacity: 0.75 } : {}}>
             <div className="dash-stat-top">
               <span className="dash-stat-icon">{s.icon}</span>
               <span className={`badge badge-${s.color}`}>{s.trend}</span>
             </div>
             <div className="dash-stat-label">{s.label}</div>
-            <div className="dash-stat-value">{s.value}</div>
-            <div className={`dash-stat-bar ${s.color}`}></div>
+            <div className="dash-stat-value" style={s.isEmpty ? { color: '#64748b', fontSize: '1.2rem' } : {}}>{s.value}</div>
+            {s.isEmpty ? (
+              <button onClick={openEditModal} style={{ marginTop: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#94a3b8', fontSize: '11px', padding: '4px 10px', cursor: 'pointer', fontWeight: 600 }}>
+                <Pencil size={10} style={{ marginRight: '4px' }} /> Set Value
+              </button>
+            ) : (
+              <div className={`dash-stat-bar ${s.color}`}></div>
+            )}
           </div>
         ))}
       </div>

@@ -21,7 +21,7 @@ from db import (
     get_user_threads, create_thread, get_thread_messages,
     delete_thread, delete_user_history
 )
-from utils import send_otp_email
+from utils import send_otp_email, send_welcome_email, send_sms_notification
 from blob_service import blob_service
 
 app = FastAPI(title="Finance AI API", version="1.0.0")
@@ -42,6 +42,7 @@ class UserCredentials(BaseModel):
     username: str | None = None
     email: str
     password: str | None = None
+    mobile_number: str | None = None
 
 class OTPRequest(BaseModel):
     email: str
@@ -82,6 +83,17 @@ def handle_register(credentials: UserCredentials):
     user_id, error = create_user(credentials.username, credentials.email, credentials.password)
     if error:
         return {"status": "error", "message": error}
+        
+    try:
+        send_welcome_email(credentials.email, credentials.username)
+        if credentials.mobile_number:
+            send_sms_notification(
+                credentials.mobile_number, 
+                f"Namaste {credentials.username}! Your Finadvisor account has been successfully created."
+            )
+    except Exception as e:
+        print(f"Failed to send welcome notifications: {e}")
+        
     return {"status": "success", "user_id": user_id, "username": credentials.username, "email": credentials.email}
 
 @app.post("/login")
@@ -118,6 +130,11 @@ def handle_verify_otp(verify: OTPVerify):
             if error:
                 return {"status": "error", "message": f"Verified but failed to create profile: {error}"}
             user = {"id": user_id, "username": username, "email": verify.email}
+            
+            try:
+                send_welcome_email(verify.email, username)
+            except Exception as e:
+                print(f"Failed to send welcome notifications: {e}")
             
         return {"status": "success", "user_id": user['id'], "username": user['username'], "email": user['email']}
     return {"status": "error", "message": "Invalid or expired OTP"}

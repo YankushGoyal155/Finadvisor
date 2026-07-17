@@ -21,26 +21,52 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
     taxData,
     investData,
     goalsData,
-    onboardingData
+    onboardingData,
+    persona
   } = useDashboard()
+
+  const isBusiness = persona === 'business';
 
   const [healthScore, setHealthScore] = useState(58);
   useEffect(() => {
-    const savedScore = localStorage.getItem('financial_health_score');
+    const scoreKey = isBusiness ? 'business_health_score' : 'financial_health_score';
+    const savedScore = localStorage.getItem(scoreKey);
     if (savedScore) setHealthScore(parseInt(savedScore, 10));
-  }, []);
+  }, [isBusiness]);
 
   const userDataPayload = useMemo(() => {
-    const monthlyEmi = emiData?.principal ? Math.round((emiData.principal * (emiData.rate/12/100) * Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12)) / (Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12) - 1)) : 0;
+    const monthlyEmi = (emiData?.principal > 0 && emiData?.rate > 0 && emiData?.tenure > 0)
+      ? Math.round((emiData.principal * (emiData.rate/12/100) * Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12)) / (Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12) - 1))
+      : 0;
+    
+    if (isBusiness) {
+      return {
+        persona: 'business',
+        monthlyRevenue: onboardingData?.monthlyRevenue || 'Unknown',
+        operatingExpenses: onboardingData?.operatingExpenses || 'Unknown',
+        profitMargin: onboardingData?.monthlyRevenue && onboardingData?.operatingExpenses 
+          ? (((Number(onboardingData.monthlyRevenue) - Number(onboardingData.operatingExpenses)) / Number(onboardingData.monthlyRevenue)) * 100).toFixed(1) + '%'
+          : 'Unknown',
+        hasBusinessLoan: onboardingData?.hasBusinessLoan || 'Unknown',
+        businessLoanAmount: onboardingData?.businessLoanAmount || 'None',
+        gstRegistered: onboardingData?.gstRegistered || 'Unknown',
+        score: healthScore,
+        goals: goalsData?.length > 0 ? goalsData.map(g => `${g.title} (${g.target})`).join(', ') : 'None',
+      };
+    }
+    
     return {
-      salary: onboardingData?.monthlySalary || 'Unknown',
-      emi: monthlyEmi,
+      persona: 'personal',
+      salary: onboardingData?.monthlySalary || 'Not provided',
+      monthlyExpenses: onboardingData?.monthlyExpenses || 'Not provided',
+      emi: monthlyEmi > 0 ? monthlyEmi : 'No active EMI',
+      sipAmount: investData?.monthlyAmount > 0 ? investData.monthlyAmount : 'Not set',
       goals: goalsData?.length > 0 ? goalsData.map(g => `${g.title} (${g.target})`).join(', ') : 'None',
       score: healthScore,
       hasEmergency: onboardingData?.emergencySavings || 'Unknown',
       hasHealthIns: onboardingData?.healthInsurance || 'Unknown'
     };
-  }, [emiData, goalsData, onboardingData, healthScore]);
+  }, [emiData, investData, goalsData, onboardingData, healthScore, isBusiness]);
 
   const dynamicSuggestions = [
     { icon: '📊', title: 'Improve My Score', desc: `How can I improve my score from ${healthScore}?` },
@@ -125,7 +151,18 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
         }),
       })
       const data = await response.json()
-      let reply = data.response;
+      
+      if (!response.ok) {
+        console.error("API Error:", data);
+        let errorMsg = data.detail ? JSON.stringify(data.detail) : "Server error";
+        let reply = `❌ **Error:** Backend returned ${response.status} - ${errorMsg}`;
+        const aiMsg = { role: 'ai', content: reply, time: new Date() }
+        setMessages(prev => [...prev, aiMsg])
+        setIsTyping(false);
+        return;
+      }
+      
+      let reply = data.response || "No response received";
 
       // Step 3: Parse and strip ALL Action Tags
       // Format: [[ACTION: {"type": "...", "data": {...}}]]

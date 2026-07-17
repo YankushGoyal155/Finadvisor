@@ -20,8 +20,7 @@ export default function OnboardingPage({ onComplete, user }) {
     monthlySalary: '',
     monthlyExpenses: '',
     hasEmi: '',
-    emiAmount: '',
-    emiPurpose: '',
+    emis: [{ amount: '', purpose: '' }],
     emergencySavings: '',
     emergencyAmount: '',
     healthInsurance: '',
@@ -33,8 +32,7 @@ export default function OnboardingPage({ onComplete, user }) {
     monthlyRevenue: '',
     operatingExpenses: '',
     hasBusinessLoan: '',
-    businessLoanAmount: '',
-    businessLoanPurpose: '',
+    businessLoans: [{ amount: '', purpose: '' }],
     gstRegistered: '',
     businessGoal: ''
   });
@@ -42,6 +40,28 @@ export default function OnboardingPage({ onComplete, user }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleArrayChange = (field, index, key, value) => {
+    setFormData(prev => {
+      const newArray = [...prev[field]];
+      newArray[index] = { ...newArray[index], [key]: value };
+      return { ...prev, [field]: newArray };
+    });
+  };
+
+  const addArrayItem = (field) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: [...prev[field], { amount: '', purpose: '' }]
+    }));
+  };
+  
+  const removeArrayItem = (field, index) => {
+    setFormData(prev => {
+      const newArray = prev[field].filter((_, i) => i !== index);
+      return { ...prev, [field]: newArray.length ? newArray : [{ amount: '', purpose: '' }] };
+    });
   };
 
   const handleOptionSelect = (name, value) => {
@@ -213,14 +233,6 @@ export default function OnboardingPage({ onComplete, user }) {
                       </div>
                     ))}
                   </div>
-                  <input 
-                    type="text" 
-                    name="incomeSource" 
-                    value={formData.incomeSource} 
-                    onChange={handleChange} 
-                    placeholder="Other (type here)..." 
-                    style={{ marginTop: '12px', padding: '14px', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', color: '#fff', width: '100%' }}
-                  />
                 </div>
               </div>
             )}
@@ -273,16 +285,48 @@ export default function OnboardingPage({ onComplete, user }) {
 
                 {((isBusiness && formData.hasBusinessLoan === 'yes') || (!isBusiness && formData.hasEmi === 'yes')) && (
                   <div className="fade-in" style={{ padding: '20px', background: 'rgba(0,0,0,0.2)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div style={{ display: 'flex', gap: '16px' }}>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label>{isBusiness ? 'Total Monthly Interest/EMI (₹)' : 'Total Monthly EMI (₹)'}</label>
-                        <input type="number" name={isBusiness ? 'businessLoanAmount' : 'emiAmount'} value={isBusiness ? formData.businessLoanAmount : formData.emiAmount} onChange={handleChange} required />
+                    
+                    {(isBusiness ? formData.businessLoans : formData.emis).map((item, index) => (
+                      <div key={index} style={{ display: 'flex', gap: '16px', marginBottom: '12px', alignItems: 'flex-end' }}>
+                        <div className="form-group" style={{ flex: 1 }}>
+                          <label>{isBusiness ? `Loan ${index + 1} Monthly EMI (₹)` : `EMI ${index + 1} Amount (₹)`}</label>
+                          <input 
+                            type="number" 
+                            value={item.amount} 
+                            onChange={(e) => handleArrayChange(isBusiness ? 'businessLoans' : 'emis', index, 'amount', e.target.value)} 
+                            required 
+                          />
+                        </div>
+                        <div className="form-group" style={{ flex: 1.5 }}>
+                          <label>Primary Purpose</label>
+                          <input 
+                            type="text" 
+                            value={item.purpose} 
+                            onChange={(e) => handleArrayChange(isBusiness ? 'businessLoans' : 'emis', index, 'purpose', e.target.value)} 
+                            placeholder={isBusiness ? "e.g. Current Account OD" : "e.g. Home Loan"} 
+                            required 
+                          />
+                        </div>
+                        {((isBusiness ? formData.businessLoans : formData.emis).length > 1) && (
+                          <button 
+                            type="button" 
+                            onClick={() => removeArrayItem(isBusiness ? 'businessLoans' : 'emis', index)}
+                            style={{ padding: '12px 16px', borderRadius: '10px', background: 'rgba(239, 68, 68, 0.2)', border: '1px solid rgba(239, 68, 68, 0.3)', color: '#ef4444', cursor: 'pointer', marginBottom: '4px' }}
+                          >
+                            ✕
+                          </button>
+                        )}
                       </div>
-                      <div className="form-group" style={{ flex: 1 }}>
-                        <label>Primary Purpose</label>
-                        <input type="text" name={isBusiness ? 'businessLoanPurpose' : 'emiPurpose'} value={isBusiness ? formData.businessLoanPurpose : formData.emiPurpose} onChange={handleChange} placeholder={isBusiness ? "e.g. Current Account OD" : "e.g. Home Loan"} required />
-                      </div>
-                    </div>
+                    ))}
+                    
+                    <button 
+                      type="button"
+                      onClick={() => addArrayItem(isBusiness ? 'businessLoans' : 'emis')}
+                      style={{ marginTop: '10px', background: 'transparent', border: `1px dashed ${themeColor}`, color: themeColor, padding: '10px 16px', borderRadius: '10px', cursor: 'pointer', width: '100%', fontSize: '0.95rem' }}
+                    >
+                      + Add Another {isBusiness ? 'Loan' : 'EMI'}
+                    </button>
+                    
                   </div>
                 )}
               </div>

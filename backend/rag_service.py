@@ -126,23 +126,40 @@ class RAGFinanceService:
 
         user_data_str = "No specific user data provided."
         if isinstance(user_data, dict):
-            user_data_str = (
-                f"Salary: {user_data.get('salary', 'Unknown')}\n"
-                f"Total Monthly EMI: {user_data.get('emi', 'Unknown')}\n"
-                f"Goals: {user_data.get('goals', 'Unknown')}\n"
-                f"Financial Score: {user_data.get('score', 'Unknown')}\n"
-                f"Has Emergency Fund: {user_data.get('hasEmergency', 'Unknown')}\n"
-                f"Has Health Insurance: {user_data.get('hasHealthIns', 'Unknown')}"
-            )
+            persona = user_data.get('persona', 'personal')
+            if persona == 'business':
+                user_data_str = (
+                    f"User Mode: BUSINESS\n"
+                    f"Monthly Revenue: {user_data.get('monthlyRevenue', 'Unknown')}\n"
+                    f"Operating Expenses: {user_data.get('operatingExpenses', 'Unknown')}\n"
+                    f"Profit Margin: {user_data.get('profitMargin', 'Unknown')}\n"
+                    f"Has Business Loan: {user_data.get('hasBusinessLoan', 'Unknown')}\n"
+                    f"Business Loan EMI: {user_data.get('businessLoanAmount', 'None')}\n"
+                    f"GST Registered: {user_data.get('gstRegistered', 'Unknown')}\n"
+                    f"Business Health Score: {user_data.get('score', 'Unknown')}\n"
+                    f"Business Goals: {user_data.get('goals', 'None')}"
+                )
+            else:
+                user_data_str = (
+                    f"User Mode: PERSONAL\n"
+                    f"Monthly Salary: {user_data.get('salary', 'Not provided')}\n"
+                    f"Monthly Expenses: {user_data.get('monthlyExpenses', 'Not provided')}\n"
+                    f"Total Monthly EMI: {user_data.get('emi', 'No active EMI')}\n"
+                    f"Monthly SIP Amount: {user_data.get('sipAmount', 'Not set')}\n"
+                    f"Financial Goals: {user_data.get('goals', 'None')}\n"
+                    f"Financial Health Score: {user_data.get('score', 'Unknown')}\n"
+                    f"Has Emergency Fund: {user_data.get('hasEmergency', 'Unknown')}\n"
+                    f"Has Health Insurance: {user_data.get('hasHealthIns', 'Unknown')}"
+                )
 
         prompt_template = """You are a highly capable AI Financial Expert specializing in the Indian context.
 Your goal is to provide helpful, accurate, and educational financial guidance. 
 
 CRITICAL SEBI COMPLIANCE RULES:
 1. You are NOT a SEBI-registered Investment Adviser (RIA).
-2. You MUST NOT give personalized stock recommendations (e.g., "Buy X", "Sell Y").
-3. You MUST NOT guarantee returns or predict the future value of specific assets.
-4. If a user asks for personalized investment advice, you MUST politely decline and state that you provide educational information only, advising them to consult a SEBI-registered professional.
+2. You MUST NOT give personalized direct stock recommendations (e.g., "Buy X Shares").
+3. For Mutual Funds: You CAN and SHOULD recommend suitable Mutual Fund categories (e.g., Index Funds, Small Cap, ELSS) or prominent well-known schemes purely for educational purposes and reference, based on the user's goals. Do not give guarantees, but explicitly provide actionable mutual fund category recommendations.
+4. Always include a brief, standard disclaimer when discussing specific funds.
 
 DASHBOARD CONTROL CAPABILITIES:
 You CAN and SHOULD update the user's dashboard calculators when explicitly asked. You are fully capable of doing this by outputting the specific action tags below.
