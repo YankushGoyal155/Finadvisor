@@ -6,6 +6,20 @@ export default function ProfileDropdown({ user, onLogout }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  
+  // Settings state
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [notificationsAlerts, setNotificationsAlerts] = useState(true);
+  const [weeklyReports, setWeeklyReports] = useState(false);
+
+  // Profile state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileData, setProfileData] = useState({
+    username: user?.username || 'Finance Pro',
+    email: user?.email || 'user@example.com',
+    phone: user?.phone || '+91 9876543210'
+  });
+
   const dropdownRef = useRef(null);
   
   const { persona, onboardingData } = useDashboard();
@@ -21,9 +35,9 @@ export default function ProfileDropdown({ user, onLogout }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const initials = user?.username ? user.username.substring(0, 2).toUpperCase() : 'FP';
-  const displayName = user?.username || 'Finance Pro';
-  const displayEmail = user?.email || 'user@example.com';
+  const initials = profileData.username ? profileData.username.substring(0, 2).toUpperCase() : 'FP';
+  const displayName = profileData.username || 'Finance Pro';
+  const displayEmail = profileData.email || 'user@example.com';
   const joinDate = new Date().toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
 
   return (
@@ -113,51 +127,74 @@ export default function ProfileDropdown({ user, onLogout }) {
             <div className="modal-body">
               <div className="profile-card-large">
                 <div className="avatar-large">{initials}</div>
-                <div className="profile-details-large">
-                  <h2>{displayName}</h2>
-                  <p className="email-lbl">{displayEmail}</p>
-                  <span className="join-badge">Member since {joinDate}</span>
+                <div className="profile-details-large" style={{ width: '100%' }}>
+                  {isEditingProfile ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                      <input 
+                        type="text" 
+                        value={profileData.username} 
+                        onChange={e => setProfileData({...profileData, username: e.target.value})}
+                        style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--navy-border)', background: 'rgba(255,255,255,0.05)', color: 'white' }}
+                        placeholder="Name"
+                      />
+                      <input 
+                        type="email" 
+                        value={profileData.email} 
+                        onChange={e => setProfileData({...profileData, email: e.target.value})}
+                        style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--navy-border)', background: 'rgba(255,255,255,0.05)', color: 'white' }}
+                        placeholder="Email"
+                      />
+                      <input 
+                        type="text" 
+                        value={profileData.phone} 
+                        onChange={e => setProfileData({...profileData, phone: e.target.value})}
+                        style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--navy-border)', background: 'rgba(255,255,255,0.05)', color: 'white' }}
+                        placeholder="Phone"
+                      />
+                      <button 
+                        onClick={() => setIsEditingProfile(false)}
+                        style={{ padding: '8px', borderRadius: '6px', background: 'var(--saffron)', color: 'white', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}
+                      >
+                        Save Details
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h2>{displayName}</h2>
+                        <button 
+                          onClick={() => setIsEditingProfile(true)}
+                          style={{ background: 'transparent', border: '1px solid var(--saffron)', color: 'var(--saffron)', padding: '4px 10px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}
+                        >
+                          Edit
+                        </button>
+                      </div>
+                      <p className="email-lbl" style={{ margin: '5px 0' }}>{displayEmail}</p>
+                      <p className="email-lbl" style={{ margin: '0 0 10px' }}>{profileData.phone}</p>
+                      <span className="join-badge">Member since {joinDate}</span>
+                    </>
+                  )}
                 </div>
               </div>
-              <div className="profile-stats-mock">
-                <div className="stat-box">
-                  <strong>Mode</strong>
-                  <span>{persona === 'business' ? '🏢 Business' : '👤 Personal'}</span>
-                </div>
-                {onboardingData?.incomeSource && (
-                  <div className="stat-box">
-                    <strong>Primary Source</strong>
-                    <span>{onboardingData.incomeSource}</span>
+
+              {!isEditingProfile && (
+                <div className="profile-stats-mock" style={{ flexWrap: 'wrap' }}>
+                  <div className="stat-box" style={{ minWidth: '45%' }}>
+                    <strong>Mode</strong>
+                    <span>{persona === 'business' ? '🏢 Business' : '👤 Personal'}</span>
                   </div>
-                )}
-                {persona === 'business' ? (
-                  <>
-                    <div className="stat-box">
-                      <strong>Monthly Revenue</strong>
-                      <span>₹{Number(onboardingData?.monthlyRevenue || 0).toLocaleString('en-IN')}</span>
+                  {onboardingData?.incomeSource && (
+                    <div className="stat-box" style={{ minWidth: '45%' }}>
+                      <strong>Primary Source</strong>
+                      <span>{onboardingData.incomeSource}</span>
                     </div>
-                    <div className="stat-box">
-                      <strong>GST Registered</strong>
-                      <span>{onboardingData?.gstRegistered === 'yes' ? 'Yes' : 'No'}</span>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="stat-box">
-                      <strong>Monthly Income</strong>
-                      <span>₹{Number(onboardingData?.monthlySalary || 0).toLocaleString('en-IN')}</span>
-                    </div>
-                    <div className="stat-box">
-                      <strong>Health Insurance</strong>
-                      <span>{onboardingData?.healthInsurance === 'yes' ? 'Active ✅' : 'Missing ⚠️'}</span>
-                    </div>
-                  </>
-                )}
-                <div className="stat-box">
-                  <strong>Status</strong>
-                  <span style={{color:'var(--saffron)'}}>Active</span>
+                  )}
+                  <div className="stat-box" style={{ minWidth: '45%' }}>
+                    <strong>Status</strong>
+                    <span style={{color:'var(--saffron)'}}>Active User</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
@@ -173,18 +210,39 @@ export default function ProfileDropdown({ user, onLogout }) {
             </div>
             <div className="modal-body">
               <div className="setting-row">
-                <label>Dark Mode</label>
-                <input type="checkbox" defaultChecked disabled />
+                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={isDarkMode} 
+                    onChange={(e) => setIsDarkMode(e.target.checked)} 
+                    style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: 'var(--saffron)' }}
+                  />
+                  Dark Mode
+                </label>
               </div>
               <div className="setting-row">
-                <label>Notification Alerts</label>
-                <input type="checkbox" defaultChecked />
+                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={notificationsAlerts} 
+                    onChange={(e) => setNotificationsAlerts(e.target.checked)} 
+                    style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: 'var(--saffron)' }}
+                  />
+                  Push Notifications
+                </label>
               </div>
               <div className="setting-row">
-                <label>Data Privacy</label>
-                <button className="btn-secondary" style={{padding: '5px 10px', fontSize:'12px'}}>Turn Off Analytics</button>
+                <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={weeklyReports} 
+                    onChange={(e) => setWeeklyReports(e.target.checked)} 
+                    style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: 'var(--saffron)' }}
+                  />
+                  Weekly Email Reports
+                </label>
               </div>
-              <p className="settings-note">Note: More settings will be available in V2.</p>
+              <p className="settings-note">Your preferences are saved automatically.</p>
             </div>
           </div>
         </div>
