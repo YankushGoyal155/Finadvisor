@@ -109,7 +109,20 @@ class RAGFinanceService:
         chat_history: list | None = None,
         user_data: dict | None = None,
     ) -> str:
-        if self.llm is None:
+        active_llm = self.llm
+        if model_name == "gpt-5.5":
+            try:
+                active_llm = AzureChatOpenAI(
+                    azure_deployment="gpt-5.5",
+                    api_version="2025-04-01-preview",
+                    temperature=0.2,
+                    api_key="https://yanku-mptr6fe7-eastus2.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview",
+                    azure_endpoint="https://yanku-mptr6fe7-eastus2.cognitiveservices.azure.com/", 
+                )
+            except Exception as e:
+                print(f"Error loading gpt-5.5 fallback to default: {e}")
+                
+        if active_llm is None:
             return "AI Service is initializing. Please wait a moment and try again!"
 
         if chat_history is None:
@@ -246,7 +259,7 @@ Educational Guidance:"""
                 "user_data": lambda _: user_data_str,
             }
             | prompt
-            | self.llm
+            | active_llm
             | StrOutputParser()
         )
 

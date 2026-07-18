@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useMemo } from 'react'
 import { useDashboard } from '../context/DashboardContext'
 import './ChatPage.css'
 
-export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogout, threadId, setThreadId, setActivePage }) {
+export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o-mini', user, onLogout, threadId, setThreadId, setActivePage }) {
+  const [selectedModel, setSelectedModel] = useState(initialSelectedModel)
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -240,6 +241,28 @@ export default function ChatPage({ selectedModel = 'llama3:latest', user, onLogo
 
   return (
     <div className={`chat-page ${isWelcome ? 'chat-page-welcome' : ''}`}>
+      
+      {/* Dynamic Model Header */}
+      <div className="chat-header">
+        <div className="chat-header-left">
+          <h2>AI Adviser</h2>
+          <div className="chat-status">
+            <span className="status-dot"></span> Online
+          </div>
+        </div>
+        <div className="chat-header-right">
+          <select 
+            className="model-selector"
+            value={selectedModel}
+            onChange={(e) => setSelectedModel(e.target.value)}
+          >
+            <option value="gpt-4o-mini">GPT 4o Mini</option>
+            <option value="gpt-5.5">GPT 5.5</option>
+          </select>
+          <span className="header-badge premium-badge">Pro</span>
+        </div>
+      </div>
+
       {isWelcome ? (
         /* ── ChatGPT-Style Centered Welcome ── */
         <div className="chat-center-wrap">
