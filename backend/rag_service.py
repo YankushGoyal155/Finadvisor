@@ -1,4 +1,7 @@
 import os
+import json
+import urllib.request
+import urllib.error
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -102,6 +105,116 @@ class RAGFinanceService:
         else:
             return FALLBACK_KNOWLEDGE
 
+    def _build_full_prompt(self, query, history_str, user_data_str, retrieved_context):
+        """Build the full system prompt text for GPT 5.5 direct API call."""
+        return f"""You are a highly capable AI Financial Expert specializing in the Indian context.
+Your goal is to provide helpful, accurate, and educational financial guidance. 
+
+CRITICAL SEBI COMPLIANCE RULES:
+1. You are NOT a SEBI-registered Investment Adviser (RIA).
+2. You MUST NOT give personalized direct stock recommendations (e.g., "Buy X Shares").
+3. For Mutual Funds: You CAN and SHOULD recommend suitable Mutual Fund categories (e.g., Index Funds, Small Cap, ELSS) or prominent well-known schemes purely for educational purposes and reference, based on the user's goals. Do not give guarantees, but explicitly provide actionable mutual fund category recommendations.
+4. Always include a brief, standard disclaimer when discussing specific funds.
+
+DASHBOARD CONTROL CAPABILITIES:
+You CAN and SHOULD update the user's dashboard calculators when explicitly asked. You are fully capable of doing this by outputting the specific action tags below.
+But you must follow these STRICT RULES:
+
+WHEN TO USE ACTION TAGS:
+- ONLY when the user EXPLICITLY asks you to update a value on the dashboard (e.g., "update my SIP to 30000", "set my goal")
+- ONLY when the user EXPLICITLY asks you to calculate something (e.g., "calculate my EMI for 50 lakh loan")
+- ONLY when the user EXPLICITLY asks to navigate to a page (e.g., "show me my dashboard", "take me to EMI calculator")
+- ONLY when the user EXPLICITLY asks to search for a mutual fund (e.g., "search for Quant Small Cap fund")
+
+WHEN TO NEVER USE ACTION TAGS:
+- Do NOT add action tags just because you MENTIONED a topic like dashboard, EMI, tax, or mutual funds in your answer.
+- Do NOT add action tags for general advice, explanations, or educational responses.
+- Do NOT add action tags just to be helpful or proactive. Wait for the user to ask.
+- Do NOT add NAVIGATE actions unless the user says words like "show me", "take me to", "open", "go to".
+
+Action Tag Format: [[ACTION: {{"type": "ACTION_TYPE", "data": {{ ... }}, "navigate": true/false}}]]
+Set "navigate" to true if you are updating a value or if the user asked to see that page.
+
+Supported Actions:
+1. EMI_UPDATE: Updates the EMI calculator. Only use when user asks to CALCULATE an EMI.
+   Data: {{"principal": number, "rate": number, "tenure": number}}
+2. MF_FILTER: Searches for a mutual fund. Only use when user asks to SEARCH or FIND a specific fund.
+   Data: {{"search": "fund name"}}
+3. TAX_UPDATE: Updates the tax planner. Only use when user asks to CALCULATE their tax.
+   Data: {{"income": number, "deductions": number}}
+4. INVEST_UPDATE: Updates investment planning. Only use when user asks to PLAN or CALCULATE investments.
+   Data: {{"monthlyAmount": number, "expectedReturn": number, "timeHorizon": number}}
+5. GOALS_UPDATE: Updates the financial goals list. Only use when user asks to SET or UPDATE their goals.
+   Data: Array of goals: [{{"title": string, "target": number, "current": number, "deadline": "YYYY-MM"}}]
+6. RETIREMENT_UPDATE: Updates retirement planning. Only use when user asks to PLAN retirement.
+   Data: {{"currentAge": number, "retirementAge": number, "monthlyExpense": number, "inflationRate": number, "expectedReturn": number}}
+7. AFFORD_UPDATE: Updates the affordability calculator. Only use when user asks "Can I afford X?".
+   Data: {{"itemName": string, "itemPrice": number}}
+
+REMEMBER: Most of your responses should NOT contain any action tags. Only use them when the user explicitly requests a calculation or navigation.
+
+USER PERSONAL CONTEXT (CRITICAL):
+The user has provided their real personal financial data below. 
+You MUST use this exact data to provide highly personalized advice. 
+If their salary is X, reference it. If their EMI is Y, calculate their debt burden. 
+If they lack an emergency fund, tell them to build one before investing.
+Do NOT give generic advice when you can use their specific numbers below!
+{user_data_str}
+
+Conversation History:
+{history_str}
+
+Context from Knowledge Base:
+{retrieved_context}
+
+User Query: {query}
+
+Educational Guidance:"""
+
+    def _call_gpt55_responses_api(self, full_prompt: str) -> str:
+        """Call Azure OpenAI GPT 5.5 via the Responses API (direct HTTP)."""
+        GPT55_ENDPOINT = "https://yanku-mptr6fe7-eastus2.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview"
+        GPT55_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
+
+        payload = {
+            "model": "gpt-5.5",
+            "input": full_prompt,
+            "temperature": 0.2,
+        }
+
+        headers = {
+            "Content-Type": "application/json",
+            "api-key": GPT55_API_KEY,
+        }
+
+        data = json.dumps(payload).encode("utf-8")
+        req = urllib.request.Request(GPT55_ENDPOINT, data=data, headers=headers, method="POST")
+
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+                # The Responses API returns output in a different format
+                # Try multiple response formats for compatibility
+                if "output" in body:
+                    # Responses API format - output is a list of message objects
+                    for item in body["output"]:
+                        if item.get("type") == "message":
+                            for content in item.get("content", []):
+                                if content.get("type") == "output_text":
+                                    return content.get("text", "")
+                # Fallback: try standard chat completions format
+                if "choices" in body:
+                    return body["choices"][0]["message"]["content"]
+                # Last resort: return raw
+                return str(body)
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode("utf-8")
+            print(f"❌ GPT 5.5 API error ({e.code}): {err_body}")
+            raise Exception(f"GPT 5.5 API error ({e.code}): {err_body}")
+        except Exception as e:
+            print(f"❌ GPT 5.5 request failed: {e}")
+            raise
+
     def get_financial_advice(
         self,
         query: str,
@@ -109,22 +222,6 @@ class RAGFinanceService:
         chat_history: list | None = None,
         user_data: dict | None = None,
     ) -> str:
-        active_llm = self.llm
-        if model_name == "gpt-5.5":
-            try:
-                active_llm = AzureChatOpenAI(
-                    azure_deployment="gpt-5.5",
-                    api_version="2025-04-01-preview",
-                    temperature=0.2,
-                    api_key="https://yanku-mptr6fe7-eastus2.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview",
-                    azure_endpoint="https://yanku-mptr6fe7-eastus2.cognitiveservices.azure.com/", 
-                )
-            except Exception as e:
-                print(f"Error loading gpt-5.5 fallback to default: {e}")
-                
-        if active_llm is None:
-            return "AI Service is initializing. Please wait a moment and try again!"
-
         if chat_history is None:
             chat_history = []
 
@@ -165,6 +262,18 @@ class RAGFinanceService:
                     f"Has Health Insurance: {user_data.get('hasHealthIns', 'Unknown')}"
                 )
 
+        retrieved_context = self._retrieve_context(query)
+
+        # ── GPT 5.5 via Azure Responses API (direct HTTP) ──
+        if model_name == "gpt-5.5":
+            print(f"🚀 Asking GPT 5.5 (Responses API): {query}")
+            full_prompt = self._build_full_prompt(query, history_str, user_data_str, retrieved_context)
+            return self._call_gpt55_responses_api(full_prompt)
+
+        # ── Default: GPT-4o-mini via LangChain ──
+        if self.llm is None:
+            return "AI Service is initializing. Please wait a moment and try again!"
+
         prompt_template = """You are a highly capable AI Financial Expert specializing in the Indian context.
 Your goal is to provide helpful, accurate, and educational financial guidance. 
 
@@ -189,8 +298,8 @@ WHEN TO NEVER USE ACTION TAGS:
 - Do NOT add action tags for general advice, explanations, or educational responses.
 - Do NOT add action tags just to be helpful or proactive. Wait for the user to ask.
 - Do NOT add NAVIGATE actions unless the user says words like "show me", "take me to", "open", "go to".
-- Nếu user asks a question like "What is SIP?" or "How does tax work?", just answer. NO action tag.
-- Nếu user says "Hi" or has a casual conversation, NEVER add any action tag.
+- If user asks a question like "What is SIP?" or "How does tax work?", just answer. NO action tag.
+- If user says "Hi" or has a casual conversation, NEVER add any action tag.
 
 Action Tag Format: [[ACTION: {{"type": "ACTION_TYPE", "data": {{ ... }}, "navigate": true/false}}]]
 Set "navigate" to true if you are updating a value or if the user asked to see that page.
@@ -249,8 +358,6 @@ Educational Guidance:"""
             input_variables=["context", "question", "history", "user_data"],
         )
 
-        retrieved_context = self._retrieve_context(query)
-
         chain = (
             {
                 "context": lambda _: retrieved_context,
@@ -259,10 +366,11 @@ Educational Guidance:"""
                 "user_data": lambda _: user_data_str,
             }
             | prompt
-            | active_llm
+            | self.llm
             | StrOutputParser()
         )
 
-        print(f"Asking Azure OpenAI: {query}")
+        print(f"Asking Azure OpenAI (4o-mini): {query}")
         return chain.invoke(query)
+
 
