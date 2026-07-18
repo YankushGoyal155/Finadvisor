@@ -19,8 +19,9 @@ export default function AffordabilityPage() {
   const monthlyIncome = taxData?.income ? taxData.income / 12 : 50000;
   
   const [result, setResult] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCalculate = (e) => {
+  const handleCalculate = async (e) => {
     e.preventDefault();
     const price = parseFloat(itemPrice);
     if (!price || price <= 0) return;
@@ -40,35 +41,43 @@ export default function AffordabilityPage() {
     let advice = [];
 
     if (price <= wants) {
-      verdict = 'Yes, comfortably!';
-      color = 'green-light';
-      emoji = '🎉';
-      advice = [
-        "This item fits well within your 30% monthly 'Wants' allowance.",
-        "You can buy this without touching your core savings.",
-        "Pro tip: Try to find a cashback offer or use a reward credit card!"
-      ];
+      verdict = 'Yes, comfortably!'; color = 'green-light'; emoji = '🎉';
     } else if (price <= monthlyIncome * 0.5) {
-      verdict = 'Yes, but be careful.';
-      color = 'gold';
-      emoji = '⚠️';
-      advice = [
-        "This purchase exceeds your monthly 'Wants' allowance (30% rule).",
-        "You might need to dip into your savings or cut other discretionary spending this month.",
-        `If you save your targeted ₹${monthlySavings.toLocaleString('en-IN')}/mo, it takes ${monthsToSave} months to afford this without stress.`
-      ];
+      verdict = 'Yes, but be careful.'; color = 'gold'; emoji = '⚠️';
     } else {
-      verdict = 'Not right now (Red Flag!).';
-      color = 'red-accent';
-      emoji = '🛑';
-      advice = [
-        "This is a major expense representing more than half of your monthly income.",
-        `Avoid putting this on a credit card or taking a high-interest loan.`,
-        `Recommendation: Save ₹${monthlySavings.toLocaleString('en-IN')} for ${monthsToSave} months to buy this guilt-free.`
-      ];
+      verdict = 'Not right now (Red Flag!).'; color = 'red-accent'; emoji = '🛑';
     }
 
-    setResult({ verdict, color, emoji, advice, monthsToSave, monthlySavings });
+    setResult({ verdict, color, emoji, advice: ["Analyzing your purchase with AI... 🤖"], monthsToSave, monthlySavings });
+    setIsLoading(true);
+
+    try {
+      const prompt = `I want to buy/pay for: ${itemName} which costs ₹${price}. My monthly income is ₹${monthlyIncome} and I save ${savingsRate}% of it (approx ₹${monthlySavings} per mo). Give me 3 short, punchy bullet points of advice on how to plan, save for, or afford this specific item/experience. No intro/outro, just 3 distinct lines. Make it highly specific to the item (${itemName}). Include some smart saving or booking tips if it's a trip.`;
+      
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/chat`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({ message: prompt, model: 'gpt-4o-mini' })
+      });
+      const data = await response.json();
+      
+      if(data.response) {
+          let aiText = data.response.replace(/\[\[ACTION:.*?\]\]/gs, '').trim();
+          let points = aiText.split('\n').filter(p => p.trim().length > 0).map(p => p.replace(/^[-\*•\d\.]+\s*/, ''));
+          setResult(prev => ({ ...prev, advice: points }));
+      }
+    } catch (err) {
+      setResult(prev => ({ 
+        ...prev, 
+        advice: [
+          `Save ₹${monthlySavings.toLocaleString('en-IN')} for ${monthsToSave} months.`,
+          "Look for discounts, cashback, or off-season booking.",
+          "Avoid using a high-interest credit card."
+        ] 
+      }));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -122,7 +131,9 @@ export default function AffordabilityPage() {
                 <span className="slider-value">{savingsRate}%</span>
               </div>
             </div>
-            <button type="submit" className="btn-primary pulse-glow">Analyze Purchase</button>
+            <button type="submit" className="btn-primary pulse-glow" disabled={isLoading}>
+              {isLoading ? 'Analyzing...' : 'Analyze Purchase'}
+            </button>
           </form>
         </div>
 
