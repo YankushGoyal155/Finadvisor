@@ -22,6 +22,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import './ToolPage.css';
+import { IncomeOverviewWidget, ExpenseTrackerWidget, SavingsInvestmentsWidget } from '../components/DashboardWidgets';
 
 export default function DashboardPage({ setActivePage, user, onLogout }) {
   const { emiData, updateEmi, taxData, updateTax, investData, updateInvest, goalsData, onboardingData, updateOnboardingData, persona } = useDashboard();
@@ -414,23 +415,54 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   };
 
   // ══════════════════════════════════════════
-  //  PIE CHART — Different for Personal vs Business
+  //  PIE CHART — Uses REAL ₹ values from user data
   // ══════════════════════════════════════════
-  const personalChartData = [
-    { name: 'Emergency', value: hasEmergency ? 25 : 5, fill: 'url(#3DGradient1)' },
-    { name: 'Insurance', value: hasHealthIns ? 25 : 5, fill: 'url(#3DGradient2)' },
-    { name: 'Investments', value: monthlySip > 0 ? 25 : 5, fill: 'url(#3DGradient3)' },
-    { name: 'EMI Load', value: hasHighEmi ? 35 : 10, fill: 'url(#3DGradient4)' }
+  const salary = Number(onboardingData?.monthlySalary) || 0;
+  const expenses = Number(onboardingData?.monthlyExpenses) || 0;
+  const emergencyAmt = hasEmergency ? Math.round(salary * 0.10) : 0; // 10% of salary if fund exists
+  const insuranceAmt = hasHealthIns ? Math.round(salary * 0.05) : 0; // 5% of salary if insured
+  const savingsAmt = Math.max(0, salary - expenses - monthlySip - monthlyEmi - estimatedTax);
+
+  // Build personal chart with actual ₹ values — show 0 explicitly
+  const personalChartRaw = [
+    { name: 'SIP/Invest', realValue: monthlySip, fill: 'url(#3DGradient3)' },
+    { name: 'EMI/Loans', realValue: monthlyEmi, fill: 'url(#3DGradient4)' },
+    { name: 'Tax', realValue: estimatedTax, fill: 'url(#BizGradient1)' },
+    { name: 'Expenses', realValue: expenses, fill: 'url(#3DGradient2)' },
+    { name: 'Savings', realValue: savingsAmt > 0 ? savingsAmt : 0, fill: 'url(#3DGradient1)' },
   ];
 
-  const businessChartData = [
-    { name: 'Revenue', value: bizRevenue > 0 ? 35 : 10, fill: 'url(#3DGradient1)' },
-    { name: 'Expenses', value: bizExpenses > 0 ? Math.min(35, Math.round((bizExpenses / Math.max(1, bizRevenue)) * 35)) : 10, fill: 'url(#3DGradient4)' },
-    { name: 'Profit', value: bizProfit > 0 ? Math.max(10, 35 - Math.round((bizExpenses / Math.max(1, bizRevenue)) * 35)) : 5, fill: 'url(#3DGradient3)' },
-    { name: 'Debt', value: bizHasLoan ? 20 : 5, fill: 'url(#BizGradient1)' }
+  // If no salary data at all, show placeholder slices so the empty chart is meaningful
+  const personalChartData = salary > 0
+    ? personalChartRaw.map(d => ({ ...d, value: d.realValue > 0 ? d.realValue : 1 })) // tiny sliver for 0-value items
+    : personalChartRaw.map(d => ({ ...d, value: 1 })); // equal empty slices
+
+  // Business chart uses actual ₹ amounts
+  const businessChartRaw = [
+    { name: 'Revenue', realValue: bizRevenue, fill: 'url(#3DGradient1)' },
+    { name: 'Expenses', realValue: bizExpenses, fill: 'url(#3DGradient4)' },
+    { name: 'Profit', realValue: bizProfit > 0 ? bizProfit : 0, fill: 'url(#3DGradient3)' },
+    { name: 'Loan EMI', realValue: bizLoanEmi, fill: 'url(#BizGradient1)' },
   ];
+
+  const businessChartData = bizRevenue > 0
+    ? businessChartRaw.map(d => ({ ...d, value: d.realValue > 0 ? d.realValue : 1 }))
+    : businessChartRaw.map(d => ({ ...d, value: 1 }));
 
   const chartData = isBusiness ? businessChartData : personalChartData;
+
+  // Custom tooltip showing actual ₹ values
+  const PieTooltipContent = ({ active, payload }) => {
+    if (!active || !payload || !payload.length) return null;
+    const d = payload[0].payload;
+    const realVal = d.realValue;
+    return (
+      <div style={{ background: 'rgba(15, 22, 41, 0.95)', border: '1px solid #1E2A40', borderRadius: '10px', padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', color: '#fff', fontSize: '12px' }}>
+        <strong>{d.name}</strong><br/>
+        {realVal !== undefined && realVal > 0 ? `₹${realVal.toLocaleString('en-IN')}` : 'Not set (₹0)'}
+      </div>
+    );
+  };
 
   const getAIChartSuggestion = () => {
     if (isBusiness) {
@@ -450,31 +482,31 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
       return "Your business financial pie looks balanced! Focus on scaling Revenue while maintaining margins.";
     }
 
-    // Personal (original)
+    // Personal
     if (!hasPersonalData && !hasSalaryData) {
-      return "Click the ✏️ Edit button to add your income, SIP, EMI, and tax details for a personalized dashboard.";
+      return "Click the ✏️ Edit button to add your income, SIP, EMI, and tax details for a real breakdown.";
     }
-    const expand = [];
-    if (!hasHealthIns) expand.push("Insurance slice");
-    if (!hasEmergency) expand.push("Emergency slice");
-    let msg = "";
-    if (expand.length > 0) msg += `Expand your ${expand.join(" and ")}`;
-    if (hasHighEmi) {
-      if (msg) msg += " while shrinking your EMI Load slice";
-      else msg += "Shrink your EMI Load slice";
-    }
-    if (msg) return msg + " for a healthier financial ratio.";
-    return "Your pie chart is perfectly balanced! Focus on growing your Investments slice.";
+    const tips = [];
+    if (monthlySip === 0) tips.push("start a SIP to grow your Investments slice");
+    if (!hasHealthIns) tips.push("get health insurance coverage");
+    if (!hasEmergency) tips.push("build an emergency fund");
+    if (monthlyEmi > 0 && salary > 0 && (monthlyEmi / salary) > 0.4) tips.push("reduce EMI to below 40% of salary");
+    if (tips.length > 0) return `Suggestion: ${tips.join(", ")} for a healthier financial ratio.`;
+    return "Your allocation looks balanced! Consider stepping up your SIP by 5% annually.";
   };
 
-  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name }) => {
+  const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, percent, name, payload }) => {
     const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
     const x = cx + radius * Math.cos(-midAngle * (Math.PI / 180));
     const y = cy + radius * Math.sin(-midAngle * (Math.PI / 180));
-    if (percent < 0.1) return null;
+    if (percent < 0.08) return null;
+    const realVal = payload?.realValue;
+    const label = realVal !== undefined && realVal > 0
+      ? `₹${(realVal / 1000).toFixed(0)}K`
+      : '₹0';
     return (
-      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold" style={{ textShadow: '0px 2px 4px rgba(0,0,0,0.9)' }}>
-        {name} {`${(percent * 100).toFixed(0)}%`}
+      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={10} fontWeight="bold" style={{ textShadow: '0px 2px 4px rgba(0,0,0,0.9)' }}>
+        {name} {label}
       </text>
     );
   };
@@ -804,10 +836,7 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                       <feDropShadow dx="2" dy="4" stdDeviation="4" floodColor="#000" floodOpacity="0.5"/>
                     </filter>
                   </defs>
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: 'rgba(15, 22, 41, 0.95)', border: '1px solid #1E2A40', borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', color: '#fff', fontSize: '12px' }}
-                    itemStyle={{ color: '#F0F4FF' }}
-                  />
+                  <Tooltip content={<PieTooltipContent />} />
                   <Pie
                     data={chartData}
                     cx="50%"
@@ -887,6 +916,14 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
           </div>
         ))}
       </div>
+
+      {!isBusiness && (
+        <div style={{ marginTop: '32px' }}>
+          <IncomeOverviewWidget />
+          <ExpenseTrackerWidget />
+          <SavingsInvestmentsWidget />
+        </div>
+      )}
 
       {/* Bottom Grid for Actions */}
       <div className="tool-grid">

@@ -13,8 +13,9 @@ const FAMOUS_FUNDS = [
 ];
 
 export default function MutualFundPage() {
-  const { mfFilters } = useDashboard();
+  const { mfFilters, investData, onboardingData, persona } = useDashboard();
   const { addInboxNotification } = useNotification();
+  const isBusiness = persona === 'business';
   const [allFunds, setAllFunds] = useState([]);
   const [search, setSearch] = useState(mfFilters.search || '');
   const [selectedFund, setSelectedFund] = useState(null);
@@ -84,13 +85,21 @@ export default function MutualFundPage() {
         setLoading(false);
       });
 
-    // Fetch AI suggestion statelessly via the chat endpoint
+    // Fetch AI suggestion with user context for personalized insights
+    const userContext = [];
+    if (onboardingData?.monthlySalary) userContext.push(`User's monthly salary: ₹${onboardingData.monthlySalary}`);
+    if (investData?.monthlyAmount > 0) userContext.push(`Current monthly SIP: ₹${investData.monthlyAmount}`);
+    if (investData?.expectedReturn > 0) userContext.push(`Expected return target: ${investData.expectedReturn}%`);
+    if (investData?.timeHorizon > 0) userContext.push(`Investment horizon: ${investData.timeHorizon} years`);
+    if (isBusiness) userContext.push(`User is a business owner`);
+    const contextStr = userContext.length > 0 ? `\nUser's financial context: ${userContext.join(', ')}.` : '';
+
     fetch(`${import.meta.env.VITE_API_URL}/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
-        message: `The user just opened the mutual fund/stock: ${selectedFund.schemeName}. Provide a very brief 2-3 sentence financial insight, specific risk factor, or useful analytical detail about this fund. Do NOT mention that you are an AI. Give actionable or analytical info directly. Do NOT include any ACTION tags.`, 
-        model: 'gpt-4o'
+        message: `The user just opened the mutual fund: ${selectedFund.schemeName}. ${contextStr}\nProvide a very brief 2-3 sentence financial insight specific to THIS fund. Include risk level assessment, compare it to the user's profile if available, and give one actionable analytical detail. Do NOT mention that you are an AI. Do NOT include any ACTION tags.`, 
+        model: 'gpt-4o-mini'
       }),
     })
     .then(r => r.json())

@@ -18,10 +18,14 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
     updateGoals, 
     updateRetirement,
     updateAfford,
+    updateOnboardingData,
+    updatePersona,
     emiData,
     taxData,
     investData,
     goalsData,
+    retirementData,
+    affordData,
     onboardingData,
     persona
   } = useDashboard()
@@ -40,34 +44,54 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
       ? Math.round((emiData.principal * (emiData.rate/12/100) * Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12)) / (Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12) - 1))
       : 0;
     
+    // Build comprehensive payload with ALL app data
+    const base = {
+      persona: isBusiness ? 'business' : 'personal',
+      score: healthScore,
+      goals: goalsData?.length > 0 ? goalsData.map(g => `${g.title}: target ₹${g.target}, saved ₹${g.current || g.saved || 0}, deadline ${g.deadline || 'not set'}`).join(' | ') : 'None set',
+      // EMI calculator state
+      emiCalculator: emiData?.principal > 0 ? `Principal: ₹${emiData.principal}, Rate: ${emiData.rate}%, Tenure: ${emiData.tenure}yr, Monthly EMI: ₹${monthlyEmi}` : 'Not configured',
+      // Tax planner state  
+      taxPlanner: taxData?.income > 0 ? `Annual Income: ₹${taxData.income}, Deductions: ₹${taxData.deductions}` : 'Not configured',
+      // Investment/SIP state
+      investmentPlanner: investData?.monthlyAmount > 0 ? `Monthly SIP: ₹${investData.monthlyAmount}, Expected Return: ${investData.expectedReturn}%, Horizon: ${investData.timeHorizon}yr` : 'Not configured',
+      // Retirement planner state
+      retirementPlanner: retirementData?.currentAge > 0 ? `Age: ${retirementData.currentAge}, Retire at: ${retirementData.retirementAge}, Monthly Expense: ₹${retirementData.monthlyExpense}` : 'Not configured',
+      // Affordability state
+      affordability: affordData?.itemName ? `Checking: ${affordData.itemName} @ ₹${affordData.itemPrice}` : 'No item being checked',
+    };
+
     if (isBusiness) {
+      const rev = Number(onboardingData?.monthlyRevenue) || 0;
+      const exp = Number(onboardingData?.operatingExpenses) || 0;
       return {
-        persona: 'business',
-        monthlyRevenue: onboardingData?.monthlyRevenue || 'Unknown',
-        operatingExpenses: onboardingData?.operatingExpenses || 'Unknown',
-        profitMargin: onboardingData?.monthlyRevenue && onboardingData?.operatingExpenses 
-          ? (((Number(onboardingData.monthlyRevenue) - Number(onboardingData.operatingExpenses)) / Number(onboardingData.monthlyRevenue)) * 100).toFixed(1) + '%'
-          : 'Unknown',
+        ...base,
+        monthlyRevenue: onboardingData?.monthlyRevenue || 'Not set',
+        operatingExpenses: onboardingData?.operatingExpenses || 'Not set',
+        profitMargin: rev > 0 ? (((rev - exp) / rev) * 100).toFixed(1) + '%' : 'Unknown',
+        monthlyProfit: rev > 0 ? `₹${(rev - exp).toLocaleString('en-IN')}` : 'Unknown',
         hasBusinessLoan: onboardingData?.hasBusinessLoan || 'Unknown',
         businessLoanAmount: onboardingData?.businessLoanAmount || 'None',
         gstRegistered: onboardingData?.gstRegistered || 'Unknown',
-        score: healthScore,
-        goals: goalsData?.length > 0 ? goalsData.map(g => `${g.title} (${g.target})`).join(', ') : 'None',
       };
     }
     
+    const sal = Number(onboardingData?.monthlySalary) || 0;
+    const exp = Number(onboardingData?.monthlyExpenses) || 0;
+    const sip = investData?.monthlyAmount || 0;
+    const savings = sal > 0 ? sal - exp - monthlyEmi - sip : 0;
     return {
-      persona: 'personal',
+      ...base,
       salary: onboardingData?.monthlySalary || 'Not provided',
       monthlyExpenses: onboardingData?.monthlyExpenses || 'Not provided',
-      emi: monthlyEmi > 0 ? monthlyEmi : 'No active EMI',
-      sipAmount: investData?.monthlyAmount > 0 ? investData.monthlyAmount : 'Not set',
-      goals: goalsData?.length > 0 ? goalsData.map(g => `${g.title} (${g.target})`).join(', ') : 'None',
-      score: healthScore,
+      emi: monthlyEmi > 0 ? `₹${monthlyEmi}` : 'No active EMI',
+      sipAmount: sip > 0 ? `₹${sip}` : 'Not set',
+      monthlySavings: sal > 0 ? `₹${savings}` : 'Unknown',
       hasEmergency: onboardingData?.emergencySavings || 'Unknown',
-      hasHealthIns: onboardingData?.healthInsurance || 'Unknown'
+      hasHealthIns: onboardingData?.healthInsurance || 'Unknown',
+      hasEmi: onboardingData?.hasEmi || 'Unknown',
     };
-  }, [emiData, investData, goalsData, onboardingData, healthScore, isBusiness]);
+  }, [emiData, investData, goalsData, onboardingData, healthScore, isBusiness, taxData, retirementData, affordData]);
 
   const dynamicSuggestions = [
     { icon: '📊', title: 'Improve My Score', desc: `How can I improve my score from ${healthScore}?` },
@@ -180,30 +204,55 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
         try {
           const action = JSON.parse(match[1]);
           console.log("AI triggered action:", action);
+          const shouldNavigate = action.navigate !== false;
           
           if (action.type === 'EMI_UPDATE' && action.data) {
             updateEmi(action.data);
-            setActivePage('emi');
+            if (shouldNavigate) setActivePage('emi');
           } else if (action.type === 'MF_FILTER' && action.data) {
             updateMfFilters(action.data);
-            setActivePage('mf');
+            if (shouldNavigate) setActivePage('mf');
           } else if (action.type === 'TAX_UPDATE' && action.data) {
             updateTax(action.data);
-            setActivePage('tax');
+            if (shouldNavigate) setActivePage('tax');
           } else if (action.type === 'INVEST_UPDATE' && action.data) {
             updateInvest(action.data);
-            setActivePage('invest');
+            if (shouldNavigate) setActivePage('invest');
           } else if (action.type === 'GOALS_UPDATE' && action.data) {
             updateGoals(action.data);
-            setActivePage('goals');
+            if (shouldNavigate) setActivePage('goals');
           } else if (action.type === 'RETIREMENT_UPDATE' && action.data) {
             updateRetirement(action.data);
-            setActivePage('retirement');
+            if (shouldNavigate) setActivePage('retirement');
           } else if (action.type === 'AFFORD_UPDATE' && action.data) {
             updateAfford(action.data);
-            setActivePage('afford');
+            if (shouldNavigate) setActivePage('afford');
+          } else if (action.type === 'ONBOARDING_UPDATE' && action.data) {
+            // AI can update any onboarding/profile field
+            const updated = { ...onboardingData, ...action.data };
+            updateOnboardingData(updated);
+            localStorage.setItem('finance_onboarding_data', JSON.stringify(updated));
+            // Clear cached health score so it recalculates
+            const scoreKey = isBusiness ? 'business_health_score' : 'financial_health_score';
+            localStorage.removeItem(scoreKey);
+            if (shouldNavigate) setActivePage('dashboard');
+          } else if (action.type === 'DASHBOARD_UPDATE' && action.data) {
+            // AI can update multiple dashboard sections at once
+            if (action.data.emi) updateEmi(action.data.emi);
+            if (action.data.tax) updateTax(action.data.tax);
+            if (action.data.invest) updateInvest(action.data.invest);
+            if (action.data.goals) updateGoals(action.data.goals);
+            if (action.data.retirement) updateRetirement(action.data.retirement);
+            if (action.data.onboarding) {
+              const updated = { ...onboardingData, ...action.data.onboarding };
+              updateOnboardingData(updated);
+              localStorage.setItem('finance_onboarding_data', JSON.stringify(updated));
+            }
+            if (shouldNavigate) setActivePage('dashboard');
+          } else if (action.type === 'PERSONA_UPDATE' && action.data?.persona) {
+            updatePersona(action.data.persona);
+            if (shouldNavigate) setActivePage('dashboard');
           } else if (action.type === 'NAVIGATE' && action.page) {
-            // Only navigate if the user explicitly asked to go to a page
             setActivePage(action.page);
           }
         } catch (e) {
