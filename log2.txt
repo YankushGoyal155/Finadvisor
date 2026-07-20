@@ -1,0 +1,2 @@
+9bcae62 Fix pie chart dummy data and perfect dashboard widgets zero state
+8f643f5 feat: Distinct AI personas and new personal dashboard widgets for Income, Expenses, and Savings
