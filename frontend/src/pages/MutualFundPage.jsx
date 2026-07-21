@@ -13,7 +13,7 @@ const FAMOUS_FUNDS = [
 ];
 
 export default function MutualFundPage() {
-  const { mfFilters, investData, onboardingData, persona } = useDashboard();
+  const { mfFilters, investData, onboardingData, persona, savedMutualFunds, updateSavedMutualFunds } = useDashboard();
   const { addInboxNotification } = useNotification();
   const isBusiness = persona === 'business';
   const [allFunds, setAllFunds] = useState([]);
@@ -273,6 +273,30 @@ export default function MutualFundPage() {
               ))}
             </div>
           </div>
+
+          {savedMutualFunds && savedMutualFunds.length > 0 && (
+            <div className="mf-famous-section" style={{ marginTop: '30px' }}>
+              <div className="mf-section-label">💼 YOUR SAVED MUTUAL FUNDS & SIPs</div>
+              <div className="mf-famous-grid">
+                {savedMutualFunds.map((fund, index) => (
+                  <button key={index} className="mf-famous-card" style={{ borderColor: 'var(--gold)', background: 'rgba(255, 215, 0, 0.05)' }} onClick={() => {
+                    if (fund.code) handleSelectFamous(fund);
+                    else {
+                      setSearch(fund.name);
+                      setShowDropdown(true);
+                    }
+                  }}>
+                    <div className="mf-famous-name">{fund.name}</div>
+                    <div className="mf-famous-meta">
+                      <span className="mf-famous-cat" style={{ color: 'var(--gold)' }}>SIP: ₹{fund.sipAmount}</span>
+                      <span className="mf-famous-risk low">Started: {fund.sipStartDate || fund.startDate || 'N/A'}</span>
+                    </div>
+                    <div className="mf-famous-hover">Analyze Fund →</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ) : (
         <div className="mf-content fade-in">
@@ -458,6 +482,15 @@ export default function MutualFundPage() {
                 style={{ width: '100%', marginTop: '20px', background: 'var(--gold)', color: '#000', border: 'none', padding: '14px', fontWeight: 'bold' }}
                 onClick={() => {
                   if (portfolioForm.fundName && portfolioForm.sipAmount) {
+                    const newFund = {
+                      name: portfolioForm.fundName,
+                      code: selectedFund?.schemeCode,
+                      sipAmount: portfolioForm.sipAmount,
+                      startDate: portfolioForm.startDate,
+                      sipStartDate: portfolioForm.sipStartDate
+                    };
+                    updateSavedMutualFunds([...(savedMutualFunds || []), newFund]);
+
                     addInboxNotification({
                       title: 'Portfolio Goal Added 🎯',
                       message: `New SIP saved for ${portfolioForm.fundName} (₹${portfolioForm.sipAmount}). ACTION TODAY: Ensure your bank Auto-Pay mandate is verified. IN ONE MONTH: Review the fund's 30-day volatility compared to the category average.`

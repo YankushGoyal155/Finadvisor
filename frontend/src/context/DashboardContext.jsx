@@ -62,6 +62,9 @@ export function DashboardProvider({ children }) {
     return saved ? JSON.parse(saved) : null;
   });
 
+  // 8.5 Saved Mutual Funds
+  const [savedMutualFunds, setSavedMutualFunds] = useState(() => loadState('finance_saved_mf', []));
+
   // 9. User Persona ('personal' or 'business')
   const [persona, setPersona] = useState(() => {
     return localStorage.getItem('finance_user_persona') || 'personal';
@@ -73,6 +76,7 @@ export function DashboardProvider({ children }) {
   useEffect(() => { localStorage.setItem('finance_invest_data', JSON.stringify(investData)); }, [investData]);
   useEffect(() => { localStorage.setItem('finance_goals_data', JSON.stringify(goalsData)); }, [goalsData]);
   useEffect(() => { localStorage.setItem('finance_retirement_data', JSON.stringify(retirementData)); }, [retirementData]);
+  useEffect(() => { localStorage.setItem('finance_saved_mf', JSON.stringify(savedMutualFunds)); }, [savedMutualFunds]);
 
   // Action Updaters
   const updateEmi = (newData) => setEmiData(prev => ({ ...prev, ...newData }));
@@ -83,6 +87,7 @@ export function DashboardProvider({ children }) {
   const updateRetirement = (newData) => setRetirementData(prev => ({ ...prev, ...newData }));
   const updateAfford = (newData) => setAffordData(prev => ({ ...prev, ...newData }));
   const updateOnboardingData = (newData) => setOnboardingData(prev => ({ ...prev, ...newData }));
+  const updateSavedMutualFunds = (newFunds) => setSavedMutualFunds(newFunds);
   const updatePersona = (newPersona) => {
     setPersona(newPersona);
     localStorage.setItem('finance_user_persona', newPersona);
@@ -98,6 +103,7 @@ export function DashboardProvider({ children }) {
       retirementData, updateRetirement,
       affordData, updateAfford,
       onboardingData, updateOnboardingData,
+      savedMutualFunds, updateSavedMutualFunds,
       persona, updatePersona
     }}>
       {children}
