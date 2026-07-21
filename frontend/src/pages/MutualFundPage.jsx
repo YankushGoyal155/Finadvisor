@@ -31,6 +31,96 @@ export default function MutualFundPage() {
     sipAmount: ''
   });
 
+  // Portfolio P&L: stores { fundCode, currentNav, startNav, history } keyed by fund code
+  const [portfolioPnL, setPortfolioPnL] = useState({});
+  const [pnlLoading, setPnlLoading] = useState(false);
+
+  // Calculate P&L for a saved fund given its history data
+  const calcPnL = (fund, historyData) => {
+    if (!historyData || !historyData.length || !fund.sipAmount || !fund.sipStartDate) return null;
+    const sipAmount = parseFloat(fund.sipAmount);
+    const startDateStr = fund.sipStartDate || fund.startDate;
+    if (!startDateStr) return null;
+
+    // Find NAV on or just after the SIP start date
+    // historyData[0] is latest, historyData[last] is oldest
+    const startDate = new Date(startDateStr);
+    const now = new Date();
+    const latestNav = parseFloat(historyData[0]?.nav);
+
+    // Find navigation data entries sorted oldest->newest
+    const sorted = [...historyData].reverse(); // oldest first
+
+    // Calculate how many SIP installments have been made (monthly)
+    const monthsRaw = (now.getFullYear() - startDate.getFullYear()) * 12 + (now.getMonth() - startDate.getMonth());
+    const months = Math.max(1, monthsRaw);
+    const totalInvested = sipAmount * months;
+
+    // For each monthly SIP, find NAV closest to that month and calculate units bought
+    let totalUnits = 0;
+    for (let m = 0; m < months; m++) {
+      const sipDate = new Date(startDate);
+      sipDate.setMonth(sipDate.getMonth() + m);
+      const sipDateStr = sipDate.toISOString().split('T')[0];
+
+      // Find closest available NAV for that month
+      let closestNav = null;
+      let minDiff = Infinity;
+      for (const entry of sorted) {
+        // entry.date is in format DD-MM-YYYY
+        const parts = entry.date.split('-');
+        const entryDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        const diff = Math.abs(entryDate - sipDate);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestNav = parseFloat(entry.nav);
+        }
+      }
+      if (closestNav && closestNav > 0) {
+        totalUnits += sipAmount / closestNav;
+      }
+    }
+
+    const currentValue = totalUnits * latestNav;
+    const pnl = currentValue - totalInvested;
+    const pnlPct = totalInvested > 0 ? ((pnl / totalInvested) * 100) : 0;
+
+    // Find NAV at start date for reference
+    let startNav = null;
+    let minDiff = Infinity;
+    for (const entry of sorted) {
+      const parts = entry.date.split('-');
+      const entryDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      const diff = Math.abs(entryDate - startDate);
+      if (diff < minDiff) { minDiff = diff; startNav = parseFloat(entry.nav); }
+    }
+
+    return { totalInvested, currentValue, pnl, pnlPct, totalUnits, months, latestNav, startNav };
+  };
+
+  // Load NAV history for all saved funds to compute P&L
+  useEffect(() => {
+    if (!savedMutualFunds || savedMutualFunds.length === 0) return;
+    setPnlLoading(true);
+    const promises = savedMutualFunds.map(fund => {
+      if (!fund.code) return Promise.resolve({ fund, data: null });
+      return fetch(`https://api.mfapi.in/mf/${fund.code}`)
+        .then(r => r.json())
+        .then(d => ({ fund, data: d.data }))
+        .catch(() => ({ fund, data: null }));
+    });
+    Promise.all(promises).then(results => {
+      const pnlMap = {};
+      results.forEach(({ fund, data }) => {
+        if (fund.code && data) {
+          pnlMap[fund.code] = calcPnL(fund, data);
+        }
+      });
+      setPortfolioPnL(pnlMap);
+      setPnlLoading(false);
+    });
+  }, [savedMutualFunds]);
+
   const [showSmartAlertModal, setShowSmartAlertModal] = useState(false);
   const [alertForm, setAlertForm] = useState({ targetNav: '', condition: 'above' });
   const [expenseForm, setExpenseForm] = useState({ investment: 100000, ratio: 1.5, years: 10 });
@@ -276,25 +366,107 @@ export default function MutualFundPage() {
 
           {savedMutualFunds && savedMutualFunds.length > 0 && (
             <div className="mf-famous-section" style={{ marginTop: '30px' }}>
-              <div className="mf-section-label">💼 YOUR SAVED MUTUAL FUNDS & SIPs</div>
-              <div className="mf-famous-grid">
-                {savedMutualFunds.map((fund, index) => (
-                  <button key={index} className="mf-famous-card" style={{ borderColor: 'var(--gold)', background: 'rgba(255, 215, 0, 0.05)' }} onClick={() => {
-                    if (fund.code) handleSelectFamous(fund);
-                    else {
-                      setSearch(fund.name);
-                      setShowDropdown(true);
-                    }
-                  }}>
-                    <div className="mf-famous-name">{fund.name}</div>
-                    <div className="mf-famous-meta">
-                      <span className="mf-famous-cat" style={{ color: 'var(--gold)' }}>SIP: ₹{fund.sipAmount}</span>
-                      <span className="mf-famous-risk low">Started: {fund.sipStartDate || fund.startDate || 'N/A'}</span>
+              <div className="mf-section-label">💼 MY PORTFOLIO — PROFIT & LOSS TRACKER</div>
+              {pnlLoading && <div style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '16px' }}>⏳ Calculating your portfolio P&L...</div>}
+              <div className="mf-portfolio-grid">
+                {savedMutualFunds.map((fund, index) => {
+                  const pnl = portfolioPnL[fund.code];
+                  const isProfit = pnl && pnl.pnl >= 0;
+                  return (
+                    <div key={index} className="mf-portfolio-card" style={{ borderColor: pnl ? (isProfit ? 'rgba(16, 185, 129, 0.5)' : 'rgba(239, 68, 68, 0.5)') : 'rgba(255, 215, 0, 0.3)' }}>
+                      <div className="mf-portfolio-header">
+                        <div className="mf-portfolio-name">{fund.name}</div>
+                        {pnl && (
+                          <div className={`mf-portfolio-pnl-badge ${isProfit ? 'profit' : 'loss'}`}>
+                            {isProfit ? '▲' : '▼'} {Math.abs(pnl.pnlPct).toFixed(2)}%
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mf-portfolio-stats">
+                        <div className="mf-portfolio-stat">
+                          <span className="mf-stat-label">Monthly SIP</span>
+                          <span className="mf-stat-value">₹{parseFloat(fund.sipAmount).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="mf-portfolio-stat">
+                          <span className="mf-stat-label">Duration</span>
+                          <span className="mf-stat-value">{pnl ? `${pnl.months} month${pnl.months !== 1 ? 's' : ''}` : 'N/A'}</span>
+                        </div>
+                        <div className="mf-portfolio-stat">
+                          <span className="mf-stat-label">Total Invested</span>
+                          <span className="mf-stat-value">₹{pnl ? pnl.totalInvested.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—'}</span>
+                        </div>
+                        <div className="mf-portfolio-stat">
+                          <span className="mf-stat-label">Current Value</span>
+                          <span className="mf-stat-value" style={{ color: pnl ? (isProfit ? '#10b981' : '#ef4444') : '#fff' }}>
+                            ₹{pnl ? pnl.currentValue.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {pnl && (
+                        <div className={`mf-portfolio-pnl-row ${isProfit ? 'pnl-profit' : 'pnl-loss'}`}>
+                          <span>{isProfit ? '📈 Profit' : '📉 Loss'}</span>
+                          <span className="mf-pnl-amount">
+                            {isProfit ? '+' : '-'}₹{Math.abs(pnl.pnl).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
+                          </span>
+                        </div>
+                      )}
+
+                      {pnl && (
+                        <div className="mf-portfolio-nav-info">
+                          <span>Start NAV: ₹{pnl.startNav ? pnl.startNav.toFixed(2) : '—'}</span>
+                          <span>Current NAV: ₹{pnl.latestNav ? pnl.latestNav.toFixed(2) : '—'}</span>
+                        </div>
+                      )}
+
+                      {!pnl && !pnlLoading && (
+                        <div style={{ color: '#64748b', fontSize: '0.8rem', marginTop: '10px' }}>⚠️ NAV data unavailable for P&L calculation</div>
+                      )}
+
+                      <div className="mf-portfolio-actions">
+                        <button className="mf-portfolio-btn analyze" onClick={() => {
+                          if (fund.code) handleSelectFamous(fund);
+                          else { setSearch(fund.name); setShowDropdown(true); }
+                        }}>Analyze →</button>
+                        <button className="mf-portfolio-btn remove" onClick={(e) => {
+                          e.stopPropagation();
+                          const updated = savedMutualFunds.filter((_, i) => i !== index);
+                          updateSavedMutualFunds(updated);
+                        }}>Remove</button>
+                      </div>
                     </div>
-                    <div className="mf-famous-hover">Analyze Fund →</div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
+
+              {/* Portfolio Summary Row */}
+              {!pnlLoading && Object.keys(portfolioPnL).length > 0 && (() => {
+                const vals = Object.values(portfolioPnL).filter(Boolean);
+                const totalInv = vals.reduce((s, v) => s + v.totalInvested, 0);
+                const totalCurr = vals.reduce((s, v) => s + v.currentValue, 0);
+                const totalPnl = totalCurr - totalInv;
+                const totalPct = totalInv > 0 ? (totalPnl / totalInv) * 100 : 0;
+                const isPos = totalPnl >= 0;
+                return (
+                  <div className="mf-portfolio-summary">
+                    <div className="mf-summary-col">
+                      <div className="mf-summary-label">Total Invested</div>
+                      <div className="mf-summary-value">₹{totalInv.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+                    </div>
+                    <div className="mf-summary-col">
+                      <div className="mf-summary-label">Portfolio Value</div>
+                      <div className="mf-summary-value" style={{ color: isPos ? '#10b981' : '#ef4444' }}>₹{totalCurr.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</div>
+                    </div>
+                    <div className="mf-summary-col">
+                      <div className="mf-summary-label">Overall P&L</div>
+                      <div className="mf-summary-value" style={{ color: isPos ? '#10b981' : '#ef4444' }}>
+                        {isPos ? '+' : ''}₹{totalPnl.toLocaleString('en-IN', { maximumFractionDigits: 0 })} ({isPos ? '+' : ''}{totalPct.toFixed(2)}%)
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </div>
@@ -482,12 +654,25 @@ export default function MutualFundPage() {
                 style={{ width: '100%', marginTop: '20px', background: 'var(--gold)', color: '#000', border: 'none', padding: '14px', fontWeight: 'bold' }}
                 onClick={() => {
                   if (portfolioForm.fundName && portfolioForm.sipAmount) {
+                    // Find NAV at start date for initial reference
+                    let startNav = null;
+                    if (fundHistory?.data && portfolioForm.startDate) {
+                      const startDate = new Date(portfolioForm.startDate);
+                      let minDiff = Infinity;
+                      for (const entry of [...(fundHistory.data || [])].reverse()) {
+                        const parts = entry.date.split('-');
+                        const entryDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                        const diff = Math.abs(entryDate - startDate);
+                        if (diff < minDiff) { minDiff = diff; startNav = parseFloat(entry.nav); }
+                      }
+                    }
                     const newFund = {
                       name: portfolioForm.fundName,
                       code: selectedFund?.schemeCode,
                       sipAmount: portfolioForm.sipAmount,
                       startDate: portfolioForm.startDate,
-                      sipStartDate: portfolioForm.sipStartDate
+                      sipStartDate: portfolioForm.sipStartDate,
+                      startNav: startNav
                     };
                     updateSavedMutualFunds([...(savedMutualFunds || []), newFund]);
 
