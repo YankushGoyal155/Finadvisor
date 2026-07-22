@@ -36,12 +36,21 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
 
   // Widget Navigation Menu state
   const [showMenu, setShowMenu] = useState(false);
+  const [activeWidget, setActiveWidget] = useState(null);
 
-  const scrollToSection = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      const y = el.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: y, behavior: 'smooth' });
+  const toggleWidget = (id) => {
+    if (activeWidget === id) {
+      setActiveWidget(null); // toggle off if same
+    } else {
+      setActiveWidget(id);
+      // Wait for React to render the widget, then scroll
+      setTimeout(() => {
+        const el = document.getElementById(id);
+        if (el) {
+          const y = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 50);
     }
     setShowMenu(false);
   };
@@ -804,9 +813,9 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
               >
                 {!isBusiness ? (
                   <>
-                    <button onClick={() => scrollToSection('expense-tracker')} style={{ background: 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Wallet & Expense Tracker</button>
-                    <button onClick={() => scrollToSection('income-overview')} style={{ background: 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Income Overview</button>
-                    <button onClick={() => scrollToSection('savings-investments')} style={{ background: 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%' }}>Savings & Investments</button>
+                    <button onClick={() => toggleWidget('expense-tracker')} style={{ background: activeWidget === 'expense-tracker' ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Wallet & Expense Tracker</button>
+                    <button onClick={() => toggleWidget('income-overview')} style={{ background: activeWidget === 'income-overview' ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Income Overview</button>
+                    <button onClick={() => toggleWidget('savings-investments')} style={{ background: activeWidget === 'savings-investments' ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%' }}>Savings & Investments</button>
                   </>
                 ) : (
                   <div style={{ padding: '10px 16px', color: '#94a3b8', fontSize: '13px', textAlign: 'center' }}>
@@ -967,11 +976,26 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
         ))}
       </div>
 
-      {!isBusiness && (
+      {!isBusiness && activeWidget && (
         <div style={{ marginTop: '32px' }}>
-          <IncomeOverviewWidget />
-          <ExpenseTrackerWidget />
-          <SavingsInvestmentsWidget />
+          {activeWidget === 'income-overview' && (
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setActiveWidget(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <IncomeOverviewWidget />
+            </div>
+          )}
+          {activeWidget === 'expense-tracker' && (
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setActiveWidget(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <ExpenseTrackerWidget />
+            </div>
+          )}
+          {activeWidget === 'savings-investments' && (
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setActiveWidget(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <SavingsInvestmentsWidget />
+            </div>
+          )}
         </div>
       )}
 

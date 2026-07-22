@@ -129,11 +129,11 @@ export function ExpenseTrackerWidget() {
     { id: 4, name: 'Entertainment', budget: 6000, actual: 0 },
   ]);
 
-  const totalBudget = categories.reduce((s, c) => s + c.budget, 0);
-  const totalActual = categories.reduce((s, c) => s + c.actual, 0);
+  const totalBudget = categories.reduce((s, c) => s + (Number(c.budget) || 0), 0);
+  const totalActual = categories.reduce((s, c) => s + (Number(c.actual) || 0), 0);
 
   const handleUpdate = (id, field, value) => {
-    setCategories(categories.map(c => c.id === id ? { ...c, [field]: Number(value) || 0 } : c));
+    setCategories(categories.map(c => c.id === id ? { ...c, [field]: value === '' ? '' : Number(value) } : c));
   };
 
   return (
