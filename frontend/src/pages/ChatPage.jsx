@@ -8,8 +8,17 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [showModelSelector, setShowModelSelector] = useState(false)
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
+
+  const handleModelChange = (val) => {
+    setSelectedModel(val);
+    setShowModelSelector(false);
+    setMessages([]);
+    if (setThreadId) setThreadId(null);
+  };
+
   
   const { 
     updateEmi, 
@@ -319,15 +328,20 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
             <div className="chat-center-input">
               <div className="chat-input-container">
                 <div className="model-selector-wrapper" title="Change AI Model">
-                  <Sparkles size={16} />
-                  <select 
-                    value={selectedModel}
-                    onChange={(e) => setSelectedModel(e.target.value)}
-                    className="model-selector-inline"
-                  >
-                    <option value="gpt-4o-mini">GPT 4o Mini</option>
-                    <option value="gpt-5.5">GPT 5.5 (Pro) </option>
-                  </select>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowModelSelector(!showModelSelector)}>
+                    <Sparkles size={16} />
+                    <span>{selectedModel === 'gpt-4o-mini' ? 'GPT 4o Mini' : 'GPT 5.5 (Pro)'}</span>
+                  </div>
+                  {showModelSelector && (
+                    <div className="custom-model-popup">
+                      <div className={`model-option ${selectedModel === 'gpt-4o-mini' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-4o-mini')}>
+                        GPT 4o Mini
+                      </div>
+                      <div className={`model-option ${selectedModel === 'gpt-5.5' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-5.5')}>
+                        GPT 5.5 (Pro)
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <textarea
                   ref={textareaRef}
@@ -394,15 +408,20 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
           <div className="chat-input-area">
             <div className="chat-input-container">
               <div className="model-selector-wrapper" title="Change AI Model">
-                <Sparkles size={16} />
-                <select 
-                  value={selectedModel}
-                  onChange={(e) => setSelectedModel(e.target.value)}
-                  className="model-selector-inline"
-                >
-                  <option value="gpt-4o-mini">GPT 4o Mini</option>
-                  <option value="gpt-5.5">GPT 5.5 (Pro) </option>
-                </select>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowModelSelector(!showModelSelector)}>
+                  <Sparkles size={16} />
+                  <span>{selectedModel === 'gpt-4o-mini' ? 'GPT 4o Mini' : 'GPT 5.5 (Pro)'}</span>
+                </div>
+                {showModelSelector && (
+                  <div className="custom-model-popup">
+                    <div className={`model-option ${selectedModel === 'gpt-4o-mini' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-4o-mini')}>
+                      GPT 4o Mini
+                    </div>
+                    <div className={`model-option ${selectedModel === 'gpt-5.5' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-5.5')}>
+                      GPT 5.5 (Pro)
+                    </div>
+                  </div>
+                )}
               </div>
               <textarea
                 ref={textareaRef}

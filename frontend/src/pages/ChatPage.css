@@ -369,34 +369,63 @@
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 20px;
-  padding: 6px 10px;
-  color: var(--saffron);
+  padding: 6px 12px;
+  color: var(--text-primary);
+  opacity: 0.9;
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
   flex-shrink: 0;
   margin-bottom: 2px; /* aligns closely with the bottom of textarea */
+  position: relative;
+  user-select: none;
 }
 
 .model-selector-wrapper:hover {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.2);
+  opacity: 1;
 }
 
-.model-selector-inline {
-  background: transparent;
-  color: inherit;
-  border: none;
-  outline: none;
-  cursor: pointer;
+.custom-model-popup {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  background: rgba(20, 27, 45, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+  padding: 6px 0;
+  min-width: 150px;
+  z-index: 50;
+  animation: popupSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: bottom left;
+}
+
+@keyframes popupSlideIn {
+  0% { opacity: 0; transform: translateY(10px) scale(0.95); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.model-option {
+  padding: 10px 16px;
   font-size: 13px;
-  font-weight: inherit;
-  font-family: inherit;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  padding-right: 4px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.model-option:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
+
+.model-option.active {
+  color: var(--saffron);
+  background: rgba(255, 107, 0, 0.08);
 }
 
 .chat-input-container:focus-within {
