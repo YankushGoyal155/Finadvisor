@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useDashboard } from '../context/DashboardContext'
+import { Sparkles, Bot } from 'lucide-react'
 import './ChatPage.css'
 
 export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o-mini', user, onLogout, threadId, setThreadId, setActivePage }) {
@@ -300,14 +301,6 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
           </div>
         </div>
         <div className="chat-header-right">
-          <select 
-            className="model-selector"
-            value={selectedModel}
-            onChange={(e) => setSelectedModel(e.target.value)}
-          >
-            <option value="gpt-4o-mini">GPT 4o Mini</option>
-            <option value="gpt-5.5">GPT 5.5</option>
-          </select>
           <span className="header-badge premium-badge">Pro</span>
         </div>
       </div>
@@ -325,6 +318,17 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
             {/* Input in the center */}
             <div className="chat-center-input">
               <div className="chat-input-container">
+                <div className="model-selector-wrapper" title="Change AI Model">
+                  <Sparkles size={16} />
+                  <select 
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className="model-selector-inline"
+                  >
+                    <option value="gpt-4o-mini">GPT 4o Mini</option>
+                    <option value="gpt-5.5">GPT 5.5 (Pro) </option>
+                  </select>
+                </div>
                 <textarea
                   ref={textareaRef}
                   className="chat-input"
@@ -389,6 +393,17 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
           {/* Input at bottom when chatting */}
           <div className="chat-input-area">
             <div className="chat-input-container">
+              <div className="model-selector-wrapper" title="Change AI Model">
+                <Sparkles size={16} />
+                <select 
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="model-selector-inline"
+                >
+                  <option value="gpt-4o-mini">GPT 4o Mini</option>
+                  <option value="gpt-5.5">GPT 5.5 (Pro) </option>
+                </select>
+              </div>
               <textarea
                 ref={textareaRef}
                 className="chat-input"
@@ -414,11 +429,28 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
 }
 
 function formatMarkdown(text) {
-  // Strip any action tags that might be in historical messages
+  if (!text) return '';
   text = text.replace(/\[\[ACTION:.*?\]\]/gs, '');
   text = text.replace(/\[\[ACTION:.*$/gm, '');
-  return text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\n\n/g, '<br/><br/>')
-    .replace(/\n/g, '<br/>')
-    .trim();
+  
+  // Headers
+  text = text.replace(/^### (.*$)/gim, '<h3 style="margin-top:12px; margin-bottom:6px; font-size:1.1em;">$1</h3>');
+  text = text.replace(/^## (.*$)/gim, '<h2 style="margin-top:14px; margin-bottom:8px; font-size:1.2em;">$1</h2>');
+  text = text.replace(/^# (.*$)/gim, '<h1 style="margin-top:16px; margin-bottom:10px; font-size:1.3em;">$1</h1>');
+  
+  // Bold
+  text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+  
+  // Italics
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Lists
+  text = text.replace(/^\s*[\-\*]\s+(.*)/gim, '<div style="display:flex; margin-bottom:4px;"><span style="margin-right:8px; color:var(--saffron);">&bull;</span><span>$1</span></div>');
+  text = text.replace(/^\s*\d+\.\s+(.*)/gim, '<div style="display:flex; margin-bottom:4px;"><span style="margin-right:8px; color:var(--saffron); font-weight:bold;">#</span><span>$1</span></div>');
+  
+  // Line breaks
+  text = text.replace(/\n\n/g, '<br/><br/>');
+  text = text.replace(/\n(?!<div)/g, '<br/>'); // basic newline handling without breaking lists
+  
+  return text.trim();
 }
