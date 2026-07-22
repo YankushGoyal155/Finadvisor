@@ -19,7 +19,8 @@ import {
   Pencil,
   X,
   Save,
-  RotateCcw
+  RotateCcw,
+  MoreVertical
 } from "lucide-react";
 import './ToolPage.css';
 import { IncomeOverviewWidget, ExpenseTrackerWidget, SavingsInvestmentsWidget } from '../components/DashboardWidgets';
@@ -32,6 +33,19 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   // Health Score calculation (Habit builder)
   const [healthScore, setHealthScore] = useState(58);
   const [allocationLoss, setAllocationLoss] = useState(0);
+
+  // Widget Navigation Menu state
+  const [showMenu, setShowMenu] = useState(false);
+
+  const scrollToSection = (id) => {
+    const el = document.getElementById(id);
+    if (el) {
+      const y = el.getBoundingClientRect().top + window.scrollY - 80;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+    setShowMenu(false);
+  };
+
 
   // ══════════════════════════════════════════
   //  MANUAL EDIT MODAL STATE
@@ -759,13 +773,49 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
             <Pencil size={16} /> Edit Dashboard
           </button>
 
-          {isBusiness 
-            ? <div className="ai-status-badge" style={{ background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>🏢 Business Mode</div>
-            : <div className="ai-status-badge">Habit Builder Active</div>
-          }
-          <span className="badge badge-gold" style={{ padding: '8px 16px', fontSize: '12px' }}>
-            {isBusiness ? `📈 ${bizProfitMargin}% Margin` : `🎯 ${goalPct}% Goal Progress`}
-          </span>
+          <div style={{ position: 'relative' }}>
+            <button 
+              onClick={() => setShowMenu(!showMenu)}
+              className="btn-secondary"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', padding: 0, borderRadius: '10px', cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: '#e2e8f0', transition: 'all 0.2s' }}
+              title="Menu"
+            >
+              <MoreVertical size={20} />
+            </button>
+
+            {showMenu && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '8px',
+                  background: 'var(--navy-mid)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '12px',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+                  minWidth: '220px',
+                  zIndex: 100,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  padding: '8px 0',
+                  overflow: 'hidden'
+                }}
+              >
+                {!isBusiness ? (
+                  <>
+                    <button onClick={() => scrollToSection('expense-tracker')} style={{ background: 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Wallet & Expense Tracker</button>
+                    <button onClick={() => scrollToSection('income-overview')} style={{ background: 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Income Overview</button>
+                    <button onClick={() => scrollToSection('savings-investments')} style={{ background: 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%' }}>Savings & Investments</button>
+                  </>
+                ) : (
+                  <div style={{ padding: '10px 16px', color: '#94a3b8', fontSize: '13px', textAlign: 'center' }}>
+                    Personal trackers are hidden in Business mode
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

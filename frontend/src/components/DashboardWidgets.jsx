@@ -39,7 +39,7 @@ export function IncomeOverviewWidget() {
   const pieData = sources.map(s => ({ name: s.name, value: s.amount }));
 
   return (
-    <div className="glass-card fade-in" style={{ padding: '24px', marginBottom: '24px' }}>
+    <div id="income-overview" className="glass-card fade-in" style={{ padding: '24px', marginBottom: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
         <IndianRupee size={24} color="#10b981" />
         <h2 style={{ fontSize: '1.4rem', margin: 0 }}>Income Overview</h2>
@@ -137,7 +137,7 @@ export function ExpenseTrackerWidget() {
   };
 
   return (
-    <div className="glass-card fade-in" style={{ padding: '24px', marginBottom: '24px' }}>
+    <div id="expense-tracker" className="glass-card fade-in" style={{ padding: '24px', marginBottom: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
         <Wallet size={24} color="#f59e0b" />
         <h2 style={{ fontSize: '1.4rem', margin: 0 }}>Expense Tracker & Budgeting</h2>
@@ -232,7 +232,7 @@ export function SavingsInvestmentsWidget() {
   const totalPortfolio = portfolio.reduce((sum, item) => sum + item.value, 0);
 
   return (
-    <div className="glass-card fade-in" style={{ padding: '24px', marginBottom: '24px' }}>
+    <div id="savings-investments" className="glass-card fade-in" style={{ padding: '24px', marginBottom: '24px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
         <PiggyBank size={24} color="#ec4899" />
         <h2 style={{ fontSize: '1.4rem', margin: 0 }}>Savings and Investments</h2>
