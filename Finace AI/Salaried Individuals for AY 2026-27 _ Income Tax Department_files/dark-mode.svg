@@ -1,0 +1,15 @@
+<svg id="_24px-5" data-name="24px-5" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: none;
+      }
+
+      .cls-2 {
+        fill: rgba(0,0,0,0.6);
+      }
+    </style>
+  </defs>
+  <path id="Path_10648" data-name="Path 10648" class="cls-1" d="M0,0H18V18H0Z"/>
+  <path id="contrast" class="cls-2" d="M7.024,0a7.024,7.024,0,1,0,7.024,7.024A7.024,7.024,0,0,0,7.024,0ZM1.756,7.024A5.269,5.269,0,0,1,7.024,1.756V12.293A5.269,5.269,0,0,1,1.756,7.024Z" transform="translate(1 2)"/>
+</svg>

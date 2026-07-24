@@ -61,9 +61,17 @@ export default function TaxPlannerPage() {
     if (taxable > 1000000) tax += (taxable - 1000000) * 0.30 + 112500;
     else if (taxable > 500000) tax += (taxable - 500000) * 0.20 + 12500;
     else if (taxable > 250000) tax += (taxable - 250000) * 0.05;
-    if (taxable <= 500000) tax = 0;
-    const cess = tax * 0.04;
-    return Math.round(tax + cess);
+    
+    if (taxable <= 500000) tax = 0; // Rebate limit is 5L
+
+    let surcharge = 0;
+    if (taxable > 50000000) surcharge = tax * 0.37;
+    else if (taxable > 20000000) surcharge = tax * 0.25;
+    else if (taxable > 10000000) surcharge = tax * 0.15;
+    else if (taxable > 5000000) surcharge = tax * 0.10;
+
+    const cess = (tax + surcharge) * 0.04;
+    return Math.round(tax + surcharge + cess);
   };
 
   const calcNewRegime = (inc) => {
@@ -79,8 +87,16 @@ export default function TaxPlannerPage() {
       rem -= amt;
       if (rem <= 0) break;
     }
-    if (taxable <= 1200000) tax = 0;
-    return Math.round(tax + (tax * 0.04));
+    
+    if (taxable <= 1200000) tax = 0; // Rebate limit for AY 2026-27
+    
+    let surcharge = 0;
+    if (taxable > 20000000) surcharge = tax * 0.25;
+    else if (taxable > 10000000) surcharge = tax * 0.15;
+    else if (taxable > 5000000) surcharge = tax * 0.10;
+
+    const cess = (tax + surcharge) * 0.04;
+    return Math.round(tax + surcharge + cess);
   };
 
   const oldTax = calcOldRegime(income, sec80C, sec80D, sec80CCD1B, hra, other);
@@ -192,7 +208,7 @@ export default function TaxPlannerPage() {
     <div className="tool-page fade-in">
       <div className="tool-header">
         <h1>{isBusiness ? 'Business' : 'Indian'} <span className="gradient-text">{isBusiness ? 'Tax & GST Planner' : 'Tax Planner'}</span> {isBusiness ? '🏢' : '⚖️'}</h1>
-        <p>{isBusiness ? 'Smart tax comparisons for Proprietors, Freelancers & Private Companies — synced with your profile.' : 'Compare Old vs New Tax Regime (FY 2024-25 / 2025-26)'}</p>
+        <p>{isBusiness ? 'Smart tax comparisons for Proprietors, Freelancers & Private Companies — synced with your profile.' : 'Compare Old vs New Tax Regime (AY 2026-27)'}</p>
         {isBusiness && <div className="ai-status-badge" style={{background: 'rgba(245,158,11,0.15)', color: '#f59e0b'}}>🏢 Business Mode</div>}
       </div>
 
@@ -487,7 +503,7 @@ export default function TaxPlannerPage() {
               </div>
 
               <div style={{ padding: '12px', textAlign: 'center', fontSize: '11px', color: 'var(--text-secondary)', opacity: 0.6, borderTop: '1px solid rgba(255,255,255,0.05)', marginTop: '8px' }}>
-                *Calculations are estimates based on Indian taxation rules for FY 2024-25. Professional advice recommended.
+                *Calculations are estimates based on Indian taxation rules for AY 2026-27. Professional advice recommended.
               </div>
             </div>
           </>

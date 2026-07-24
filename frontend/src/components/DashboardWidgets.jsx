@@ -133,7 +133,9 @@ export function ExpenseTrackerWidget() {
   const totalActual = categories.reduce((s, c) => s + (Number(c.actual) || 0), 0);
 
   const handleUpdate = (id, field, value) => {
-    setCategories(categories.map(c => c.id === id ? { ...c, [field]: value === '' ? '' : Number(value) } : c));
+    let num = value === '' ? '' : Number(value);
+    if (num > 999999999) num = 999999999; // Cap at 99.9 Cr to prevent layout break
+    setCategories(categories.map(c => c.id === id ? { ...c, [field]: num } : c));
   };
 
   return (
@@ -150,11 +152,11 @@ export function ExpenseTrackerWidget() {
           <div style={{ display: 'flex', gap: '15px', marginBottom: '20px' }}>
             <div style={{ flex: 1, background: 'rgba(255,255,255,0.05)', padding: '15px', borderRadius: '10px' }}>
               <p style={{ margin: '0 0 5px 0', fontSize: '0.9rem', color: '#94a3b8' }}>Total Budget</p>
-              <h4 style={{ margin: 0, fontSize: '1.4rem' }}>₹{totalBudget.toLocaleString('en-IN')}</h4>
+              <h4 style={{ margin: 0, fontSize: '1.4rem', wordBreak: 'break-all' }}>₹{totalBudget.toLocaleString('en-IN')}</h4>
             </div>
-            <div style={{ flex: 1, background: totalActual > totalBudget ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)', padding: '15px', borderRadius: '10px', border: totalActual > totalBudget ? '1px solid rgba(239, 68, 68, 0.3)' : 'none' }}>
+            <div style={{ flex: 1, background: totalActual > totalBudget ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)', padding: '15px', borderRadius: '10px', border: totalActual > totalBudget ? '1px solid rgba(239, 68, 68, 0.3)' : 'none', minWidth: 0 }}>
               <p style={{ margin: '0 0 5px 0', fontSize: '0.9rem', color: totalActual > totalBudget ? '#ef4444' : '#3b82f6' }}>Actual Spending</p>
-              <h4 style={{ margin: 0, fontSize: '1.4rem', color: totalActual > totalBudget ? '#ef4444' : '#fff' }}>₹{totalActual.toLocaleString('en-IN')}</h4>
+              <h4 style={{ margin: 0, fontSize: '1.4rem', color: totalActual > totalBudget ? '#ef4444' : '#fff', wordBreak: 'break-all' }}>₹{totalActual.toLocaleString('en-IN')}</h4>
             </div>
           </div>
 

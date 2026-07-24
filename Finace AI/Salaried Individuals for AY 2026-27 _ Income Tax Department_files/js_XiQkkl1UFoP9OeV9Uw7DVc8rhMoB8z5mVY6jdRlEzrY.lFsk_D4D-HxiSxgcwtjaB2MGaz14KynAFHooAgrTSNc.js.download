@@ -1,0 +1,45 @@
+(function ($, drupalSettings) {
+  'use strict';
+
+  Drupal.behaviors.lang_dropdown_form_alter = {
+    attach: function (context, settings) {
+      $('select.lang-dropdown-select-element').change(function (event) {
+        event.stopImmediatePropagation();
+        var selectedValue = $(this).val();
+        var langDropdownType = $("input[name=lang_dropdown_type]").val();
+        var langDropdownTohome = $("input[name=lang_dropdown_tohome]").val();
+        var currentPath = drupalSettings.path.currentPath;
+       
+
+        $.ajax({
+          url: Drupal.url('lang-alter'),
+          type: 'GET',
+          data: {
+            lang_dropdown_select: selectedValue,
+            lang_dropdown_type: langDropdownType,
+            lang_dropdown_tohome: langDropdownTohome,
+            current_path:drupalSettings.path.currentPath
+          },
+          
+          success: function (response) {
+                 if (
+                   typeof response.path === 'string' &&
+                   response.path.startsWith('/') &&
+                   !response.path.match(/^\/\/|javascript:/i)
+                 ) {
+                   window.location.href = encodeURI(response.path);
+                 } else {
+                    console.error('Invalid or unsafe path:', response.path);
+                 }
+          },
+
+          error: function (xhr, status, error) {
+            if (xhr.responseJSON && xhr.responseJSON.error) {
+              console.error('Error message:', xhr.responseJSON.error);
+            }
+          }
+        });
+      });
+    }
+  };
+})(jQuery, drupalSettings);

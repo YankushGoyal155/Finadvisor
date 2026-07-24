@@ -1,0 +1,28 @@
+/*.add_share_btn {
+    display: none;
+}
+
+.field.field--name-body.field--type-text-with-summary h4 {
+	font-size: 15px;
+}
+
+.field.field--name-body.field--type-text-with-summary h3 {
+	font-size: 18px;
+}
+
+.field.field--name-body.field--type-text-with-summary h2 {
+	font-size: 24px !important;
+}
+
+.field.field--name-body.field--type-text-with-summary h5 {
+	font-size: 12px;
+}
+
+.field.field--name-body.field--type-text-with-summary h6 {
+    font-size: 9px;
+}
+*/
+
+.node_view ul.pre_links li:first-child {
+	display: none;
+}

@@ -60,6 +60,10 @@ def add_document_to_brain(file_path: str):
     chunks = text_splitter.split_documents(documents)
     print(f"✂️ Split into {len(chunks)} knowledge chunks.")
 
+    if len(chunks) == 0:
+        print("⚠️ No content could be extracted from this document.")
+        return
+
     # Store in ChromaDB with Azure embeddings
     print("🧠 Adding to Finance AI Brain...")
     vector_store = Chroma(persist_directory=db_dir, embedding_function=embeddings)
