@@ -167,21 +167,21 @@ export function ExpenseTrackerWidget() {
               <span>Actual (₹)</span>
             </div>
             {categories.map(cat => (
-              <div key={cat.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', alignItems: 'center' }}>
+              <div key={cat.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
                 <span style={{ fontWeight: 600 }}>{cat.name}</span>
                 <input 
                   type="number" 
                   value={cat.budget} 
                   onChange={e => handleUpdate(cat.id, 'budget', e.target.value)}
                   className="chat-input"
-                  style={{ padding: '8px', borderRadius: '6px' }}
+                  style={{ padding: '8px', borderRadius: '6px', width: '100%', boxSizing: 'border-box' }}
                 />
                 <input 
                   type="number" 
                   value={cat.actual} 
                   onChange={e => handleUpdate(cat.id, 'actual', e.target.value)}
                   className="chat-input"
-                  style={{ padding: '8px', borderRadius: '6px', border: cat.actual > cat.budget ? '1px solid #ef4444' : 'none' }}
+                  style={{ padding: '8px', borderRadius: '6px', width: '100%', boxSizing: 'border-box', border: cat.actual > cat.budget ? '1px solid #ef4444' : 'none' }}
                 />
               </div>
             ))}
