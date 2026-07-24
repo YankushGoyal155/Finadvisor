@@ -261,7 +261,7 @@ export default function TaxPlannerPage() {
                   <span>Annual Salary Income</span>
                   <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
                     <span style={{color: 'var(--text-muted)'}}>₹</span>
-                    <input type="number" value={income} onChange={(e) => setIncome(Number(e.target.value) || 0)} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white'}} />
+                    <input type="number" value={income} onChange={(e) => setIncome(e.target.value === '' ? '' : Number(e.target.value))} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white'}} />
                   </div>
                 </div>
                 <input type="range" min="300000" max="10000000" step="10000" value={income} onChange={(e) => setIncome(Number(e.target.value))} />
@@ -272,7 +272,7 @@ export default function TaxPlannerPage() {
               <div className="input-group" style={{ marginBottom: '12px' }}>
                 <div className="input-label" style={{alignItems: 'center'}}>
                   <span>Section 80C (PPF, ELSS, etc.)</span>
-                  <input type="number" value={sec80C} onChange={(e) => setSec80C(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
+                  <input type="number" value={sec80C} onChange={(e) => setSec80C(e.target.value === '' ? '' : Number(e.target.value))} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
                 </div>
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>* Max ₹1,50,000</p>
               </div>
@@ -280,7 +280,7 @@ export default function TaxPlannerPage() {
               <div className="input-group" style={{ marginBottom: '12px' }}>
                 <div className="input-label" style={{alignItems: 'center'}}>
                   <span>Section 80D (Health Ins.)</span>
-                  <input type="number" value={sec80D} onChange={(e) => setSec80D(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
+                  <input type="number" value={sec80D} onChange={(e) => setSec80D(e.target.value === '' ? '' : Number(e.target.value))} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
                 </div>
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>* Max ~₹75,000 to ₹1,00,000</p>
               </div>
@@ -288,7 +288,7 @@ export default function TaxPlannerPage() {
               <div className="input-group" style={{ marginBottom: '12px' }}>
                 <div className="input-label" style={{alignItems: 'center'}}>
                   <span>Section 80CCD(1B) (NPS)</span>
-                  <input type="number" value={sec80CCD1B} onChange={(e) => setSec80CCD1B(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
+                  <input type="number" value={sec80CCD1B} onChange={(e) => setSec80CCD1B(e.target.value === '' ? '' : Number(e.target.value))} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
                 </div>
                 <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '4px' }}>* Max ₹50,000</p>
               </div>
@@ -296,14 +296,14 @@ export default function TaxPlannerPage() {
               <div className="input-group" style={{ marginBottom: '12px' }}>
                 <div className="input-label" style={{alignItems: 'center'}}>
                   <span>Exempt HRA</span>
-                  <input type="number" value={hra} onChange={(e) => setHra(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
+                  <input type="number" value={hra} onChange={(e) => setHra(e.target.value === '' ? '' : Number(e.target.value))} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
                 </div>
               </div>
               
               <div className="input-group" style={{ marginBottom: '12px' }}>
                 <div className="input-label" style={{alignItems: 'center'}}>
                   <span>Other (80E, 80G, LTA, etc)</span>
-                  <input type="number" value={other} onChange={(e) => setOther(Number(e.target.value) || 0)} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
+                  <input type="number" value={other} onChange={(e) => setOther(e.target.value === '' ? '' : Number(e.target.value))} style={{width: '90px', padding: '4px', borderRadius: '4px'}} className="number-input" />
                 </div>
               </div>
             </div>
@@ -356,7 +356,7 @@ export default function TaxPlannerPage() {
                   <span>Annual Gross Turnover</span>
                   <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
                     <span style={{color: 'var(--text-muted)'}}>₹</span>
-                    <input type="number" value={annualTurnover} onChange={(e) => setAnnualTurnover(Number(e.target.value) || 0)} style={{width: '140px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white'}} />
+                    <input type="number" value={annualTurnover} onChange={(e) => setAnnualTurnover(e.target.value === '' ? '' : Number(e.target.value))} style={{width: '140px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white'}} />
                   </div>
                 </div>
                 <input type="range" min="100000" max="100000000" step="100000" value={annualTurnover} onChange={(e) => setAnnualTurnover(Number(e.target.value))} />
@@ -372,7 +372,7 @@ export default function TaxPlannerPage() {
                   <span>Total Business Expenses</span>
                   <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
                     <span style={{color: 'var(--text-muted)'}}>₹</span>
-                    <input type="number" value={businessExpenses} onChange={(e) => setBusinessExpenses(Number(e.target.value) || 0)} style={{width: '140px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white'}} />
+                    <input type="number" value={businessExpenses} onChange={(e) => setBusinessExpenses(e.target.value === '' ? '' : Number(e.target.value))} style={{width: '140px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white'}} />
                   </div>
                 </div>
                 <input type="range" min="0" max="100000000" step="100000" value={businessExpenses} onChange={(e) => setBusinessExpenses(Number(e.target.value))} />
