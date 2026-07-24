@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useDashboard } from '../context/DashboardContext'
-import { Sparkles, Bot } from 'lucide-react'
+import { Sparkles, Bot, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react'
 import './ChatPage.css'
 
 export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o-mini', user, onLogout, threadId, setThreadId, setActivePage }) {
@@ -9,8 +9,13 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [showModelSelector, setShowModelSelector] = useState(false)
+  const [showAttachMenu, setShowAttachMenu] = useState(false)
+  const [attachedImage, setAttachedImage] = useState(null) // { base64, name, preview }
+  const [uploadStatus, setUploadStatus] = useState(null) // { type: 'success'|'error'|'loading', msg }
   const messagesEndRef = useRef(null)
   const textareaRef = useRef(null)
+  const docInputRef = useRef(null)
+  const imgInputRef = useRef(null)
 
   const handleModelChange = (val) => {
     setSelectedModel(val);
@@ -110,6 +115,62 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
     { icon: '📈', title: 'Increase Savings', desc: 'Can I increase my SIP?' }
   ];
 
+  // ── Document upload handler ──
+  const handleDocUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setShowAttachMenu(false);
+    setUploadStatus({ type: 'loading', msg: `Uploading ${file.name}...` });
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const resp = await fetch(`${import.meta.env.VITE_API_URL}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await resp.json();
+      setUploadStatus({ type: 'success', msg: data.response || `Learned ${file.name}!` });
+      setTimeout(() => setUploadStatus(null), 4000);
+    } catch (err) {
+      setUploadStatus({ type: 'error', msg: 'Upload failed. Is the backend running?' });
+      setTimeout(() => setUploadStatus(null), 4000);
+    }
+    // Reset input so same file can be re-selected
+    e.target.value = '';
+  };
+
+  // ── Image attach handler ──
+  const handleImageAttach = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setShowAttachMenu(false);
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadStatus({ type: 'error', msg: 'Image too large (max 10 MB)' });
+      setTimeout(() => setUploadStatus(null), 3000);
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      setAttachedImage({
+        base64: reader.result, // data:image/...;base64,...
+        name: file.name,
+        preview: URL.createObjectURL(file),
+      });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
+
+  const removeAttachedImage = () => {
+    if (attachedImage?.preview) URL.revokeObjectURL(attachedImage.preview);
+    setAttachedImage(null);
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
@@ -147,12 +208,26 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
     }
   }, [input])
 
+  // Close attach menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showAttachMenu && !e.target.closest('.attach-wrapper')) {
+        setShowAttachMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showAttachMenu]);
+
   const handleSend = async (text = input) => {
-    if (!text.trim()) return
-    const userMsg = { role: 'user', content: text.trim(), time: new Date() }
+    if (!text.trim() && !attachedImage) return
+    const displayText = text.trim() + (attachedImage ? `\n📎 ${attachedImage.name}` : '');
+    const userMsg = { role: 'user', content: displayText, time: new Date() }
     setMessages(prev => [...prev, userMsg])
     setInput('')
     setIsTyping(true)
+    const imageToSend = attachedImage?.base64 || null;
+    removeAttachedImage();
 
     let currentThreadId = threadId;
 
@@ -178,11 +253,12 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          message: text.trim(), 
+          message: text.trim() || 'Analyze this image', 
           model: selectedModel,
           user_id: user?.user_id || null,
           thread_id: currentThreadId,
-          user_data: userDataPayload
+          user_data: userDataPayload,
+          image_data: imageToSend,
         }),
       })
       const data = await response.json()
@@ -326,6 +402,21 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
 
             {/* Input in the center */}
             <div className="chat-center-input">
+              {/* Upload status toast */}
+              {uploadStatus && (
+                <div className={`upload-toast ${uploadStatus.type}`}>
+                  {uploadStatus.type === 'loading' && <span className="toast-spinner" />}
+                  {uploadStatus.msg}
+                </div>
+              )}
+              {/* Image preview strip */}
+              {attachedImage && (
+                <div className="attached-preview">
+                  <img src={attachedImage.preview} alt="preview" />
+                  <span className="attached-name">{attachedImage.name}</span>
+                  <button className="attached-remove" onClick={removeAttachedImage}><X size={14} /></button>
+                </div>
+              )}
               <div className="chat-input-container">
                 <div className="model-selector-wrapper" title="Change AI Model">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowModelSelector(!showModelSelector)}>
@@ -343,6 +434,24 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
                     </div>
                   )}
                 </div>
+                {/* + Attach Button */}
+                <div className="attach-wrapper">
+                  <button className="attach-btn" title="Attach file" onClick={() => setShowAttachMenu(!showAttachMenu)}>
+                    <Paperclip size={18} />
+                  </button>
+                  {showAttachMenu && (
+                    <div className="attach-popup">
+                      <div className="attach-option" onClick={() => { docInputRef.current?.click(); }}>
+                        <FileText size={16} /> <span>Upload Document</span>
+                        <span className="attach-hint">PDF, TXT</span>
+                      </div>
+                      <div className="attach-option" onClick={() => { imgInputRef.current?.click(); }}>
+                        <ImageIcon size={16} /> <span>Attach Image</span>
+                        <span className="attach-hint">JPG, PNG, WEBP</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <textarea
                   ref={textareaRef}
                   className="chat-input"
@@ -352,13 +461,16 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
                   onKeyDown={handleKeyDown}
                   rows={1}
                 />
-                <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim()}>
+                <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim() && !attachedImage}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
                     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                   </svg>
                 </button>
               </div>
+              {/* Hidden file inputs */}
+              <input ref={docInputRef} type="file" accept=".pdf,.txt" style={{ display: 'none' }} onChange={handleDocUpload} />
+              <input ref={imgInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageAttach} />
             </div>
 
             {/* Suggestion Chips */}
@@ -406,6 +518,21 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
 
           {/* Input at bottom when chatting */}
           <div className="chat-input-area">
+            {/* Upload status toast */}
+            {uploadStatus && (
+              <div className={`upload-toast ${uploadStatus.type}`}>
+                {uploadStatus.type === 'loading' && <span className="toast-spinner" />}
+                {uploadStatus.msg}
+              </div>
+            )}
+            {/* Image preview strip */}
+            {attachedImage && (
+              <div className="attached-preview">
+                <img src={attachedImage.preview} alt="preview" />
+                <span className="attached-name">{attachedImage.name}</span>
+                <button className="attached-remove" onClick={removeAttachedImage}><X size={14} /></button>
+              </div>
+            )}
             <div className="chat-input-container">
               <div className="model-selector-wrapper" title="Change AI Model">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowModelSelector(!showModelSelector)}>
@@ -423,6 +550,24 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
                   </div>
                 )}
               </div>
+              {/* + Attach Button */}
+              <div className="attach-wrapper">
+                <button className="attach-btn" title="Attach file" onClick={() => setShowAttachMenu(!showAttachMenu)}>
+                  <Paperclip size={18} />
+                </button>
+                {showAttachMenu && (
+                  <div className="attach-popup">
+                    <div className="attach-option" onClick={() => { docInputRef.current?.click(); }}>
+                      <FileText size={16} /> <span>Upload Document</span>
+                      <span className="attach-hint">PDF, TXT</span>
+                    </div>
+                    <div className="attach-option" onClick={() => { imgInputRef.current?.click(); }}>
+                      <ImageIcon size={16} /> <span>Attach Image</span>
+                      <span className="attach-hint">JPG, PNG, WEBP</span>
+                    </div>
+                  </div>
+                )}
+              </div>
               <textarea
                 ref={textareaRef}
                 className="chat-input"
@@ -432,13 +577,16 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
                 onKeyDown={handleKeyDown}
                 rows={1}
               />
-              <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim()}>
+              <button className="send-btn" onClick={() => handleSend()} disabled={!input.trim() && !attachedImage}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="22" y1="2" x2="11" y2="13"></line>
                   <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                 </svg>
               </button>
             </div>
+            {/* Hidden file inputs */}
+            <input ref={docInputRef} type="file" accept=".pdf,.txt" style={{ display: 'none' }} onChange={handleDocUpload} />
+            <input ref={imgInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageAttach} />
             <p className="chat-disclaimer">AI can make mistakes. Check facts before relying.</p>
           </div>
         </>

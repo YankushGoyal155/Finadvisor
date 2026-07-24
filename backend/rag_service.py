@@ -1,5 +1,6 @@
 import os
 import json
+import base64
 import urllib.request
 import urllib.error
 from pathlib import Path
@@ -8,6 +9,7 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent / '.env', override=True)
 
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
@@ -174,14 +176,23 @@ User Query: {query}
 
 Provide your response:"""
 
-    def _call_gpt55_responses_api(self, full_prompt: str) -> str:
+    def _call_gpt55_responses_api(self, full_prompt: str, image_data: str | None = None) -> str:
         """Call Azure OpenAI GPT 5.5 via the Responses API (direct HTTP)."""
         GPT55_ENDPOINT = "https://yanku-mptr6fe7-eastus2.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview"
         GPT55_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
+        # Build input — multimodal if image attached
+        if image_data:
+            input_content = [
+                {"type": "input_text", "text": full_prompt},
+                {"type": "input_image", "image_url": image_data},
+            ]
+        else:
+            input_content = full_prompt
+
         payload = {
             "model": "gpt-5.5",
-            "input": full_prompt,
+            "input": input_content,
         }
 
         headers = {
@@ -223,6 +234,7 @@ Provide your response:"""
         model_name: str = "gpt-4o",
         chat_history: list | None = None,
         user_data: dict | None = None,
+        image_data: str | None = None,
     ) -> str:
         if chat_history is None:
             chat_history = []
@@ -281,13 +293,13 @@ Provide your response:"""
         if model_name == "gpt-5.5":
             print(f"🚀 Asking GPT 5.5 (Responses API): {query}")
             full_prompt = self._build_full_prompt(query, history_str, user_data_str, retrieved_context)
-            return self._call_gpt55_responses_api(full_prompt)
+            return self._call_gpt55_responses_api(full_prompt, image_data=image_data)
 
         # ── Default: GPT-4o-mini via LangChain ──
         if self.llm is None:
             return "AI Service is initializing. Please wait a moment and try again!"
 
-        prompt_template = """You are 'Finadvisor Basic', a friendly and highly capable AI Personal Finance Assistant (powered by GPT-4o-mini) specializing in the Indian context.
+        system_prompt = f"""You are 'Finadvisor Basic', a friendly and highly capable AI Personal Finance Assistant (powered by GPT-4o-mini) specializing in the Indian context.
 Your goal is to provide helpful, accurate, easy-to-understand, and educational financial guidance.
 You are also the CONTROLLER of the user's entire financial dashboard application — you can modify any data in the app when asked.
 
@@ -361,39 +373,37 @@ Supported Actions:
     Pages: "dashboard", "chat", "checkin", "afford", "mf", "tax", "corp_tax", "invest", "emi", "goals", "retirement"
     Example: [[ACTION: {{"type": "NAVIGATE", "page": "dashboard"}}]]
 
+IMAGE ANALYSIS CAPABILITY:
+If the user attaches an image, analyze it thoroughly. It could be a screenshot of a portfolio, a tax form (Form 16, ITR), an invoice, a bank statement, a mutual fund report, etc.
+Provide detailed financial analysis of whatever is visible in the image.
+
 REMEMBER: Most responses should NOT contain action tags. Only use them when the user explicitly requests a change or calculation.
 
 USER PERSONAL CONTEXT (CRITICAL — use this data to personalize ALL responses):
-{user_data}
+{user_data_str}
 
 Conversation History:
-{history}
+{history_str}
 
 Context from Knowledge Base:
-{context}
-
-User Query: {question}
-
-Provide your response:"""
-
-        prompt = PromptTemplate(
-            template=prompt_template,
-            input_variables=["context", "question", "history", "user_data"],
-        )
-
-        chain = (
-            {
-                "context": lambda _: retrieved_context,
-                "question": RunnablePassthrough(),
-                "history": lambda _: history_str,
-                "user_data": lambda _: user_data_str,
-            }
-            | prompt
-            | self.llm
-            | StrOutputParser()
-        )
+{retrieved_context}"""
 
         print(f"Asking Azure OpenAI (4o-mini): {query}")
-        return chain.invoke(query)
+
+        # ── Build messages — multimodal if image attached ──
+        messages = [SystemMessage(content=system_prompt)]
+
+        if image_data:
+            # Vision: send text + image together in a single HumanMessage
+            human_content = [
+                {"type": "text", "text": query},
+                {"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}},
+            ]
+            messages.append(HumanMessage(content=human_content))
+        else:
+            messages.append(HumanMessage(content=query))
+
+        result = self.llm.invoke(messages)
+        return result.content
 
 

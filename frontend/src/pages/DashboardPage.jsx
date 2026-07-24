@@ -36,23 +36,33 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
 
   // Widget Navigation Menu state
   const [showMenu, setShowMenu] = useState(false);
-  const [activeWidget, setActiveWidget] = useState(null);
+  const [activeWidgets, setActiveWidgets] = useState(new Set());
 
   const toggleWidget = (id) => {
-    if (activeWidget === id) {
-      setActiveWidget(null); // toggle off if same
-    } else {
-      setActiveWidget(id);
-      // Wait for React to render the widget, then scroll
-      setTimeout(() => {
-        const el = document.getElementById(id);
-        if (el) {
-          const y = el.getBoundingClientRect().top + window.scrollY - 80;
-          window.scrollTo({ top: y, behavior: 'smooth' });
-        }
-      }, 50);
-    }
+    setActiveWidgets(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const applyWidgets = () => {
     setShowMenu(false);
+    // Scroll to first active widget
+    setTimeout(() => {
+      const order = ['income-overview', 'expense-tracker', 'savings-investments'];
+      for (const id of order) {
+        if (activeWidgets.has(id)) {
+          const el = document.getElementById(id);
+          if (el) {
+            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          }
+          break;
+        }
+      }
+    }, 50);
   };
 
 
@@ -799,26 +809,105 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                   top: '100%',
                   right: 0,
                   marginTop: '8px',
-                  background: 'var(--navy-mid)',
+                  background: 'linear-gradient(180deg, #141b2d 0%, #0f1729 100%)',
                   border: '1px solid rgba(255,255,255,0.1)',
-                  borderRadius: '12px',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
-                  minWidth: '220px',
+                  borderRadius: '16px',
+                  boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
+                  minWidth: '280px',
                   zIndex: 100,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  padding: '8px 0',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
                 }}
               >
                 {!isBusiness ? (
                   <>
-                    <button onClick={() => toggleWidget('expense-tracker')} style={{ background: activeWidget === 'expense-tracker' ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Wallet & Expense Tracker</button>
-                    <button onClick={() => toggleWidget('income-overview')} style={{ background: activeWidget === 'income-overview' ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>Income Overview</button>
-                    <button onClick={() => toggleWidget('savings-investments')} style={{ background: activeWidget === 'savings-investments' ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', color: '#e2e8f0', padding: '10px 16px', textAlign: 'left', cursor: 'pointer', fontSize: '14px', width: '100%' }}>Savings & Investments</button>
+                    {/* Header */}
+                    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+                      <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Add to your Dashboard</p>
+                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>Select one or more trackers to view below</p>
+                    </div>
+
+                    {/* Options */}
+                    {[
+                      {
+                        id: 'expense-tracker',
+                        icon: '💳',
+                        title: 'Expense Tracker',
+                        desc: 'Log & categorise your daily spending',
+                      },
+                      {
+                        id: 'income-overview',
+                        icon: '💰',
+                        title: 'Income Overview',
+                        desc: 'See salary, side income & net flow',
+                      },
+                      {
+                        id: 'savings-investments',
+                        icon: '📈',
+                        title: 'Savings & Investments',
+                        desc: 'Track SIPs, goals & portfolio growth',
+                      },
+                    ].map(item => {
+                      const isActive = activeWidgets.has(item.id);
+                      return (
+                        <div
+                          key={item.id}
+                          onClick={() => toggleWidget(item.id)}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '12px 16px',
+                            cursor: 'pointer',
+                            background: isActive ? 'rgba(255,107,0,0.08)' : 'transparent',
+                            borderBottom: '1px solid rgba(255,255,255,0.05)',
+                            transition: 'background 0.2s',
+                          }}
+                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                          onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                        >
+                          {/* Emoji icon */}
+                          <div style={{ fontSize: '22px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? 'rgba(255,107,0,0.15)' : 'rgba(255,255,255,0.05)', borderRadius: '10px', flexShrink: 0 }}>
+                            {item.icon}
+                          </div>
+                          {/* Text */}
+                          <div style={{ flex: 1 }}>
+                            <p style={{ margin: 0, fontWeight: 700, fontSize: '13px', color: isActive ? '#ff6b00' : '#e2e8f0' }}>{item.title}</p>
+                            <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b', lineHeight: 1.4 }}>{item.desc}</p>
+                          </div>
+                          {/* Checkbox */}
+                          <div style={{
+                            width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0,
+                            border: isActive ? 'none' : '2px solid rgba(255,255,255,0.2)',
+                            background: isActive ? '#ff6b00' : 'transparent',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            transition: 'all 0.2s',
+                          }}>
+                            {isActive && <svg width="11" height="9" viewBox="0 0 12 10" fill="none"><path d="M1 5L4.5 8.5L11 1.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {/* Footer Action Button */}
+                    <div style={{ padding: '10px 12px' }}>
+                      <button
+                        onClick={applyWidgets}
+                        disabled={activeWidgets.size === 0}
+                        style={{
+                          width: '100%', padding: '10px', borderRadius: '10px', border: 'none',
+                          background: activeWidgets.size > 0 ? 'linear-gradient(135deg, #ff6b00, #ff8c00)' : 'rgba(255,255,255,0.05)',
+                          color: activeWidgets.size > 0 ? '#fff' : '#475569',
+                          fontWeight: 700, fontSize: '13px', cursor: activeWidgets.size > 0 ? 'pointer' : 'not-allowed',
+                          transition: 'all 0.2s',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                        }}
+                      >
+                        {activeWidgets.size > 0 ? `Show ${activeWidgets.size} Widget${activeWidgets.size > 1 ? 's' : ''} on Dashboard ↓` : 'Select a tracker above'}
+                      </button>
+                    </div>
                   </>
                 ) : (
-                  <div style={{ padding: '10px 16px', color: '#94a3b8', fontSize: '13px', textAlign: 'center' }}>
+                  <div style={{ padding: '16px', color: '#94a3b8', fontSize: '13px', textAlign: 'center' }}>
                     Personal trackers are hidden in Business mode
                   </div>
                 )}
@@ -976,23 +1065,23 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
         ))}
       </div>
 
-      {!isBusiness && activeWidget && (
-        <div style={{ marginTop: '32px' }}>
-          {activeWidget === 'income-overview' && (
-            <div style={{ position: 'relative' }}>
-              <button onClick={() => setActiveWidget(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+      {!isBusiness && activeWidgets.size > 0 && (
+        <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          {activeWidgets.has('income-overview') && (
+            <div id="income-overview" style={{ position: 'relative' }}>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('income-overview'); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
               <IncomeOverviewWidget />
             </div>
           )}
-          {activeWidget === 'expense-tracker' && (
-            <div style={{ position: 'relative' }}>
-              <button onClick={() => setActiveWidget(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+          {activeWidgets.has('expense-tracker') && (
+            <div id="expense-tracker" style={{ position: 'relative' }}>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('expense-tracker'); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
               <ExpenseTrackerWidget />
             </div>
           )}
-          {activeWidget === 'savings-investments' && (
-            <div style={{ position: 'relative' }}>
-              <button onClick={() => setActiveWidget(null)} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+          {activeWidgets.has('savings-investments') && (
+            <div id="savings-investments" style={{ position: 'relative' }}>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('savings-investments'); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
               <SavingsInvestmentsWidget />
             </div>
           )}

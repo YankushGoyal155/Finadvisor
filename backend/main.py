@@ -61,6 +61,7 @@ class ChatMessage(BaseModel):
     user_id: int | None = None
     thread_id: int | None = None
     user_data: dict | None = None
+    image_data: str | None = None  # base64-encoded image for vision analysis
 
 
 ai_service: RAGFinanceService | None = None
@@ -179,7 +180,7 @@ def handle_chat(chat: ChatMessage):
         history = get_thread_messages(chat.thread_id)
 
     try:
-        reply = ai_service.get_financial_advice(chat.message, model_name=chat.model, chat_history=history, user_data=chat.user_data)
+        reply = ai_service.get_financial_advice(chat.message, model_name=chat.model, chat_history=history, user_data=chat.user_data, image_data=chat.image_data)
         
         if chat.user_id:
             # Save AI response (including thread_id if provided)
