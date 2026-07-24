@@ -418,22 +418,6 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
                 </div>
               )}
               <div className="chat-input-container">
-                <div className="model-selector-wrapper" title="Change AI Model">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowModelSelector(!showModelSelector)}>
-                    <Sparkles size={16} />
-                    <span>{selectedModel === 'gpt-4o-mini' ? 'GPT 4o Mini' : 'GPT 5.5 (Pro)'}</span>
-                  </div>
-                  {showModelSelector && (
-                    <div className="custom-model-popup">
-                      <div className={`model-option ${selectedModel === 'gpt-4o-mini' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-4o-mini')}>
-                        GPT 4o Mini
-                      </div>
-                      <div className={`model-option ${selectedModel === 'gpt-5.5' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-5.5')}>
-                        GPT 5.5 (Pro)
-                      </div>
-                    </div>
-                  )}
-                </div>
                 {/* + Attach Button */}
                 <div className="attach-wrapper">
                   <button className="attach-btn" title="Attach file" onClick={() => setShowAttachMenu(!showAttachMenu)}>
@@ -448,6 +432,22 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
                       <div className="attach-option" onClick={() => { imgInputRef.current?.click(); }}>
                         <ImageIcon size={16} /> <span>Attach Image</span>
                         <span className="attach-hint">JPG, PNG, WEBP</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="model-selector-wrapper" title="Change AI Model">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowModelSelector(!showModelSelector)}>
+                    <Sparkles size={16} />
+                    <span>{selectedModel === 'gpt-4o-mini' ? 'GPT 4o Mini' : 'GPT 5.5 (Pro)'}</span>
+                  </div>
+                  {showModelSelector && (
+                    <div className="custom-model-popup">
+                      <div className={`model-option ${selectedModel === 'gpt-4o-mini' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-4o-mini')}>
+                        GPT 4o Mini
+                      </div>
+                      <div className={`model-option ${selectedModel === 'gpt-5.5' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-5.5')}>
+                        GPT 5.5 (Pro)
                       </div>
                     </div>
                   )}
@@ -534,22 +534,6 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
               </div>
             )}
             <div className="chat-input-container">
-              <div className="model-selector-wrapper" title="Change AI Model">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowModelSelector(!showModelSelector)}>
-                  <Sparkles size={16} />
-                  <span>{selectedModel === 'gpt-4o-mini' ? 'GPT 4o Mini' : 'GPT 5.5 (Pro)'}</span>
-                </div>
-                {showModelSelector && (
-                  <div className="custom-model-popup">
-                    <div className={`model-option ${selectedModel === 'gpt-4o-mini' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-4o-mini')}>
-                      GPT 4o Mini
-                    </div>
-                    <div className={`model-option ${selectedModel === 'gpt-5.5' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-5.5')}>
-                      GPT 5.5 (Pro)
-                    </div>
-                  </div>
-                )}
-              </div>
               {/* + Attach Button */}
               <div className="attach-wrapper">
                 <button className="attach-btn" title="Attach file" onClick={() => setShowAttachMenu(!showAttachMenu)}>
@@ -564,6 +548,22 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
                     <div className="attach-option" onClick={() => { imgInputRef.current?.click(); }}>
                       <ImageIcon size={16} /> <span>Attach Image</span>
                       <span className="attach-hint">JPG, PNG, WEBP</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="model-selector-wrapper" title="Change AI Model">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => setShowModelSelector(!showModelSelector)}>
+                  <Sparkles size={16} />
+                  <span>{selectedModel === 'gpt-4o-mini' ? 'GPT 4o Mini' : 'GPT 5.5 (Pro)'}</span>
+                </div>
+                {showModelSelector && (
+                  <div className="custom-model-popup">
+                    <div className={`model-option ${selectedModel === 'gpt-4o-mini' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-4o-mini')}>
+                      GPT 4o Mini
+                    </div>
+                    <div className={`model-option ${selectedModel === 'gpt-5.5' ? 'active' : ''}`} onClick={() => handleModelChange('gpt-5.5')}>
+                      GPT 5.5 (Pro)
                     </div>
                   </div>
                 )}

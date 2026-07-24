@@ -184,11 +184,17 @@ Provide your response:"""
         # Build input — multimodal if image attached
         if image_data:
             input_content = [
-                {"type": "input_text", "text": full_prompt},
-                {"type": "input_image", "image_url": image_data},
+                {"role": "user", "content": [
+                    {"type": "input_text", "text": full_prompt},
+                    {"type": "input_image", "image_url": image_data}
+                ]}
             ]
         else:
-            input_content = full_prompt
+            input_content = [
+                {"role": "user", "content": [
+                    {"type": "input_text", "text": full_prompt}
+                ]}
+            ]
 
         payload = {
             "model": "gpt-5.5",
