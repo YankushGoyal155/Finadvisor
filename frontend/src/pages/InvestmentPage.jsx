@@ -28,6 +28,13 @@ export default function InvestmentPage() {
 
 
 
+  const presets = [
+    { name: 'Fixed Deposit (FD)', rate: 7.0, risk: 'Zero', icon: '🏦' },
+    { name: 'Recurring Deposit (RD)', rate: 6.5, risk: 'Zero', icon: '🔄' },
+    { name: 'PPF (Govt)', rate: 7.1, risk: 'Zero', icon: '🏛️' },
+    { name: 'EPF (Provident Fund)', rate: 8.25, risk: 'Zero', icon: '🏢' },
+  ];
+
   const riskColor = (risk) => {
     if (risk === 'Zero') return 'var(--green-light)';
     if (risk === 'Low') return 'var(--green-light)';
@@ -80,6 +87,20 @@ export default function InvestmentPage() {
             <input type="range" min="1" max="40" step="1" value={years} onChange={(e) => setYears(Number(e.target.value))} />
           </div>
 
+          <div style={{ marginTop: '24px' }}>
+            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600' }}>Fixed Income Presets</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {presets.map((p, i) => (
+                <button key={i} onClick={() => setRate(p.rate)} className="btn-secondary" style={{ padding: '10px 14px', fontSize: '12px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>{p.icon}</span>
+                  <div>
+                    <strong style={{ display: 'block', fontSize: '12px', color: 'white' }}>{p.name}</strong>
+                    <span style={{ fontSize: '10px', color: riskColor(p.risk) }}>{p.rate}% Return</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="results-card">
