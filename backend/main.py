@@ -21,7 +21,7 @@ from db import (
     get_user_threads, create_thread, get_thread_messages,
     delete_thread, delete_user_history
 )
-from utils import send_otp_email, send_welcome_email, send_sms_notification
+from utils import send_otp_email, send_welcome_email, send_signin_email, send_sms_notification
 from blob_service import blob_service
 
 app = FastAPI(title="Finance AI API", version="1.0.0")
@@ -101,6 +101,11 @@ def handle_register(credentials: UserCredentials):
 def handle_login(credentials: UserCredentials):
     user = verify_user_password(credentials.email, credentials.password)
     if user:
+        # Send sign-in notification email (non-blocking — failure won't prevent login)
+        try:
+            send_signin_email(user['email'], user['username'])
+        except Exception as e:
+            print(f"Failed to send sign-in notification: {e}")
         return {"status": "success", "user_id": user['id'], "username": user['username'], "email": user['email']}
     return {"status": "error", "message": "Invalid email or password"}
 

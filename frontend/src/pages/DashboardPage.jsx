@@ -36,13 +36,19 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
 
   // Widget Navigation Menu state
   const [showMenu, setShowMenu] = useState(false);
-  const [activeWidgets, setActiveWidgets] = useState(new Set());
+  const [activeWidgets, setActiveWidgets] = useState(() => {
+    try {
+      const saved = localStorage.getItem('finance_active_widgets');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch { return new Set(); }
+  });
 
   const toggleWidget = (id) => {
     setActiveWidgets(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
+      localStorage.setItem('finance_active_widgets', JSON.stringify([...next]));
       return next;
     });
   };
@@ -338,7 +344,8 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
       personalAlerts.push({ 
         type: 'warning', badgeClass: 'badge-red', title: 'Overspending Risk', 
         desc: `Your EMI (₹${monthlyEmi.toLocaleString('en-IN')}) is ${emiRatio.toFixed(0)}% of your salary. Keep it below 40%.`, 
-        hasPopup: true, actionText: 'View Details' 
+        solution: 'Consider paying off high-interest personal loans first or use our EMI calculator to restructure your debt.',
+        action: 'emi', actionText: 'Go to EMI Calculator 📊'
       });
     }
   }
@@ -376,7 +383,8 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
     businessAlerts.push({
       type: 'warning', badgeClass: 'badge-red', title: 'Over-leveraged Warning',
       desc: `Your loan EMI (₹${bizLoanEmi.toLocaleString('en-IN')}) is ${((bizLoanEmi / bizRevenue) * 100).toFixed(0)}% of monthly revenue. Keep it below 30% for safety.`,
-      hasPopup: true, actionText: 'View Details'
+      solution: 'Focus on reducing operating costs and consider refinancing loans at lower rates to free up cash flow.',
+      action: 'corp_tax', actionText: 'Analyze Finances 📈'
     });
   }
   
@@ -399,8 +407,9 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   if (!bizGstRegistered && bizRevenue * 12 > 4000000) {
     businessAlerts.push({
       type: 'warning', badgeClass: 'badge-gold', title: 'GST Registration Advisory',
-      desc: `Your annual turnover exceeds ₹40 Lakhs. GST registration may be mandatory. Consult your CA.`,
-      action: 'tax', actionText: 'View Tax Details'
+      desc: `Your annual turnover exceeds ₹40 Lakhs. GST registration may be mandatory.`,
+      solution: 'Consult your CA to complete GST registration, then update your profile to reflect this status.',
+      actionText: 'Update Profile ✏️', customAction: () => openEditModal()
     });
   }
 
@@ -458,11 +467,11 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
 
   // Build personal chart with actual ₹ values — show 0 explicitly
   const personalChartRaw = [
-    { name: 'SIP/Invest', realValue: monthlySip, fill: 'url(#3DGradient3)' },
-    { name: 'EMI/Loans', realValue: monthlyEmi, fill: 'url(#3DGradient4)' },
-    { name: 'Tax', realValue: estimatedTax, fill: 'url(#BizGradient1)' },
-    { name: 'Expenses', realValue: expenses, fill: 'url(#3DGradient2)' },
-    { name: 'Savings', realValue: savingsAmt > 0 ? savingsAmt : 0, fill: 'url(#3DGradient1)' },
+    { name: 'SIP/Invest', realValue: monthlySip, fill: 'url(#3DGradient3)', action: 'invest' },
+    { name: 'EMI/Loans', realValue: monthlyEmi, fill: 'url(#3DGradient4)', action: 'emi' },
+    { name: 'Tax', realValue: estimatedTax, fill: 'url(#BizGradient1)', action: 'tax' },
+    { name: 'Expenses', realValue: expenses, fill: 'url(#3DGradient2)', action: 'dashboard' },
+    { name: 'Savings', realValue: savingsAmt > 0 ? savingsAmt : 0, fill: 'url(#3DGradient1)', action: 'goals' },
   ];
 
   // If no salary data at all, show placeholder slices so the empty chart is meaningful
@@ -472,10 +481,10 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
 
   // Business chart uses actual ₹ amounts
   const businessChartRaw = [
-    { name: 'Revenue', realValue: bizRevenue, fill: 'url(#3DGradient1)' },
-    { name: 'Expenses', realValue: bizExpenses, fill: 'url(#3DGradient4)' },
-    { name: 'Profit', realValue: bizProfit > 0 ? bizProfit : 0, fill: 'url(#3DGradient3)' },
-    { name: 'Loan EMI', realValue: bizLoanEmi, fill: 'url(#BizGradient1)' },
+    { name: 'Revenue', realValue: bizRevenue, fill: 'url(#3DGradient1)', action: 'tax' },
+    { name: 'Expenses', realValue: bizExpenses, fill: 'url(#3DGradient4)', action: 'corp_tax' },
+    { name: 'Profit', realValue: bizProfit > 0 ? bizProfit : 0, fill: 'url(#3DGradient3)', action: 'corp_tax' },
+    { name: 'Loan EMI', realValue: bizLoanEmi, fill: 'url(#BizGradient1)', action: 'dashboard' },
   ];
 
   const businessChartData = bizRevenue > 0
@@ -493,6 +502,11 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
       <div style={{ background: 'rgba(15, 22, 41, 0.95)', border: '1px solid #1E2A40', borderRadius: '10px', padding: '10px 14px', boxShadow: '0 8px 24px rgba(0,0,0,0.5)', color: '#fff', fontSize: '12px' }}>
         <strong>{d.name}</strong><br/>
         {realVal !== undefined && realVal > 0 ? `₹${realVal.toLocaleString('en-IN')}` : 'Not set (₹0)'}
+        {d.action && (
+          <div style={{ marginTop: '6px', fontSize: '10px', color: 'var(--gold)', fontWeight: 600 }}>
+            Click to manage →
+          </div>
+        )}
       </div>
     );
   };
@@ -997,9 +1011,11 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                     labelLine={false}
                     label={renderCustomizedLabel}
                     filter="url(#pieShadow)"
+                    onClick={(entry) => entry.payload?.action && setActivePage && setActivePage(entry.payload.action)}
+                    style={{ cursor: 'pointer' }}
                   >
                     {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                      <Cell key={`cell-${index}`} fill={entry.fill} style={{ cursor: 'pointer', outline: 'none' }} />
                     ))}
                   </Pie>
                 </PieChart>
@@ -1033,6 +1049,12 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                   <span className={`badge ${alert.badgeClass}`} style={{ fontSize: '11px', padding: '4px 8px' }}>{alert.title}</span>
                 </div>
                 <p style={{ fontSize: '13px', lineHeight: '1.4', margin: '8px 0', color: 'var(--text-secondary)' }}>{alert.desc}</p>
+                {alert.solution && (
+                  <div style={{ background: 'rgba(0,0,0,0.2)', padding: '10px 12px', borderRadius: '8px', margin: '10px 0', borderLeft: '3px solid rgba(255,255,255,0.15)' }}>
+                    <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 'bold' }}>💡 Solution: </span>
+                    <span style={{ fontSize: '12px', color: '#e2e8f0', lineHeight: '1.4' }}>{alert.solution}</span>
+                  </div>
+                )}
                 {alert.actionText && (
                   <button onClick={() => handleAlertAction(alert)} style={{ background: 'transparent', border: 'none', color: alert.badgeClass.includes('gold') || alert.badgeClass.includes('saffron') ? 'var(--gold)' : 'var(--saffron)', cursor: 'pointer', padding: 0, fontSize: '12px', fontWeight: 'bold', marginTop: '4px' }}>
                     {alert.actionText} →
@@ -1069,19 +1091,19 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
         <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {activeWidgets.has('income-overview') && (
             <div id="income-overview" style={{ position: 'relative' }}>
-              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('income-overview'); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('income-overview'); localStorage.setItem('finance_active_widgets', JSON.stringify([...n])); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
               <IncomeOverviewWidget />
             </div>
           )}
           {activeWidgets.has('expense-tracker') && (
             <div id="expense-tracker" style={{ position: 'relative' }}>
-              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('expense-tracker'); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('expense-tracker'); localStorage.setItem('finance_active_widgets', JSON.stringify([...n])); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
               <ExpenseTrackerWidget />
             </div>
           )}
           {activeWidgets.has('savings-investments') && (
             <div id="savings-investments" style={{ position: 'relative' }}>
-              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('savings-investments'); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('savings-investments'); localStorage.setItem('finance_active_widgets', JSON.stringify([...n])); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
               <SavingsInvestmentsWidget />
             </div>
           )}

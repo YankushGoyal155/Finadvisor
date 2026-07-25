@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
 import { useDashboard } from '../context/DashboardContext'
+import { useNotification } from '../context/NotificationContext'
 import { Sparkles, Bot, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react'
 import './ChatPage.css'
 
@@ -44,6 +45,8 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
     onboardingData,
     persona
   } = useDashboard()
+
+  const { showToast } = useNotification();
 
   const isBusiness = persona === 'business';
 
@@ -294,24 +297,31 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
           
           if (action.type === 'EMI_UPDATE' && action.data) {
             updateEmi(action.data);
+            showToast(`✅ EMI updated: ₹${Number(action.data.principal).toLocaleString('en-IN')} @ ${action.data.rate}% for ${action.data.tenure}yr`, 'success');
             if (shouldNavigate) setActivePage('emi');
           } else if (action.type === 'MF_FILTER' && action.data) {
             updateMfFilters(action.data);
+            showToast(`🔍 Searching: ${action.data.search}`, 'success');
             if (shouldNavigate) setActivePage('mf');
           } else if (action.type === 'TAX_UPDATE' && action.data) {
             updateTax(action.data);
+            showToast('✅ Tax planner updated!', 'success');
             if (shouldNavigate) setActivePage('tax');
           } else if (action.type === 'INVEST_UPDATE' && action.data) {
             updateInvest(action.data);
+            showToast(`✅ SIP updated to ₹${Number(action.data.monthlyAmount).toLocaleString('en-IN')}/month!`, 'success');
             if (shouldNavigate) setActivePage('invest');
           } else if (action.type === 'GOALS_UPDATE' && action.data) {
             updateGoals(action.data);
+            showToast('✅ Financial goals updated!', 'success');
             if (shouldNavigate) setActivePage('goals');
           } else if (action.type === 'RETIREMENT_UPDATE' && action.data) {
             updateRetirement(action.data);
+            showToast('✅ Retirement plan updated!', 'success');
             if (shouldNavigate) setActivePage('retirement');
           } else if (action.type === 'AFFORD_UPDATE' && action.data) {
             updateAfford(action.data);
+            showToast(`✅ Checking affordability: ${action.data.itemName}`, 'success');
             if (shouldNavigate) setActivePage('afford');
           } else if (action.type === 'ONBOARDING_UPDATE' && action.data) {
             // AI can update any onboarding/profile field
@@ -321,6 +331,15 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
             // Clear cached health score so it recalculates
             const scoreKey = isBusiness ? 'business_health_score' : 'financial_health_score';
             localStorage.removeItem(scoreKey);
+            // Build descriptive toast
+            const changes = [];
+            if (action.data.monthlySalary) changes.push(`Salary: ₹${Number(action.data.monthlySalary).toLocaleString('en-IN')}`);
+            if (action.data.monthlyExpenses) changes.push(`Expenses: ₹${Number(action.data.monthlyExpenses).toLocaleString('en-IN')}`);
+            if (action.data.emergencySavings) changes.push(`Emergency Fund: ${action.data.emergencySavings}`);
+            if (action.data.healthInsurance) changes.push(`Health Insurance: ${action.data.healthInsurance}`);
+            if (action.data.hasEmi) changes.push(`EMI: ${action.data.hasEmi}`);
+            if (action.data.monthlyRevenue) changes.push(`Revenue: ₹${Number(action.data.monthlyRevenue).toLocaleString('en-IN')}`);
+            showToast(`✅ Profile updated! ${changes.join(', ')}`, 'success');
             if (shouldNavigate) setActivePage('dashboard');
           } else if (action.type === 'DASHBOARD_UPDATE' && action.data) {
             // AI can update multiple dashboard sections at once
@@ -334,9 +353,11 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
               updateOnboardingData(updated);
               localStorage.setItem('finance_onboarding_data', JSON.stringify(updated));
             }
+            showToast('✅ Dashboard updated with multiple changes!', 'success');
             if (shouldNavigate) setActivePage('dashboard');
           } else if (action.type === 'PERSONA_UPDATE' && action.data?.persona) {
             updatePersona(action.data.persona);
+            showToast(`✅ Switched to ${action.data.persona} mode!`, 'success');
             if (shouldNavigate) setActivePage('dashboard');
           } else if (action.type === 'NAVIGATE' && action.page) {
             setActivePage(action.page);
