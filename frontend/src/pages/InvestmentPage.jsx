@@ -26,12 +26,7 @@ export default function InvestmentPage() {
   const wealthGained = futureValue - totalInvested;
   const gainPct = Math.round((wealthGained / futureValue) * 100);
 
-  const presets = [
-    { name: 'Nifty 50 Index', rate: 12, risk: 'Low', icon: '📊' },
-    { name: 'Flexi Cap Fund', rate: 14, risk: 'Medium', icon: '📈' },
-    { name: 'Small Cap Fund', rate: 18, risk: 'High', icon: '🚀' },
-    { name: 'PPF (Govt)', rate: 7.1, risk: 'Zero', icon: '🏛️' },
-  ];
+
 
   const riskColor = (risk) => {
     if (risk === 'Zero') return 'var(--green-light)';
@@ -85,20 +80,6 @@ export default function InvestmentPage() {
             <input type="range" min="1" max="40" step="1" value={years} onChange={(e) => setYears(Number(e.target.value))} />
           </div>
 
-          <div style={{ marginTop: '24px' }}>
-            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: '600' }}>Quick Asset Presets</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {presets.map((p, i) => (
-                <button key={i} onClick={() => setRate(p.rate)} className="btn-secondary" style={{ padding: '10px 14px', fontSize: '12px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>{p.icon}</span>
-                  <div>
-                    <strong style={{ display: 'block', fontSize: '12px' }}>{p.name}</strong>
-                    <span style={{ fontSize: '10px', color: riskColor(p.risk) }}>{p.risk} Risk • {p.rate}%</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         <div className="results-card">

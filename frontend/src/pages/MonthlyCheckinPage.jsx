@@ -55,9 +55,9 @@ export default function MonthlyCheckinPage() {
               <div className="form-group" style={{ marginBottom: '20px' }}>
                 <label>Did you add to your Emergency fund last month?</label>
                 <select className="pulse-glow" style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.05)', color: 'white', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px' }}>
-                  <option value="yes">Yes, I added to it!</option>
-                  <option value="no">No, not this month</option>
-                  <option value="used">I had to use some of it</option>
+                  <option value="yes" style={{ background: '#0f1729', color: 'white' }}>Yes, I added to it!</option>
+                  <option value="no" style={{ background: '#0f1729', color: 'white' }}>No, not this month</option>
+                  <option value="used" style={{ background: '#0f1729', color: 'white' }}>I had to use some of it</option>
                 </select>
               </div>
 

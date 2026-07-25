@@ -223,21 +223,7 @@ export function SavingsInvestmentsWidget() {
     currentEmergency = Number(emergencyVal);
   }
 
-  const [portfolio, setPortfolio] = useState([]);
-  const [newAsset, setNewAsset] = useState('');
-  const [newValue, setNewValue] = useState('');
 
-  const addAsset = () => {
-    if (newAsset && newValue) {
-      setPortfolio([...portfolio, { id: Date.now(), name: newAsset, value: Number(newValue) }]);
-      setNewAsset('');
-      setNewValue('');
-    }
-  };
-
-  const removeAsset = (id) => setPortfolio(portfolio.filter(a => a.id !== id));
-
-  const totalPortfolio = portfolio.reduce((sum, item) => sum + item.value, 0);
 
   return (
     <div id="savings-investments" className="glass-card fade-in" style={{ padding: '24px', marginBottom: '24px' }}>
@@ -294,45 +280,24 @@ export function SavingsInvestmentsWidget() {
           </div>
         </div>
 
-        {/* Right Side: Portfolio Tracker */}
+        {/* Right Side: Monthly Savings */}
         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '20px', borderRadius: '12px' }}>
           <h4 style={{ margin: '0 0 15px 0', color: '#e2e8f0', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <TrendingUp size={16} color="#8b5cf6" /> Portfolio Overview
+            <TrendingUp size={16} color="#8b5cf6" /> Monthly Savings Rate
           </h4>
-          <h3 style={{ fontSize: '1.8rem', color: '#8b5cf6', margin: '0 0 20px 0' }}>₹{totalPortfolio.toLocaleString('en-IN')}</h3>
           
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-            {portfolio.map(asset => (
-              <div key={asset.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '12px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px', alignItems: 'center' }}>
-                <span>{asset.name}</span>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontWeight: 'bold' }}>₹{asset.value.toLocaleString('en-IN')}</span>
-                  <button onClick={() => removeAsset(asset.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer' }}>×</button>
-                </div>
-              </div>
-            ))}
+          <div style={{ padding: '20px', background: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '12px', textAlign: 'center', marginBottom: '20px' }}>
+            <p style={{ margin: '0 0 5px 0', color: '#cbd5e1', fontSize: '0.9rem' }}>Target Monthly Savings</p>
+            <h3 style={{ fontSize: '2.4rem', color: '#8b5cf6', margin: '0', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+              ₹{Number(onboardingData?.monthlySavings || 0).toLocaleString('en-IN')}
+            </h3>
           </div>
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <input 
-              type="text" 
-              placeholder="Asset (e.g. Stocks)" 
-              value={newAsset} 
-              onChange={e => setNewAsset(e.target.value)}
-              className="chat-input"
-              style={{ flex: 1, padding: '10px', borderRadius: '8px' }}
-            />
-            <input 
-              type="number" 
-              placeholder="Value (₹)" 
-              value={newValue} 
-              onChange={e => setNewValue(e.target.value)}
-              className="chat-input"
-              style={{ width: '100px', padding: '10px', borderRadius: '8px' }}
-            />
-            <button onClick={addAsset} style={{ background: '#8b5cf6', color: 'white', border: 'none', borderRadius: '8px', padding: '10px', cursor: 'pointer' }}>
-              <Plus size={18} />
-            </button>
+          
+          <div style={{ fontSize: '0.95rem', color: '#94a3b8', lineHeight: '1.5' }}>
+            <p style={{ marginBottom: '10px' }}>This metric tells the AI how much liquid cash you aim to save each month apart from your fixed investments (SIPs).</p>
+            <p style={{ background: 'rgba(0,0,0,0.2)', padding: '10px', borderRadius: '8px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+              <strong>💡 Tip:</strong> Try asking the AI Advisor:<br/> <i>"Set my monthly savings to 50000"</i>
+            </p>
           </div>
         </div>
 

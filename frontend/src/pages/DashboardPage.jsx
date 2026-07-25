@@ -46,8 +46,14 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
   const toggleWidget = (id) => {
     setActiveWidgets(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        setTimeout(() => {
+          document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+      }
       localStorage.setItem('finance_active_widgets', JSON.stringify([...next]));
       return next;
     });
