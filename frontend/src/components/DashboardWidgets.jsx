@@ -129,6 +129,9 @@ export function ExpenseTrackerWidget() {
     { id: 4, name: 'Entertainment', budget: 6000, actual: 0 },
   ]);
 
+  const [newCatName, setNewCatName] = useState('');
+  const [newCatBudget, setNewCatBudget] = useState('');
+
   const totalBudget = categories.reduce((s, c) => s + (Number(c.budget) || 0), 0);
   const totalActual = categories.reduce((s, c) => s + (Number(c.actual) || 0), 0);
 
@@ -137,6 +140,16 @@ export function ExpenseTrackerWidget() {
     if (num > 999999999) num = 999999999; // Cap at 99.9 Cr to prevent layout break
     setCategories(categories.map(c => c.id === id ? { ...c, [field]: num } : c));
   };
+
+  const addCategory = () => {
+    if (newCatName && newCatBudget) {
+      setCategories([...categories, { id: Date.now(), name: newCatName, budget: Number(newCatBudget), actual: 0 }]);
+      setNewCatName('');
+      setNewCatBudget('');
+    }
+  };
+
+  const removeCategory = (id) => setCategories(categories.filter(c => c.id !== id));
 
   return (
     <div id="expense-tracker" className="glass-card fade-in" style={{ padding: '24px', marginBottom: '24px' }}>
@@ -161,14 +174,15 @@ export function ExpenseTrackerWidget() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', color: '#94a3b8', fontSize: '0.85rem', padding: '0 5px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(80px, 1.8fr) 1fr 1fr auto', gap: '10px', color: '#94a3b8', fontSize: '0.85rem', padding: '0 5px' }}>
               <span>Category</span>
               <span>Budget (₹)</span>
               <span>Actual (₹)</span>
+              <span style={{width: '20px'}}></span>
             </div>
             {categories.map(cat => (
-              <div key={cat.id} style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
-                <span style={{ fontWeight: 600 }}>{cat.name}</span>
+              <div key={cat.id} style={{ display: 'grid', gridTemplateColumns: 'minmax(80px, 1.8fr) 1fr 1fr auto', gap: '10px', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 600, wordBreak: 'break-word', fontSize: '0.9rem' }}>{cat.name}</span>
                 <input 
                   type="number" 
                   value={cat.budget} 
@@ -183,8 +197,31 @@ export function ExpenseTrackerWidget() {
                   className="chat-input"
                   style={{ padding: '8px', borderRadius: '6px', width: '100%', boxSizing: 'border-box', border: cat.actual > cat.budget ? '1px solid #ef4444' : 'none' }}
                 />
+                <button onClick={() => removeCategory(cat.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0 5px', fontSize: '18px', fontWeight: 'bold' }}>×</button>
               </div>
             ))}
+            
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              <input 
+                type="text" 
+                placeholder="New Category"
+                value={newCatName}
+                onChange={e => setNewCatName(e.target.value)}
+                className="chat-input"
+                style={{ flex: 1, padding: '10px', borderRadius: '8px', minWidth: '0' }}
+              />
+              <input 
+                type="number" 
+                placeholder="Budget (₹)" 
+                value={newCatBudget}
+                onChange={e => setNewCatBudget(e.target.value)}
+                className="chat-input"
+                style={{ width: '90px', padding: '10px', borderRadius: '8px' }}
+              />
+              <button onClick={addCategory} style={{ background: '#f59e0b', color: 'white', border: 'none', borderRadius: '8px', padding: '10px', cursor: 'pointer', flexShrink: 0 }}>
+                <Plus size={18} />
+              </button>
+            </div>
           </div>
         </div>
 
