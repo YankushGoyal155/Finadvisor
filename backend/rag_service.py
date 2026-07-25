@@ -163,6 +163,9 @@ Your response must include: [[ACTION: {{"type": "INVEST_UPDATE", "data": {{"mont
 User: "Change emergency fund to yes" or "I have emergency savings" or "Set emergency fund"
 Your response must include: [[ACTION: {{"type": "ONBOARDING_UPDATE", "data": {{"emergencySavings": "yes"}}, "navigate": false}}]]
 
+User: "Set emergency fund to 20000" or "Add emergency fund of 50000"
+Your response must include: [[ACTION: {{"type": "ONBOARDING_UPDATE", "data": {{"emergencySavings": "20000"}}, "navigate": false}}]]
+
 User: "I don't have emergency fund" or "Remove emergency fund"
 Your response must include: [[ACTION: {{"type": "ONBOARDING_UPDATE", "data": {{"emergencySavings": "no"}}, "navigate": false}}]]
 
@@ -405,6 +408,10 @@ User: "Change emergency fund to yes" or "I have emergency savings" or "Set emerg
 You MUST include:
 [[ACTION: {{"type": "ONBOARDING_UPDATE", "data": {{"emergencySavings": "yes"}}, "navigate": false}}]]
 
+User: "Set emergency fund to 20000" or "Add emergency fund of 50000"
+You MUST include:
+[[ACTION: {{"type": "ONBOARDING_UPDATE", "data": {{"emergencySavings": "20000"}}, "navigate": false}}]]
+
 User: "I don't have emergency fund" or "Remove emergency fund"
 You MUST include:
 [[ACTION: {{"type": "ONBOARDING_UPDATE", "data": {{"emergencySavings": "no"}}, "navigate": false}}]]
@@ -441,7 +448,7 @@ Supported Actions:
 6. RETIREMENT_UPDATE: {{"currentAge": number, "retirementAge": number, "monthlyExpense": number, "inflationRate": number, "expectedReturn": number}}
 7. AFFORD_UPDATE: {{"itemName": string, "itemPrice": number}}
 8. ONBOARDING_UPDATE: Updates the user's profile data directly.
-   Data: Any combination of: {{"monthlySalary": string, "monthlyExpenses": string, "hasEmi": "yes"/"no", "emiAmount": string, "emergencySavings": "yes"/"no", "healthInsurance": "yes"/"no", "monthlyRevenue": string, "operatingExpenses": string, "hasBusinessLoan": "yes"/"no", "businessLoanAmount": string, "gstRegistered": "yes"/"no"}}
+   Data: Any combination of: {{"monthlySalary": string, "monthlyExpenses": string, "hasEmi": "yes"/"no", "emiAmount": string, "emergencySavings": "yes"/"no" or specific amount like "20000", "healthInsurance": "yes"/"no", "monthlyRevenue": string, "operatingExpenses": string, "hasBusinessLoan": "yes"/"no", "businessLoanAmount": string, "gstRegistered": "yes"/"no"}}
 9. DASHBOARD_UPDATE: Updates multiple dashboard sections at once.
    Data: {{"emi": {{...}}, "tax": {{...}}, "invest": {{...}}, "onboarding": {{...}}}}
 10. PERSONA_UPDATE: Switches between personal and business mode.

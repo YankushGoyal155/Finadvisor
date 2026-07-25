@@ -213,9 +213,15 @@ export function SavingsInvestmentsWidget() {
   
   const monthlyExpenses = Number(onboardingData?.monthlyExpenses) || 40000;
   const targetEmergency = monthlyExpenses * 6;
-  const hasEmergency = onboardingData?.emergencySavings === 'yes';
-  // Simulate an emergency fund value based on onboarding context
-  const currentEmergency = hasEmergency ? targetEmergency * 0.85 : 0; 
+  const emergencyVal = onboardingData?.emergencySavings;
+  const hasEmergency = emergencyVal && emergencyVal !== 'no';
+  
+  let currentEmergency = 0;
+  if (emergencyVal === 'yes') {
+    currentEmergency = targetEmergency * 0.85; // Simulated fallback
+  } else if (!isNaN(Number(emergencyVal)) && Number(emergencyVal) > 0) {
+    currentEmergency = Number(emergencyVal);
+  }
 
   const [portfolio, setPortfolio] = useState([]);
   const [newAsset, setNewAsset] = useState('');

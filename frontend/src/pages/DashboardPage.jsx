@@ -681,10 +681,17 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
-                  <label style={labelStyle}>Emergency Fund?</label>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button type="button" onClick={() => handleEditChange('emergencySavings', 'yes')} style={toggleBtnStyle(editForm.emergencySavings === 'yes')}>Yes</button>
-                    <button type="button" onClick={() => handleEditChange('emergencySavings', 'no')} style={toggleBtnStyle(editForm.emergencySavings === 'no')}>No</button>
+                  <label style={labelStyle}>Emergency Fund (₹) / Yes / No</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    <button type="button" onClick={() => handleEditChange('emergencySavings', 'yes')} style={{...toggleBtnStyle(editForm.emergencySavings === 'yes'), flex: '0 0 auto', padding: '10px 16px'}}>Yes</button>
+                    <button type="button" onClick={() => handleEditChange('emergencySavings', 'no')} style={{...toggleBtnStyle(editForm.emergencySavings === 'no' || !editForm.emergencySavings), flex: '0 0 auto', padding: '10px 16px'}}>No</button>
+                    <input 
+                      type="number" 
+                      placeholder="Or Amount (e.g. 50000)" 
+                      value={(editForm.emergencySavings !== 'yes' && editForm.emergencySavings !== 'no') ? editForm.emergencySavings || '' : ''}
+                      onChange={(e) => handleEditChange('emergencySavings', e.target.value)}
+                      style={{ ...inputStyle, padding: '8px 12px', fontSize: '13px', flex: 1, minWidth: '130px' }}
+                    />
                   </div>
                 </div>
                 <div>
