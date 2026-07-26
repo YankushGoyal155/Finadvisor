@@ -439,3 +439,11 @@ input[type="range"]::-webkit-slider-thumb:hover {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ─── RECHARTS OVERRIDES ─── */
+.recharts-wrapper *:focus {
+  outline: none !important;
+}
+.recharts-surface {
+  outline: none !important;
+}
