@@ -36,6 +36,8 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
     updateAfford,
     updateOnboardingData,
     updatePersona,
+    savedMutualFunds,
+    updateSavedMutualFunds,
     emiData,
     taxData,
     investData,
@@ -62,6 +64,14 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
       ? Math.round((emiData.principal * (emiData.rate/12/100) * Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12)) / (Math.pow(1 + (emiData.rate/12/100), emiData.tenure*12) - 1))
       : 0;
     
+    // Build mutual fund portfolio summary for AI context
+    let mfPortfolioStr = 'No mutual funds saved';
+    if (savedMutualFunds && savedMutualFunds.length > 0) {
+      mfPortfolioStr = savedMutualFunds.map((f, i) => 
+        `${i+1}. ${f.name} (Code: ${f.code || 'N/A'}, SIP: ₹${f.sipAmount || 0}/month, Start: ${f.sipStartDate || f.startDate || 'N/A'})`
+      ).join(' | ');
+    }
+
     // Build comprehensive payload with ALL app data
     const base = {
       persona: isBusiness ? 'business' : 'personal',
@@ -77,6 +87,9 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
       retirementPlanner: retirementData?.currentAge > 0 ? `Age: ${retirementData.currentAge}, Retire at: ${retirementData.retirementAge}, Monthly Expense: ₹${retirementData.monthlyExpense}` : 'Not configured',
       // Affordability state
       affordability: affordData?.itemName ? `Checking: ${affordData.itemName} @ ₹${affordData.itemPrice}` : 'No item being checked',
+      // Mutual Fund Portfolio
+      mutualFundPortfolio: mfPortfolioStr,
+      mutualFundCount: savedMutualFunds?.length || 0,
     };
 
     if (isBusiness) {
@@ -109,12 +122,12 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
       hasHealthIns: onboardingData?.healthInsurance || 'Unknown',
       hasEmi: onboardingData?.hasEmi || 'Unknown',
     };
-  }, [emiData, investData, goalsData, onboardingData, healthScore, isBusiness, taxData, retirementData, affordData]);
+  }, [emiData, investData, goalsData, onboardingData, healthScore, isBusiness, taxData, retirementData, affordData, savedMutualFunds]);
 
   const dynamicSuggestions = [
     { icon: '📊', title: 'Improve My Score', desc: `How can I improve my score from ${healthScore}?` },
     { icon: '💸', title: 'Wealth Leakage', desc: 'Where am I losing money?' },
-    { icon: '🛍️', title: 'Affordability', desc: 'Can I afford a ₹50k purchase?' },
+    { icon: '💹', title: 'Analyze Portfolio', desc: 'Analyze my mutual fund portfolio and suggest changes' },
     { icon: '📈', title: 'Increase Savings', desc: 'Can I increase my SIP?' }
   ];
 
@@ -359,6 +372,40 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
             updatePersona(action.data.persona);
             showToast(`✅ Switched to ${action.data.persona} mode!`, 'success');
             if (shouldNavigate) setActivePage('dashboard');
+          } else if (action.type === 'MF_ADD_PORTFOLIO' && action.data) {
+            // AI adds a mutual fund to portfolio
+            const newFund = {
+              name: action.data.fundName || action.data.name,
+              code: action.data.schemeCode || action.data.code || '',
+              sipAmount: String(action.data.sipAmount || '0'),
+              startDate: action.data.startDate || new Date().toISOString().split('T')[0],
+              sipStartDate: action.data.sipStartDate || action.data.startDate || new Date().toISOString().split('T')[0],
+              startNav: null
+            };
+            const currentFunds = savedMutualFunds || [];
+            updateSavedMutualFunds([...currentFunds, newFund]);
+            showToast(`✅ Added ${newFund.name} to your portfolio (SIP: ₹${newFund.sipAmount}/month)`, 'success');
+            if (shouldNavigate) setActivePage('mf');
+          } else if (action.type === 'MF_REMOVE_PORTFOLIO' && action.data) {
+            // AI removes a mutual fund from portfolio by name or code match
+            const currentFunds = savedMutualFunds || [];
+            const nameToRemove = (action.data.fundName || action.data.name || '').toLowerCase();
+            const codeToRemove = action.data.schemeCode || action.data.code || '';
+            const updated = currentFunds.filter(f => {
+              const nameMatch = nameToRemove && f.name.toLowerCase().includes(nameToRemove);
+              const codeMatch = codeToRemove && f.code === codeToRemove;
+              return !(nameMatch || codeMatch);
+            });
+            if (updated.length < currentFunds.length) {
+              updateSavedMutualFunds(updated);
+              showToast(`🗑️ Removed ${action.data.fundName || action.data.name} from your portfolio`, 'success');
+            } else {
+              showToast(`⚠️ Fund "${action.data.fundName || action.data.name}" not found in portfolio`, 'warning');
+            }
+            if (shouldNavigate) setActivePage('mf');
+          } else if (action.type === 'MF_ANALYZE_PORTFOLIO') {
+            // Navigate to MF page for portfolio view
+            if (shouldNavigate) setActivePage('mf');
           } else if (action.type === 'NAVIGATE' && action.page) {
             setActivePage(action.page);
           }

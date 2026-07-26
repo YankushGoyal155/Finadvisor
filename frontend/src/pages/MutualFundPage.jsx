@@ -3,6 +3,31 @@ import { useDashboard } from '../context/DashboardContext';
 import { useNotification } from '../context/NotificationContext';
 import './MutualFundPage.css';
 
+const calculateXIRR = (cashflows) => {
+  if (cashflows.length < 2) return 0;
+  const sorted = [...cashflows].sort((a, b) => a.date - b.date);
+  if (sorted[0].amount >= 0) return 0; // Need at least one outflow
+
+  const xnpv = (rate) => {
+    return sorted.reduce((sum, cf) => {
+      const days = (cf.date - sorted[0].date) / (1000 * 60 * 60 * 24);
+      return sum + cf.amount / Math.pow(1 + rate, days / 365);
+    }, 0);
+  };
+
+  let low = -0.9999;
+  let high = 100.0;
+  let rate = 0;
+  for (let i = 0; i < 100; i++) {
+    rate = (low + high) / 2;
+    const val = xnpv(rate);
+    if (Math.abs(val) < 0.001) break;
+    if (val > 0) low = rate;
+    else high = rate;
+  }
+  return rate;
+};
+
 const FAMOUS_FUNDS = [
   { name: "Quant Small Cap", code: "120823", category: "Small Cap", risk: "Very High" },
   { name: "Parag Parikh Flexi Cap", code: "122639", category: "Flexi Cap", risk: "Moderate" },
@@ -36,7 +61,7 @@ export default function MutualFundPage() {
   const [pnlLoading, setPnlLoading] = useState(false);
 
   // Calculate P&L for a saved fund given its history data
-  const calcPnL = (fund, historyData) => {
+  const calcPnL = (fund, historyData, metaData) => {
     if (!historyData || !historyData.length || !fund.sipAmount || !fund.sipStartDate) return null;
     const sipAmount = parseFloat(fund.sipAmount);
     const startDateStr = fund.sipStartDate || fund.startDate;
@@ -58,10 +83,11 @@ export default function MutualFundPage() {
 
     // For each monthly SIP, find NAV closest to that month and calculate units bought
     let totalUnits = 0;
+    const installments = [];
+    const cashflows = [];
     for (let m = 0; m < months; m++) {
       const sipDate = new Date(startDate);
       sipDate.setMonth(sipDate.getMonth() + m);
-      const sipDateStr = sipDate.toISOString().split('T')[0];
 
       // Find closest available NAV for that month
       let closestNav = null;
@@ -77,13 +103,49 @@ export default function MutualFundPage() {
         }
       }
       if (closestNav && closestNav > 0) {
-        totalUnits += sipAmount / closestNav;
+        const units = sipAmount / closestNav;
+        totalUnits += units;
+        const exactDate = new Date(sipDate);
+        installments.push({ amount: sipAmount, units, date: exactDate });
+        cashflows.push({ amount: -sipAmount, date: exactDate });
       }
     }
 
     const currentValue = totalUnits * latestNav;
     const pnl = currentValue - totalInvested;
     const pnlPct = totalInvested > 0 ? ((pnl / totalInvested) * 100) : 0;
+
+    cashflows.push({ amount: currentValue, date: now });
+    const xirr = cashflows.length > 1 ? calculateXIRR(cashflows) * 100 : 0;
+
+    const isEquity = !metaData?.scheme_category?.toLowerCase().includes('debt');
+    let stcg = 0;
+    let ltcg = 0;
+
+    installments.forEach(inst => {
+      const days = (now - inst.date) / (1000 * 60 * 60 * 24);
+      const gain = (inst.units * latestNav) - inst.amount;
+      if (isEquity) {
+        if (days > 365) ltcg += gain;
+        else stcg += gain;
+      } else {
+        stcg += gain; // For debt, simplified short-term gains (no indexation typically)
+      }
+    });
+
+    // 2024 Budget estimates (AY 25-26 & 26-27 rules approximations)
+    let tax = 0;
+    if (isEquity) {
+      if (stcg > 0) tax += stcg * 0.20; // 20% on STCG
+      if (ltcg > 125000) tax += (ltcg - 125000) * 0.125; // 12.5% on LTCG > 1.25L
+    } else {
+      if (stcg > 0 || ltcg > 0) tax += Math.max(0, stcg + ltcg) * 0.30; // Approx 30% slab for Debt
+    }
+
+    const netAmount = currentValue - tax;
+    const afterTaxCashflows = [...cashflows];
+    afterTaxCashflows[afterTaxCashflows.length - 1] = { amount: netAmount, date: now };
+    const afterTaxXirr = afterTaxCashflows.length > 1 ? calculateXIRR(afterTaxCashflows) * 100 : 0;
 
     // Find NAV at start date for reference
     let startNav = null;
@@ -95,7 +157,7 @@ export default function MutualFundPage() {
       if (diff < minDiff) { minDiff = diff; startNav = parseFloat(entry.nav); }
     }
 
-    return { totalInvested, currentValue, pnl, pnlPct, totalUnits, months, latestNav, startNav };
+    return { totalInvested, currentValue, pnl, pnlPct, totalUnits, months, latestNav, startNav, xirr, tax, netAmount, afterTaxXirr, stcg, ltcg, isEquity };
   };
 
   // Load NAV history for all saved funds to compute P&L
@@ -103,17 +165,17 @@ export default function MutualFundPage() {
     if (!savedMutualFunds || savedMutualFunds.length === 0) return;
     setPnlLoading(true);
     const promises = savedMutualFunds.map(fund => {
-      if (!fund.code) return Promise.resolve({ fund, data: null });
+      if (!fund.code) return Promise.resolve({ fund, data: null, meta: null });
       return fetch(`https://api.mfapi.in/mf/${fund.code}`)
         .then(r => r.json())
-        .then(d => ({ fund, data: d.data }))
-        .catch(() => ({ fund, data: null }));
+        .then(d => ({ fund, data: d.data, meta: d.meta }))
+        .catch(() => ({ fund, data: null, meta: null }));
     });
     Promise.all(promises).then(results => {
       const pnlMap = {};
-      results.forEach(({ fund, data }) => {
+      results.forEach(({ fund, data, meta }) => {
         if (fund.code && data) {
-          pnlMap[fund.code] = calcPnL(fund, data);
+          pnlMap[fund.code] = calcPnL(fund, data, meta);
         }
       });
       setPortfolioPnL(pnlMap);
@@ -410,6 +472,38 @@ export default function MutualFundPage() {
                           <span className="mf-pnl-amount">
                             {isProfit ? '+' : '-'}₹{Math.abs(pnl.pnl).toLocaleString('en-IN', { maximumFractionDigits: 0 })}
                           </span>
+                        </div>
+                      )}
+
+                      {pnl && pnl.xirr !== undefined && (
+                        <div className="mf-portfolio-xirr-section" style={{ marginTop: '12px', padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '8px', fontWeight: 'bold' }}>XIRR & Tax Estimation</div>
+                          
+                          <div className="mf-portfolio-stat" style={{ marginBottom: '4px' }}>
+                            <span className="mf-stat-label">Current XIRR</span>
+                            <span className="mf-stat-value" style={{ color: pnl.xirr >= 0 ? '#10b981' : '#ef4444' }}>{pnl.xirr.toFixed(2)}%</span>
+                          </div>
+                          
+                          <div className="mf-portfolio-stat" style={{ marginBottom: '4px' }}>
+                            <span className="mf-stat-label">Est. Capital Gain</span>
+                            <span className="mf-stat-value" style={{ color: (pnl.stcg + pnl.ltcg) >= 0 ? '#10b981' : '#ef4444' }}>₹{Math.max(0, pnl.stcg + pnl.ltcg).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+                          </div>
+
+                          <div className="mf-portfolio-stat" style={{ marginBottom: '4px' }}>
+                            <span className="mf-stat-label">Est. Tax ({pnl.isEquity ? 'Equity' : 'Debt'})</span>
+                            <span className="mf-stat-value">₹{pnl.tax ? pnl.tax.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '0'}</span>
+                          </div>
+                          
+                          <div className="mf-portfolio-stat" style={{ marginBottom: '4px' }}>
+                            <span className="mf-stat-label">Net After Tax</span>
+                            <span className="mf-stat-value" style={{ color: pnl.netAmount >= pnl.totalInvested ? '#10b981' : '#ef4444' }}>₹{pnl.netAmount ? pnl.netAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 }) : '—'}</span>
+                          </div>
+
+                          <div className="mf-portfolio-stat" style={{ marginBottom: '4px' }}>
+                            <span className="mf-stat-label">XIRR After Tax</span>
+                            <span className="mf-stat-value" style={{ color: pnl.afterTaxXirr >= 0 ? '#10b981' : '#ef4444' }}>{pnl.afterTaxXirr.toFixed(2)}%</span>
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: '#8b9bbf', marginTop: '6px', fontStyle: 'italic', lineHeight: '1.2' }}>* Estimates only. Assumes redemption today under current tax rules.</div>
                         </div>
                       )}
 

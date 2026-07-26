@@ -146,6 +146,9 @@ WHEN TO USE ACTION TAGS (MANDATORY — you MUST include the tag):
 - When the user says: search for X fund → use MF_FILTER
 - When the user says: add a goal / update goals → use GOALS_UPDATE
 - When the user says: set retirement details → use RETIREMENT_UPDATE
+- When the user says: add X fund to my portfolio / track X fund → use MF_ADD_PORTFOLIO
+- When the user says: remove X fund from portfolio / stop tracking X → use MF_REMOVE_PORTFOLIO
+- When the user says: analyze my portfolio / review my mutual funds → use MF_ANALYZE_PORTFOLIO and analyze their holdings
 
 WHEN TO NEVER USE ACTION TAGS:
 - For general advice, explanations, or educational responses (e.g., "What is SIP?")
@@ -186,6 +189,20 @@ Your response must include BOTH:
 [[ACTION: {{"type": "ONBOARDING_UPDATE", "data": {{"monthlySalary": "100000"}}, "navigate": false}}]]
 [[ACTION: {{"type": "INVEST_UPDATE", "data": {{"monthlyAmount": 15000, "expectedReturn": 12, "timeHorizon": 10}}, "navigate": false}}]]
 
+User: "Add Parag Parikh Flexi Cap to my portfolio with SIP of 5000"
+Your response must include:
+[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "Parag Parikh Flexi Cap", "schemeCode": "122639", "sipAmount": 5000}}, "navigate": true}}]]
+
+User: "Remove Quant Small Cap from my portfolio"
+Your response must include:
+[[ACTION: {{"type": "MF_REMOVE_PORTFOLIO", "data": {{"fundName": "Quant Small Cap"}}, "navigate": true}}]]
+
+User: "Analyze my mutual fund portfolio" or "Review my investments"
+Your response must: Look at the user's Mutual Fund Portfolio data below, analyze each fund's risk, category, and SIP allocation, then provide recommendations. If you recommend removing a fund, INCLUDE the MF_REMOVE_PORTFOLIO tag. If you recommend adding a fund, INCLUDE the MF_ADD_PORTFOLIO tag.
+
+User: "Which fund should I remove from my portfolio?"
+Your response must: Review ALL funds in the user's portfolio (from the data below), identify the weakest performer or most risky allocation, provide analysis, and INCLUDE [[ACTION: {{"type": "MF_REMOVE_PORTFOLIO", "data": {{"fundName": "the fund name"}}, "navigate": true}}]] for the recommended removal. ALWAYS ask for confirmation before removing.
+
 Action Tag Format: [[ACTION: {{"type": "ACTION_TYPE", "data": {{...}}, "navigate": true/false}}]]
 
 Supported Actions:
@@ -203,6 +220,21 @@ Supported Actions:
 10. PERSONA_UPDATE: Switches between personal and business mode.
     Data: {{"persona": "personal" or "business"}}
 11. NAVIGATE: Navigate to any page. Pages: "dashboard", "chat", "checkin", "afford", "mf", "tax", "corp_tax", "invest", "emi", "goals", "retirement"
+12. MF_ADD_PORTFOLIO: Adds a mutual fund to the user's tracked portfolio.
+    Data: {{"fundName": string, "schemeCode": string (optional), "sipAmount": number}}
+    Use when user wants to add/track a fund in their portfolio.
+13. MF_REMOVE_PORTFOLIO: Removes a mutual fund from the user's portfolio.
+    Data: {{"fundName": string}} or {{"schemeCode": string}}
+    Use when user wants to remove/stop tracking a fund, OR when YOU recommend removing an underperformer.
+14. MF_ANALYZE_PORTFOLIO: Triggers portfolio analysis view.
+    Use this when analyzing the user's mutual fund holdings.
+
+MUTUAL FUND PORTFOLIO INTELLIGENCE:
+- You can see ALL the user's saved mutual funds in their portfolio data below.
+- When asked to analyze, review each fund's risk category, SIP amount, and overall portfolio balance.
+- You should proactively recommend adding diversifying funds or removing underperformers.
+- When removing a fund, ALWAYS explain WHY (e.g., "too much overlap with X", "high expense ratio", "underperforming category").
+- Popular fund codes: Quant Small Cap (120823), Parag Parikh Flexi Cap (122639), HDFC Top 100 (102000), Nippon India Small Cap (118778), SBI Bluechip (103504), Mirae Asset Large Cap (107578).
 
 === FINAL REMINDER ===
 If the user asks you to CHANGE, UPDATE, SET, ADD, or MODIFY anything in the app, you MUST include the [[ACTION: ...]] tag. Without it, NOTHING changes. This is NON-NEGOTIABLE.
@@ -309,7 +341,8 @@ Provide your response:"""
                 f"Tax Planner State: {user_data.get('taxPlanner', 'Not configured')}\n"
                 f"Investment Planner State: {user_data.get('investmentPlanner', 'Not configured')}\n"
                 f"Retirement Planner State: {user_data.get('retirementPlanner', 'Not configured')}\n"
-                f"Affordability Check: {user_data.get('affordability', 'None')}"
+                f"Affordability Check: {user_data.get('affordability', 'None')}\n"
+                f"Mutual Fund Portfolio ({user_data.get('mutualFundCount', 0)} funds): {user_data.get('mutualFundPortfolio', 'No funds saved')}"
             )
             if persona == 'business':
                 user_data_str = (
@@ -388,6 +421,9 @@ WHEN TO USE ACTION TAGS (MANDATORY — you MUST include the tag):
 - When the user says: search for X fund → use MF_FILTER
 - When the user says: add a goal / update goals → use GOALS_UPDATE
 - When the user says: set retirement details → use RETIREMENT_UPDATE
+- When the user says: add X fund to my portfolio / track X fund → use MF_ADD_PORTFOLIO
+- When the user says: remove X fund from portfolio / stop tracking X → use MF_REMOVE_PORTFOLIO
+- When the user says: analyze my portfolio / review my mutual funds → use MF_ANALYZE_PORTFOLIO and give deep analysis
 
 WHEN TO NEVER USE ACTION TAGS:
 - For general advice, explanations, or educational responses (e.g., "What is SIP?")
@@ -437,6 +473,17 @@ You MUST include BOTH tags:
 [[ACTION: {{"type": "ONBOARDING_UPDATE", "data": {{"monthlySalary": "100000"}}, "navigate": false}}]]
 [[ACTION: {{"type": "INVEST_UPDATE", "data": {{"monthlyAmount": 15000, "expectedReturn": 12, "timeHorizon": 10}}, "navigate": false}}]]
 
+User: "Add HDFC Top 100 to my portfolio with SIP of 3000"
+You MUST include:
+[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "HDFC Top 100 Fund", "schemeCode": "102000", "sipAmount": 3000}}, "navigate": true}}]]
+
+User: "Remove Nippon India Small Cap from my portfolio"
+You MUST include:
+[[ACTION: {{"type": "MF_REMOVE_PORTFOLIO", "data": {{"fundName": "Nippon India Small Cap"}}, "navigate": true}}]]
+
+User: "Analyze my mutual fund portfolio and remove weak ones"
+You MUST: Look at the portfolio data, identify weak/overlapping funds, provide analysis, and add MF_REMOVE_PORTFOLIO for each fund you recommend removing.
+
 Action Tag Format: [[ACTION: {{"type": "ACTION_TYPE", "data": {{...}}, "navigate": true/false}}]]
 
 Supported Actions:
@@ -455,6 +502,18 @@ Supported Actions:
     Data: {{"persona": "personal"}} or {{"persona": "business"}}
 11. NAVIGATE: Navigate to any page in the app.
     Pages: "dashboard", "chat", "checkin", "afford", "mf", "tax", "corp_tax", "invest", "emi", "goals", "retirement"
+12. MF_ADD_PORTFOLIO: Add a mutual fund to the user's tracked portfolio.
+    Data: {{"fundName": string, "schemeCode": string (optional), "sipAmount": number}}
+13. MF_REMOVE_PORTFOLIO: Remove a mutual fund from the user's portfolio.
+    Data: {{"fundName": string}} or {{"schemeCode": string}}
+14. MF_ANALYZE_PORTFOLIO: Triggers portfolio analysis navigation.
+
+MUTUAL FUND PORTFOLIO INTELLIGENCE:
+- You can see the user's saved mutual funds in their portfolio context below.
+- When the user asks to analyze, review each fund's risk, SIP allocation, overlap, and diversification.
+- Recommend adding diversifying funds or removing overlapping/underperforming ones.
+- When removing, ALWAYS explain your reasoning (overlap, risk concentration, expense ratio, etc.).
+- Well-known fund codes: Quant Small Cap (120823), Parag Parikh Flexi Cap (122639), HDFC Top 100 (102000), Nippon India Small Cap (118778), SBI Bluechip (103504), Mirae Asset Large Cap (107578).
 
 IMAGE ANALYSIS CAPABILITY:
 If the user attaches an image, analyze it thoroughly. It could be a screenshot of a portfolio, a tax form (Form 16, ITR), an invoice, a bank statement, a mutual fund report, etc.
