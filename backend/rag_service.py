@@ -248,33 +248,38 @@ Conversation History:
 Context from Knowledge Base:
 {retrieved_context}
 
-User Query: {query}
+IMPORTANT: Analyze any image the user sends thoroughly. If the user attaches a financial document, portfolio screenshot, tax form, bank statement, etc., provide detailed analysis of what you see in the image."""
 
-Provide your response:"""
-
-    def _call_gpt55_responses_api(self, full_prompt: str, image_data: str | None = None) -> str:
-        """Call Azure OpenAI GPT 5.5 via the Responses API (direct HTTP)."""
+    def _call_gpt55_responses_api(self, system_instructions: str, user_query: str, image_data: str | None = None) -> str:
+        """Call Azure OpenAI GPT 5.5 via the Responses API (direct HTTP).
+        
+        Uses the top-level 'instructions' field for system prompt so that the
+        user role only carries the actual user query (+ optional image). This
+        avoids Azure content-filter false-positives caused by huge monolithic
+        prompts inside the user message block.
+        """
         GPT55_ENDPOINT = "https://yanku-mptr6fe7-eastus2.cognitiveservices.azure.com/openai/responses?api-version=2025-04-01-preview"
         GPT55_API_KEY = os.getenv("AZURE_OPENAI_API_KEY")
 
-        # Build input — multimodal if image attached
+        # Build the user content block — multimodal if image is attached
         if image_data:
-            input_content = [
-                {"role": "user", "content": [
-                    {"type": "input_text", "text": full_prompt},
-                    {"type": "input_image", "image_url": image_data}
-                ]}
+            print(f"🖼️ GPT-5.5: Sending image with message (data length: {len(image_data)})")
+            user_content = [
+                {"type": "input_text", "text": user_query if user_query.strip() else "Please analyze this image and provide financial insights."},
+                {"type": "input_image", "image_url": image_data},
             ]
         else:
-            input_content = [
-                {"role": "user", "content": [
-                    {"type": "input_text", "text": full_prompt}
-                ]}
+            user_content = [
+                {"type": "input_text", "text": user_query},
             ]
 
         payload = {
             "model": "gpt-5.5",
-            "input": input_content,
+            # 'instructions' acts as the system prompt — keeps it separate from user content
+            "instructions": system_instructions,
+            "input": [
+                {"role": "user", "content": user_content}
+            ],
         }
 
         headers = {
@@ -375,8 +380,9 @@ Provide your response:"""
         # ── GPT 5.5 via Azure Responses API (direct HTTP) ──
         if model_name == "gpt-5.5":
             print(f"🚀 Asking GPT 5.5 (Responses API): {query}")
-            full_prompt = self._build_full_prompt(query, history_str, user_data_str, retrieved_context)
-            return self._call_gpt55_responses_api(full_prompt, image_data=image_data)
+            # Build system instructions separately from user query for proper vision support
+            system_instructions = self._build_full_prompt(query, history_str, user_data_str, retrieved_context)
+            return self._call_gpt55_responses_api(system_instructions, query, image_data=image_data)
 
         # ── Default: GPT-4o-mini via LangChain ──
         if self.llm is None:
@@ -537,10 +543,12 @@ Context from Knowledge Base:
         messages = [SystemMessage(content=system_prompt)]
 
         if image_data:
+            print(f"🖼️ GPT-4o-mini: Sending image with message (data length: {len(image_data)})")
             # Vision: send text + image together in a single HumanMessage
+            # Use 'high' detail for better image analysis accuracy
             human_content = [
-                {"type": "text", "text": query},
-                {"type": "image_url", "image_url": {"url": image_data, "detail": "auto"}},
+                {"type": "text", "text": query if query.strip() else "Please analyze this image and provide financial insights."},
+                {"type": "image_url", "image_url": {"url": image_data, "detail": "high"}},
             ]
             messages.append(HumanMessage(content=human_content))
         else:
