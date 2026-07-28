@@ -23,7 +23,7 @@ import {
   MoreVertical
 } from "lucide-react";
 import './ToolPage.css';
-import { IncomeOverviewWidget, ExpenseTrackerWidget, SavingsInvestmentsWidget } from '../components/DashboardWidgets';
+import { IncomeOverviewWidget, ExpenseTrackerWidget, SavingsInvestmentsWidget, FinancialGoalsWidget, InsuranceOverviewWidget, RetirementPlanningWidget } from '../components/DashboardWidgets';
 
 export default function DashboardPage({ setActivePage, user, onLogout }) {
   const { emiData, updateEmi, taxData, updateTax, investData, updateInvest, goalsData, onboardingData, updateOnboardingData, persona } = useDashboard();
@@ -63,7 +63,7 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
     setShowMenu(false);
     // Scroll to first active widget
     setTimeout(() => {
-      const order = ['income-overview', 'expense-tracker', 'savings-investments'];
+      const order = ['income-overview', 'expense-tracker', 'savings-investments', 'financial-goals', 'insurance-overview', 'retirement-planning'];
       for (const id of order) {
         if (activeWidgets.has(id)) {
           const el = document.getElementById(id);
@@ -873,6 +873,24 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                         title: 'Savings & Investments',
                         desc: 'Track SIPs, goals & portfolio growth',
                       },
+                      {
+                        id: 'financial-goals',
+                        icon: '🎯',
+                        title: 'Financial Goals',
+                        desc: 'Advanced goal setting & priorities',
+                      },
+                      {
+                        id: 'insurance-overview',
+                        icon: '🛡️',
+                        title: 'Insurance Overview',
+                        desc: 'Health cover & Life needs',
+                      },
+                      {
+                        id: 'retirement-planning',
+                        icon: '🌅',
+                        title: 'Retirement Planning',
+                        desc: 'Corpus calculation & forecasts',
+                      },
                     ].map(item => {
                       const isActive = activeWidgets.has(item.id);
                       return (
@@ -1118,6 +1136,24 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
             <div id="savings-investments" style={{ position: 'relative' }}>
               <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('savings-investments'); localStorage.setItem('finance_active_widgets', JSON.stringify([...n])); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
               <SavingsInvestmentsWidget />
+            </div>
+          )}
+          {activeWidgets.has('financial-goals') && (
+            <div id="financial-goals" style={{ position: 'relative' }}>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('financial-goals'); localStorage.setItem('finance_active_widgets', JSON.stringify([...n])); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <FinancialGoalsWidget />
+            </div>
+          )}
+          {activeWidgets.has('insurance-overview') && (
+            <div id="insurance-overview" style={{ position: 'relative' }}>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('insurance-overview'); localStorage.setItem('finance_active_widgets', JSON.stringify([...n])); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <InsuranceOverviewWidget />
+            </div>
+          )}
+          {activeWidgets.has('retirement-planning') && (
+            <div id="retirement-planning" style={{ position: 'relative' }}>
+              <button onClick={() => { setActiveWidgets(prev => { const n = new Set(prev); n.delete('retirement-planning'); localStorage.setItem('finance_active_widgets', JSON.stringify([...n])); return n; }); }} style={{ position: 'absolute', top: '24px', right: '24px', background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', borderRadius: '50%', width: '32px', height: '32px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10, transition: 'all 0.2s' }}><X size={16} /></button>
+              <RetirementPlanningWidget />
             </div>
           )}
         </div>
