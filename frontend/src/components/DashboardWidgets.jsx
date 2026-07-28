@@ -345,10 +345,7 @@ export function SavingsInvestmentsWidget() {
 
 // ─── 4. Financial Goals Widget ───
 export function FinancialGoalsWidget() {
-  const [goals, setGoals] = useState([
-    { id: 1, title: 'House Downpayment', target: 2000000, current: 500000, deadline: '2028-12-31', priority: 'High' },
-    { id: 2, title: 'Dream Vacation', target: 300000, current: 150000, deadline: '2027-06-15', priority: 'Medium' }
-  ]);
+  const [goals, setGoals] = useState([]);
   
   const [newTitle, setNewTitle] = useState('');
   const [newTarget, setNewTarget] = useState('');
@@ -485,10 +482,7 @@ export function FinancialGoalsWidget() {
 
 // ─── 5. Insurance Overview Widget ───
 export function InsuranceOverviewWidget() {
-  const [policies, setPolicies] = useState([
-    { id: 1, name: 'Family Health Cover', provider: 'HDFC Ergo', type: 'Health', sumInsured: 1000000, premium: 15000, renewalDate: '2027-02-14' },
-    { id: 2, name: 'Term Life Insurance', provider: 'LIC India', type: 'Life', sumInsured: 10000000, premium: 12000, renewalDate: '2027-08-20' }
-  ]);
+  const [policies, setPolicies] = useState([]);
 
   // Needs Assessment Calculator State
   const [annIncome, setAnnIncome] = useState(1200000);
@@ -514,7 +508,11 @@ export function InsuranceOverviewWidget() {
         <div>
           <h4 style={{ color: '#e2e8f0', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}><HeartPulse size={18} color="#10b981"/> My Policies</h4>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {policies.map(p => {
+            {policies.length === 0 ? (
+              <div style={{ padding: '20px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', textAlign: 'center', color: '#94a3b8' }}>
+                No active policies. Keep track of your insurance here!
+              </div>
+            ) : policies.map(p => {
               const daysToRenew = Math.ceil((new Date(p.renewalDate) - new Date()) / (1000 * 60 * 60 * 24));
               const isUrgent = daysToRenew <= 30 && daysToRenew > 0;
               return (
@@ -577,14 +575,19 @@ export function InsuranceOverviewWidget() {
 
 // ─── 6. Retirement Planning Widget ───
 export function RetirementPlanningWidget() {
-  const [currentAge, setCurrentAge] = useState(30);
-  const [retireAge, setRetireAge] = useState(60);
-  const [currentMonthlyExpenses, setCurrentMonthlyExpenses] = useState(50000);
-  const [inflation, setInflation] = useState(6);
-  const [lifeExpectancy, setLifeExpectancy] = useState(85);
+  const [currentAge, setCurrentAge] = useState('30');
+  const [retireAge, setRetireAge] = useState('60');
+  const [currentMonthlyExpenses, setCurrentMonthlyExpenses] = useState('50000');
+  const [inflation, setInflation] = useState('6');
+  const [lifeExpectancy, setLifeExpectancy] = useState('85');
 
-  const yearsToRetire = Math.max(0, retireAge - currentAge);
-  const futureMonthlyExpenses = currentMonthlyExpenses * Math.pow(1 + (inflation / 100), yearsToRetire);
+  const numCurrentAge = Number(currentAge) || 0;
+  const numRetireAge = Number(retireAge) || 0;
+  const numExpenses = Number(currentMonthlyExpenses) || 0;
+  const numInflation = Number(inflation) || 0;
+
+  const yearsToRetire = Math.max(0, numRetireAge - numCurrentAge);
+  const futureMonthlyExpenses = numExpenses * Math.pow(1 + (numInflation / 100), yearsToRetire);
   const futureAnnualExpenses = futureMonthlyExpenses * 12;
   const requiredCorpus = futureAnnualExpenses * 25; 
   
@@ -597,10 +600,10 @@ export function RetirementPlanningWidget() {
   if (yearsToRetire > 0) {
     for(let i=0; i<=yearsToRetire; i+= Math.max(1, Math.floor(yearsToRetire/5))) {
       const acc = annualSavingsNeeded * ((Math.pow(1 + rate, i) - 1) / rate);
-      projData.push({ age: currentAge + i, value: Math.round(acc) });
+      projData.push({ age: numCurrentAge + i, value: Math.round(acc) });
     }
-    if (projData[projData.length - 1].age !== retireAge) {
-      projData.push({ age: retireAge, value: Math.round(requiredCorpus) });
+    if (projData[projData.length - 1].age !== numRetireAge) {
+      projData.push({ age: numRetireAge, value: Math.round(requiredCorpus) });
     }
   }
 
@@ -619,21 +622,21 @@ export function RetirementPlanningWidget() {
           <div style={{ display: 'flex', gap: '14px' }}>
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '6px' }}>Current Age</label>
-              <input type="number" value={currentAge} onChange={e => setCurrentAge(Number(e.target.value))} className="chat-input" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }} />
+              <input type="number" value={currentAge} onChange={e => setCurrentAge(e.target.value)} className="chat-input" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }} />
             </div>
             <div style={{ flex: 1 }}>
               <label style={{ display: 'block', fontSize: '0.85rem', color: '#10b981', marginBottom: '6px' }}>Retirement Age</label>
-              <input type="number" value={retireAge} onChange={e => setRetireAge(Number(e.target.value))} className="chat-input" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' }} />
+              <input type="number" value={retireAge} onChange={e => setRetireAge(e.target.value)} className="chat-input" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' }} />
             </div>
           </div>
 
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '6px' }}>Monthly Expenses Today (₹)</label>
-            <input type="number" value={currentMonthlyExpenses} onChange={e => setCurrentMonthlyExpenses(Number(e.target.value))} className="chat-input" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }} />
+            <input type="number" value={currentMonthlyExpenses} onChange={e => setCurrentMonthlyExpenses(e.target.value)} className="chat-input" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(0,0,0,0.2)' }} />
           </div>
 
           <div style={{ padding: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)' }}>
-             <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '10px' }}>Future Lifestyle at Age {retireAge} (@{inflation}% inflation):</div>
+             <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '10px' }}>Future Lifestyle at Age {numRetireAge} (@{numInflation}% inflation):</div>
              <div style={{ fontSize: '1.4rem', fontWeight: 600, color: '#f59e0b' }}>₹{Math.round(futureMonthlyExpenses).toLocaleString('en-IN')}<span style={{fontSize:'0.9rem', color:'#94a3b8', fontWeight:400}}>/mo</span></div>
           </div>
           
