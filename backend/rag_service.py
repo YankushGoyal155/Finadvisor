@@ -15,6 +15,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_core.runnables import RunnablePassthrough
 from langchain_community.vectorstores import Chroma
 
+from market_fetcher import get_live_market_data
+
 # ─── Fallback Knowledge ────────────────────────────────────────────────
 FALLBACK_KNOWLEDGE = """
 The old tax regime offers lower tax rates across different income brackets but requires taxpayers to let go of many tax exemptions and deductions such as HRA, LTA, 80C, 80D, etc. 
@@ -99,13 +101,20 @@ class RAGFinanceService:
             except Exception as e:
                 print(f"⚠️ Vector search failed: {e}")
 
+        # Fetch live data if the user asked for prices
+        live_data_str = get_live_market_data(query)
+
+        context_parts = []
+        if live_data_str:
+            context_parts.append(live_data_str)
+            print(f"📈 Found Live Data: {live_data_str}")
+
         if retrieved_chunks:
-            context = "RETRIEVED FROM KNOWLEDGE BASE:\n"
-            context += "\n---\n".join(retrieved_chunks)
-            context += "\n\nADDITIONAL REFERENCE:\n" + FALLBACK_KNOWLEDGE
-            return context
-        else:
-            return FALLBACK_KNOWLEDGE
+            context_parts.append("RETRIEVED FROM KNOWLEDGE BASE:\n" + "\n---\n".join(retrieved_chunks))
+
+        context_parts.append("ADDITIONAL REFERENCE:\n" + FALLBACK_KNOWLEDGE)
+
+        return "\n\n".join(context_parts)
 
     def _build_full_prompt(self, query, history_str, user_data_str, retrieved_context):
         """Build the full system prompt text for GPT 5.5 direct API call."""
@@ -191,7 +200,15 @@ Your response must include BOTH:
 
 User: "Add Parag Parikh Flexi Cap to my portfolio with SIP of 5000"
 Your response must include:
-[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "Parag Parikh Flexi Cap", "schemeCode": "122639", "sipAmount": 5000}}, "navigate": true}}]]
+[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "Parag Parikh Flexi Cap", "schemeCode": "122639", "sipAmount": 5000, "startDate": "2024-01-01", "sipStartDate": "2024-01-01"}}, "navigate": true}}]]
+
+User: "Add HDFC Mid-Cap Opportunities fund, I started SIP of 3000 from March 2023"
+Your response must include:
+[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "HDFC Mid-Cap Opportunities", "sipAmount": 3000, "startDate": "2023-03-01", "sipStartDate": "2023-03-01"}}, "navigate": true}}]]
+
+User: "Track Axis Small Cap fund with 2000 SIP, started in June 2022"
+Your response must include:
+[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "Axis Small Cap", "sipAmount": 2000, "startDate": "2022-06-01", "sipStartDate": "2022-06-01"}}, "navigate": true}}]]
 
 User: "Remove Quant Small Cap from my portfolio"
 Your response must include:
@@ -221,20 +238,22 @@ Supported Actions:
     Data: {{"persona": "personal" or "business"}}
 11. NAVIGATE: Navigate to any page. Pages: "dashboard", "chat", "checkin", "afford", "mf", "tax", "corp_tax", "invest", "emi", "goals", "retirement"
 12. MF_ADD_PORTFOLIO: Adds a mutual fund to the user's tracked portfolio.
-    Data: {{"fundName": string, "schemeCode": string (optional), "sipAmount": number}}
-    Use when user wants to add/track a fund in their portfolio.
+     Data: {{"fundName": string, "schemeCode": string (optional — the frontend will auto-resolve this if you don't know it), "sipAmount": number, "startDate": "YYYY-MM-DD" (when user started investing), "sipStartDate": "YYYY-MM-DD" (when SIP started — same as startDate if not specified separately)}}
+     IMPORTANT: If the user tells you when they started the fund/SIP, you MUST include startDate and sipStartDate. If they don't specify, default to today's date.
+     The fundName should be the common/popular name of the fund (e.g., "HDFC Mid-Cap Opportunities", "Axis Small Cap"). The frontend will fuzzy-match it to the exact MFAPI scheme name.
 13. MF_REMOVE_PORTFOLIO: Removes a mutual fund from the user's portfolio.
-    Data: {{"fundName": string}} or {{"schemeCode": string}}
-    Use when user wants to remove/stop tracking a fund, OR when YOU recommend removing an underperformer.
+     Data: {{"fundName": string}} or {{"schemeCode": string}}
+     Use when user wants to remove/stop tracking a fund, OR when YOU recommend removing an underperformer.
 14. MF_ANALYZE_PORTFOLIO: Triggers portfolio analysis view.
-    Use this when analyzing the user's mutual fund holdings.
+     Use this when analyzing the user's mutual fund holdings.
 
 MUTUAL FUND PORTFOLIO INTELLIGENCE:
 - You can see ALL the user's saved mutual funds in their portfolio data below.
 - When asked to analyze, review each fund's risk category, SIP amount, and overall portfolio balance.
 - You should proactively recommend adding diversifying funds or removing underperformers.
 - When removing a fund, ALWAYS explain WHY (e.g., "too much overlap with X", "high expense ratio", "underperforming category").
-- Popular fund codes: Quant Small Cap (120823), Parag Parikh Flexi Cap (122639), HDFC Top 100 (102000), Nippon India Small Cap (118778), SBI Bluechip (103504), Mirae Asset Large Cap (107578).
+- When adding a fund, ALWAYS include startDate and sipStartDate. If user says "I started in March 2023", use "2023-03-01". If user says "from last year", estimate the date.
+- Popular fund codes: Quant Small Cap (120823), Parag Parikh Flexi Cap (122639), HDFC Top 100 (102000), Nippon India Small Cap (118778), SBI Bluechip (103504), Mirae Asset Large Cap (107578), HDFC Mid-Cap Opportunities (118989), Axis Small Cap (125354), Motilal Oswal Nasdaq 100 (120505), ICICI Prudential Bluechip (120586), Kotak Emerging Equity (120200), Tata Digital India (135781), DSP Small Cap (119186), Canara Robeco Bluechip Equity (115477).
 
 === FINAL REMINDER ===
 If the user asks you to CHANGE, UPDATE, SET, ADD, or MODIFY anything in the app, you MUST include the [[ACTION: ...]] tag. Without it, NOTHING changes. This is NON-NEGOTIABLE.
@@ -481,7 +500,15 @@ You MUST include BOTH tags:
 
 User: "Add HDFC Top 100 to my portfolio with SIP of 3000"
 You MUST include:
-[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "HDFC Top 100 Fund", "schemeCode": "102000", "sipAmount": 3000}}, "navigate": true}}]]
+[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "HDFC Top 100 Fund", "sipAmount": 3000, "startDate": "2025-05-22", "sipStartDate": "2025-05-22"}}, "navigate": true}}]]
+
+User: "Add Axis Small Cap fund, started SIP of 5000 from January 2024"
+You MUST include:
+[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "Axis Small Cap", "sipAmount": 5000, "startDate": "2024-01-01", "sipStartDate": "2024-01-01"}}, "navigate": true}}]]
+
+User: "Track Motilal Oswal Nasdaq 100 fund with 10000 SIP since March 2023"
+You MUST include:
+[[ACTION: {{"type": "MF_ADD_PORTFOLIO", "data": {{"fundName": "Motilal Oswal Nasdaq 100", "sipAmount": 10000, "startDate": "2023-03-01", "sipStartDate": "2023-03-01"}}, "navigate": true}}]]
 
 User: "Remove Nippon India Small Cap from my portfolio"
 You MUST include:
@@ -509,7 +536,9 @@ Supported Actions:
 11. NAVIGATE: Navigate to any page in the app.
     Pages: "dashboard", "chat", "checkin", "afford", "mf", "tax", "corp_tax", "invest", "emi", "goals", "retirement"
 12. MF_ADD_PORTFOLIO: Add a mutual fund to the user's tracked portfolio.
-    Data: {{"fundName": string, "schemeCode": string (optional), "sipAmount": number}}
+    Data: {{"fundName": string, "schemeCode": string (optional — the frontend will auto-resolve if not provided), "sipAmount": number, "startDate": "YYYY-MM-DD", "sipStartDate": "YYYY-MM-DD"}}
+    IMPORTANT: ALWAYS include startDate and sipStartDate. If the user mentions when they started, use that date. Otherwise default to today.
+    The fundName should be the common name (e.g., "HDFC Mid-Cap Opportunities"). The frontend will fuzzy-match it.
 13. MF_REMOVE_PORTFOLIO: Remove a mutual fund from the user's portfolio.
     Data: {{"fundName": string}} or {{"schemeCode": string}}
 14. MF_ANALYZE_PORTFOLIO: Triggers portfolio analysis navigation.
@@ -519,7 +548,8 @@ MUTUAL FUND PORTFOLIO INTELLIGENCE:
 - When the user asks to analyze, review each fund's risk, SIP allocation, overlap, and diversification.
 - Recommend adding diversifying funds or removing overlapping/underperforming ones.
 - When removing, ALWAYS explain your reasoning (overlap, risk concentration, expense ratio, etc.).
-- Well-known fund codes: Quant Small Cap (120823), Parag Parikh Flexi Cap (122639), HDFC Top 100 (102000), Nippon India Small Cap (118778), SBI Bluechip (103504), Mirae Asset Large Cap (107578).
+- When adding, ALWAYS include startDate and sipStartDate in the action data.
+- Well-known fund codes: Quant Small Cap (120823), Parag Parikh Flexi Cap (122639), HDFC Top 100 (102000), Nippon India Small Cap (118778), SBI Bluechip (103504), Mirae Asset Large Cap (107578), HDFC Mid-Cap Opportunities (118989), Axis Small Cap (125354), Motilal Oswal Nasdaq 100 (120505), ICICI Prudential Bluechip (120586), Kotak Emerging Equity (120200), Tata Digital India (135781), DSP Small Cap (119186), Canara Robeco Bluechip Equity (115477).
 
 IMAGE ANALYSIS CAPABILITY:
 If the user attaches an image, analyze it thoroughly. It could be a screenshot of a portfolio, a tax form (Form 16, ITR), an invoice, a bank statement, a mutual fund report, etc.

@@ -374,17 +374,128 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
             if (shouldNavigate) setActivePage('dashboard');
           } else if (action.type === 'MF_ADD_PORTFOLIO' && action.data) {
             // AI adds a mutual fund to portfolio
+            const fundName = action.data.fundName || action.data.name || '';
+            let schemeCode = action.data.schemeCode || action.data.code || '';
+            let officialName = fundName;
+            
+            // Fuzzy match helper — scores funds by word overlap with the query
+            const fuzzyMatchFund = (funds, query) => {
+              const queryWords = query.toLowerCase().replace(/[^a-z0-9\s]/g, '').split(/\s+/).filter(w => w.length > 1);
+              if (queryWords.length === 0) return null;
+              let bestMatch = null;
+              let bestScore = 0;
+              for (const f of funds) {
+                const schemeLower = f.schemeName.toLowerCase();
+                // Count how many query words appear in the scheme name
+                let score = 0;
+                for (const word of queryWords) {
+                  if (schemeLower.includes(word)) score++;
+                }
+                // Bonus for "direct" plan preference
+                if (schemeLower.includes('direct') && schemeLower.includes('growth')) score += 0.5;
+                // Must match at least 60% of query words
+                if (score > bestScore && score >= queryWords.length * 0.6) {
+                  bestScore = score;
+                  bestMatch = f;
+                }
+              }
+              return bestMatch;
+            };
+            
+            // Auto-fetch schemeCode using fuzzy matching if AI did not provide it
+            if (fundName) {
+              try {
+                // First try the search API for faster results
+                const searchRes = await fetch(`https://api.mfapi.in/mf/search?q=${encodeURIComponent(fundName)}`);
+                if (searchRes.ok) {
+                  const searchResults = await searchRes.json();
+                  if (searchResults && searchResults.length > 0) {
+                    // Use fuzzy matching on search results
+                    const match = fuzzyMatchFund(searchResults, fundName);
+                    if (match) {
+                      schemeCode = String(match.schemeCode);
+                      officialName = match.schemeName;
+                    } else {
+                      // Fallback to first Direct Growth result
+                      const directGrowth = searchResults.find(f => 
+                        f.schemeName.toLowerCase().includes('direct') && 
+                        f.schemeName.toLowerCase().includes('growth')
+                      );
+                      if (directGrowth) {
+                        schemeCode = String(directGrowth.schemeCode);
+                        officialName = directGrowth.schemeName;
+                      } else {
+                        schemeCode = String(searchResults[0].schemeCode);
+                        officialName = searchResults[0].schemeName;
+                      }
+                    }
+                  }
+                }
+                
+                // If search API didn't work, fall back to full list
+                if (!schemeCode) {
+                  const res = await fetch('https://api.mfapi.in/mf');
+                  if (res.ok) {
+                    const allFunds = await res.json();
+                    const match = fuzzyMatchFund(allFunds, fundName);
+                    if (match) {
+                      schemeCode = String(match.schemeCode);
+                      officialName = match.schemeName;
+                    }
+                  }
+                }
+              } catch(e) {
+                console.error("Failed to fetch MF scheme code", e);
+              }
+            }
+
+            let startD = action.data.startDate || new Date().toISOString().split('T')[0];
+            let sipD = action.data.sipStartDate || startD;
+
+            // Handle invalid dates gracefully
+            const d1 = new Date(startD);
+            if (isNaN(d1.getTime())) startD = new Date().toISOString().split('T')[0];
+            else startD = d1.toISOString().split('T')[0];
+
+            const d2 = new Date(sipD);
+            if (isNaN(d2.getTime())) sipD = new Date().toISOString().split('T')[0];
+            else sipD = d2.toISOString().split('T')[0];
+
+            // Fetch starting NAV for proper P&L calculation
+            let startNav = null;
+            if (schemeCode) {
+              try {
+                const navRes = await fetch(`https://api.mfapi.in/mf/${schemeCode}`);
+                if (navRes.ok) {
+                  const navData = await navRes.json();
+                  if (navData.data && navData.data.length > 0) {
+                    const startDate = new Date(startD);
+                    const sorted = [...navData.data].reverse(); // oldest first
+                    let minDiff = Infinity;
+                    for (const entry of sorted) {
+                      const parts = entry.date.split('-');
+                      const entryDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                      const diff = Math.abs(entryDate - startDate);
+                      if (diff < minDiff) { minDiff = diff; startNav = parseFloat(entry.nav); }
+                    }
+                  }
+                }
+              } catch(e) {
+                console.error("Failed to fetch starting NAV", e);
+              }
+            }
+
             const newFund = {
-              name: action.data.fundName || action.data.name,
-              code: action.data.schemeCode || action.data.code || '',
+              name: officialName,
+              code: schemeCode,
               sipAmount: String(action.data.sipAmount || '0'),
-              startDate: action.data.startDate || new Date().toISOString().split('T')[0],
-              sipStartDate: action.data.sipStartDate || action.data.startDate || new Date().toISOString().split('T')[0],
-              startNav: null
+              startDate: startD,
+              sipStartDate: sipD,
+              startNav: startNav
             };
             const currentFunds = savedMutualFunds || [];
             updateSavedMutualFunds([...currentFunds, newFund]);
-            showToast(`✅ Added ${newFund.name} to your portfolio (SIP: ₹${newFund.sipAmount}/month)`, 'success');
+            showToast(`✅ Added ${newFund.name} to portfolio!`, 'success');
             if (shouldNavigate) setActivePage('mf');
           } else if (action.type === 'MF_REMOVE_PORTFOLIO' && action.data) {
             // AI removes a mutual fund from portfolio by name or code match
