@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDashboard } from '../context/DashboardContext';
 import { useNotification } from '../context/NotificationContext';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
@@ -36,6 +36,21 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
 
   // Widget Navigation Menu state
   const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMenu]);
   const [activeWidgets, setActiveWidgets] = useState(() => {
     try {
       const saved = localStorage.getItem('finance_active_widgets');
@@ -819,12 +834,12 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
             <Pencil size={16} /> Edit Dashboard
           </button>
 
-          <div style={{ position: 'relative' }}>
+          <div style={{ position: 'relative' }} ref={menuRef}>
             <button 
               onClick={() => setShowMenu(!showMenu)}
               className="btn-secondary"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', padding: 0, borderRadius: '10px', cursor: 'pointer', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: '#e2e8f0', transition: 'all 0.2s' }}
-              title="Menu"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '40px', height: '40px', padding: 0, borderRadius: '10px', cursor: 'pointer', background: showMenu ? 'rgba(255,255,255,0.1)' : 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: '#e2e8f0', transition: 'all 0.2s', boxShadow: showMenu ? '0 0 0 2px rgba(255, 107, 0, 0.4)' : 'none' }}
+              title="Add Widgets"
             >
               <MoreVertical size={20} />
             </button>
@@ -835,22 +850,28 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                   position: 'absolute',
                   top: '100%',
                   right: 0,
-                  marginTop: '8px',
-                  background: 'linear-gradient(180deg, #141b2d 0%, #0f1729 100%)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  marginTop: '12px',
+                  background: 'rgba(15, 23, 41, 0.85)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: '16px',
-                  boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
-                  minWidth: '280px',
-                  zIndex: 100,
+                  boxShadow: '0 24px 64px rgba(0,0,0,0.8), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+                  minWidth: '320px',
+                  zIndex: 200,
                   overflow: 'hidden',
+                  animation: 'fadeIn 0.2s ease-out',
                 }}
               >
                 {!isBusiness ? (
                   <>
                     {/* Header */}
-                    <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-                      <p style={{ margin: 0, fontSize: '11px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Add to your Dashboard</p>
-                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>Select one or more trackers to view below</p>
+                    <div style={{ padding: '16px 20px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Dashboard Trackers</p>
+                        <span style={{ fontSize: '11px', color: 'var(--saffron)', background: 'rgba(255, 107, 0, 0.1)', padding: '2px 8px', borderRadius: '12px', fontWeight: 'bold' }}>{activeWidgets.size} Active</span>
+                      </div>
+                      <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#cbd5e1' }}>Select widgets to display below</p>
                     </div>
 
                     {/* Options */}
@@ -900,18 +921,20 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                           style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '12px',
-                            padding: '12px 16px',
+                            gap: '14px',
+                            padding: '14px 20px',
                             cursor: 'pointer',
-                            background: isActive ? 'rgba(255,107,0,0.08)' : 'transparent',
-                            borderBottom: '1px solid rgba(255,255,255,0.05)',
-                            transition: 'background 0.2s',
+                            background: isActive ? 'linear-gradient(90deg, rgba(255,107,0,0.06) 0%, transparent 100%)' : 'transparent',
+                            borderBottom: '1px solid rgba(255,255,255,0.03)',
+                            transition: 'all 0.2s ease',
+                            position: 'relative'
                           }}
-                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                          onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
                           onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
                         >
+                          {isActive && <div style={{ position: 'absolute', left: 0, top: '15%', bottom: '15%', width: '3px', background: 'var(--saffron)', borderRadius: '0 4px 4px 0' }} />}
                           {/* Emoji icon */}
-                          <div style={{ fontSize: '22px', width: '36px', height: '36px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? 'rgba(255,107,0,0.15)' : 'rgba(255,255,255,0.05)', borderRadius: '10px', flexShrink: 0 }}>
+                          <div style={{ fontSize: '24px', width: '42px', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isActive ? 'rgba(255,107,0,0.2)' : 'rgba(255,255,255,0.04)', borderRadius: '12px', flexShrink: 0, border: isActive ? '1px solid rgba(255,107,0,0.3)' : '1px solid rgba(255,255,255,0.05)', boxShadow: isActive ? '0 4px 12px rgba(255,107,0,0.15)' : 'none' }}>
                             {item.icon}
                           </div>
                           {/* Text */}
@@ -934,20 +957,21 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
                     })}
 
                     {/* Footer Action Button */}
-                    <div style={{ padding: '10px 12px' }}>
+                    <div style={{ padding: '16px 20px', background: 'rgba(0,0,0,0.2)' }}>
                       <button
                         onClick={applyWidgets}
                         disabled={activeWidgets.size === 0}
                         style={{
-                          width: '100%', padding: '10px', borderRadius: '10px', border: 'none',
-                          background: activeWidgets.size > 0 ? 'linear-gradient(135deg, #ff6b00, #ff8c00)' : 'rgba(255,255,255,0.05)',
-                          color: activeWidgets.size > 0 ? '#fff' : '#475569',
-                          fontWeight: 700, fontSize: '13px', cursor: activeWidgets.size > 0 ? 'pointer' : 'not-allowed',
+                          width: '100%', padding: '12px', borderRadius: '12px', border: 'none',
+                          background: activeWidgets.size > 0 ? 'linear-gradient(135deg, var(--saffron), #e65c00)' : 'rgba(255,255,255,0.04)',
+                          color: activeWidgets.size > 0 ? '#fff' : '#64748b',
+                          fontWeight: 700, fontSize: '14px', cursor: activeWidgets.size > 0 ? 'pointer' : 'not-allowed',
                           transition: 'all 0.2s',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                          boxShadow: activeWidgets.size > 0 ? '0 8px 24px rgba(255, 107, 0, 0.25)' : 'none'
                         }}
                       >
-                        {activeWidgets.size > 0 ? `Show ${activeWidgets.size} Widget${activeWidgets.size > 1 ? 's' : ''} on Dashboard ↓` : 'Select a tracker above'}
+                        {activeWidgets.size > 0 ? `Apply ${activeWidgets.size} Widget${activeWidgets.size > 1 ? 's' : ''} ↓` : 'Select a tracker above'}
                       </button>
                     </div>
                   </>
