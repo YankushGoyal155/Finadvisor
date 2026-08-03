@@ -17,6 +17,7 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
   const textareaRef = useRef(null)
   const docInputRef = useRef(null)
   const imgInputRef = useRef(null)
+  const skipFetchRef = useRef(false)
 
   const handleModelChange = (val) => {
     setSelectedModel(val);
@@ -193,6 +194,10 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
 
   useEffect(() => {
     if (threadId) {
+      if (skipFetchRef.current) {
+        skipFetchRef.current = false;
+        return;
+      }
       // Fetch messages for this specific thread
       fetch(`${import.meta.env.VITE_API_URL}/threads/${threadId}/messages`)
         .then(res => res.json())
@@ -224,16 +229,19 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
     }
   }, [input])
 
-  // Close attach menu on outside click
+  // Close attach menu & model selector on outside click
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (showAttachMenu && !e.target.closest('.attach-wrapper')) {
         setShowAttachMenu(false);
       }
+      if (showModelSelector && !e.target.closest('.model-selector-wrapper')) {
+        setShowModelSelector(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showAttachMenu]);
+  }, [showAttachMenu, showModelSelector]);
 
   const handleSend = async (text = input) => {
     if (!text.trim() && !attachedImage) return
@@ -260,6 +268,7 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
         const threadData = await threadResp.json();
         if (threadData.status === 'success') {
           currentThreadId = threadData.thread_id;
+          skipFetchRef.current = true;
           setThreadId(currentThreadId); // Update parent state
         }
       }
@@ -293,18 +302,29 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
 
       // Step 3: Parse and strip ALL Action Tags
       // Format: [[ACTION: {"type": "...", "data": {...}}]]
-      const actionRegex = /\[\[ACTION:\s*(\{.*?\})\s*\]\]/gs;
+      const actionRegex = /\[\[ACTION:\s*(\{[\s\S]*?\})\s*\]\]/g;
       const matches = [...reply.matchAll(actionRegex)];
       
       // Always strip action tags from visible text first
       reply = reply.replace(actionRegex, '').trim();
       // Also clean up any malformed/partial action tags the AI might have left
-      reply = reply.replace(/\[\[ACTION:.*?\]\]/gs, '').trim();
-      reply = reply.replace(/\[\[ACTION:.*$/gm, '').trim();
+      reply = reply.replace(/\[\[ACTION:[\s\S]*?\]\]/g, '').trim();
+      reply = reply.replace(/\[\[ACTION:[\s\S]*$/gm, '').trim();
       
       for (const match of matches) {
         try {
-          const action = JSON.parse(match[1]);
+          // Robust JSON parsing with fallback for common AI formatting issues
+          let action;
+          try {
+            action = JSON.parse(match[1]);
+          } catch (jsonErr) {
+            // Try fixing common issues: trailing commas, unescaped quotes
+            const cleaned = match[1]
+              .replace(/,\s*}/g, '}')
+              .replace(/,\s*]/g, ']')
+              .replace(/([{,]\s*)(\w+)\s*:/g, '$1"$2":');
+            action = JSON.parse(cleaned);
+          }
           console.log("AI triggered action:", action);
           const shouldNavigate = action.navigate !== false;
           
@@ -340,7 +360,7 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
             // AI can update any onboarding/profile field
             const updated = { ...onboardingData, ...action.data };
             updateOnboardingData(updated);
-            localStorage.setItem('finance_onboarding_data', JSON.stringify(updated));
+            // Context auto-persists to localStorage
             // Clear cached health score so it recalculates
             const scoreKey = isBusiness ? 'business_health_score' : 'financial_health_score';
             localStorage.removeItem(scoreKey);
@@ -364,7 +384,6 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
             if (action.data.onboarding) {
               const updated = { ...onboardingData, ...action.data.onboarding };
               updateOnboardingData(updated);
-              localStorage.setItem('finance_onboarding_data', JSON.stringify(updated));
             }
             showToast('✅ Dashboard updated with multiple changes!', 'success');
             if (shouldNavigate) setActivePage('dashboard');
@@ -517,8 +536,13 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
           } else if (action.type === 'MF_ANALYZE_PORTFOLIO') {
             // Navigate to MF page for portfolio view
             if (shouldNavigate) setActivePage('mf');
-          } else if (action.type === 'NAVIGATE' && action.page) {
-            setActivePage(action.page);
+          } else if (action.type === 'NAVIGATE') {
+            // Support both action.data.page and action.page (AI sends either)
+            const targetPage = action.data?.page || action.data || action.page;
+            if (typeof targetPage === 'string') {
+              setActivePage(targetPage);
+              showToast(`📄 Navigated to ${targetPage}`, 'info');
+            }
           }
         } catch (e) {
           console.error("Failed to parse AI action:", e);
@@ -776,8 +800,14 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
 
 function formatMarkdown(text) {
   if (!text) return '';
-  text = text.replace(/\[\[ACTION:.*?\]\]/gs, '');
-  text = text.replace(/\[\[ACTION:.*$/gm, '');
+  text = text.replace(/\[\[ACTION:[\s\S]*?\]\]/g, '');
+  text = text.replace(/\[\[ACTION:[\s\S]*$/gm, '');
+  
+  // Code blocks (```...```)
+  text = text.replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px; overflow-x:auto; font-size:12px; margin:8px 0; font-family:monospace;"><code>$1</code></pre>');
+  
+  // Inline code (`...`)
+  text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(255,107,0,0.12); padding:2px 6px; border-radius:4px; font-size:0.9em; font-family:monospace; color:var(--saffron-light);">$1</code>');
   
   // Headers
   text = text.replace(/^### (.*$)/gim, '<h3 style="margin-top:12px; margin-bottom:6px; font-size:1.1em;">$1</h3>');
@@ -787,16 +817,27 @@ function formatMarkdown(text) {
   // Bold
   text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
   
-  // Italics
-  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  // Italics (avoid matching inside multiply/math)
+  text = text.replace(/(?<![\w*])\*([^*]+)\*(?![\w*])/g, '<em>$1</em>');
   
-  // Lists
-  text = text.replace(/^\s*[\-\*]\s+(.*)/gim, '<div style="display:flex; margin-bottom:4px;"><span style="margin-right:8px; color:var(--saffron);">&bull;</span><span>$1</span></div>');
-  text = text.replace(/^\s*\d+\.\s+(.*)/gim, '<div style="display:flex; margin-bottom:4px;"><span style="margin-right:8px; color:var(--saffron); font-weight:bold;">#</span><span>$1</span></div>');
+  // Horizontal rule
+  text = text.replace(/^---$/gim, '<hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:12px 0;"/>');
+  
+  // Links [text](url)
+  text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--saffron-light); text-decoration:underline;">$1</a>');
+  
+  // Ordered lists (numbered)
+  text = text.replace(/^\s*\d+\.\s+(.*)/gim, '<div style="display:flex; margin-bottom:4px; padding-left:4px;"><span style="margin-right:8px; color:var(--saffron); font-weight:bold; min-width:16px;">•</span><span>$1</span></div>');
+  
+  // Unordered lists
+  text = text.replace(/^\s*[\-\*]\s+(.*)/gim, '<div style="display:flex; margin-bottom:4px; padding-left:4px;"><span style="margin-right:8px; color:var(--saffron);">•</span><span>$1</span></div>');
+  
+  // Disclaimer/Note blocks (> blockquote)
+  text = text.replace(/^>\s?(.*)/gim, '<div style="border-left:3px solid var(--saffron); padding:8px 14px; margin:8px 0; background:rgba(255,107,0,0.05); border-radius:0 8px 8px 0; font-size:0.9em; color:var(--text-secondary);">$1</div>');
   
   // Line breaks
   text = text.replace(/\n\n/g, '<br/><br/>');
-  text = text.replace(/\n(?!<div)/g, '<br/>'); // basic newline handling without breaking lists
+  text = text.replace(/\n(?!<div|<pre|<h[1-3]|<hr)/g, '<br/>');
   
   return text.trim();
 }

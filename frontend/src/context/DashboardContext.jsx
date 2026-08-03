@@ -77,6 +77,7 @@ export function DashboardProvider({ children }) {
   useEffect(() => { localStorage.setItem('finance_goals_data', JSON.stringify(goalsData)); }, [goalsData]);
   useEffect(() => { localStorage.setItem('finance_retirement_data', JSON.stringify(retirementData)); }, [retirementData]);
   useEffect(() => { localStorage.setItem('finance_saved_mf', JSON.stringify(savedMutualFunds)); }, [savedMutualFunds]);
+  useEffect(() => { if (onboardingData) localStorage.setItem('finance_onboarding_data', JSON.stringify(onboardingData)); }, [onboardingData]);
 
   // Action Updaters
   const updateEmi = (newData) => setEmiData(prev => ({ ...prev, ...newData }));

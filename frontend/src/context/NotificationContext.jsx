@@ -33,7 +33,11 @@ export function NotificationProvider({ children }) {
 
   const showToast = useCallback((message, type = 'info', duration = 4000) => {
     const id = Date.now().toString();
-    setToasts(prev => [...prev, { id, message, type }]);
+    setToasts(prev => {
+      const updated = [...prev, { id, message, type }];
+      // Limit to 3 visible toasts to prevent UI overflow
+      return updated.length > 3 ? updated.slice(-3) : updated;
+    });
 
     if (duration > 0) {
       setTimeout(() => {

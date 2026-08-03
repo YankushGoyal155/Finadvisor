@@ -18,16 +18,18 @@ export default function RetirementPage() {
     setPortfolioReturn(retirementData.expectedReturn);
   }, [retirementData]);
 
-  const yearsToRetire = retireAge - age;
-  const futureMonthlyExpenses = Math.round(expenses * Math.pow(1 + inflation/100, yearsToRetire));
+  const yearsToRetire = Math.max(1, retireAge - age);
+  const futureMonthlyExpenses = expenses > 0 ? Math.round(expenses * Math.pow(1 + inflation/100, yearsToRetire)) : 0;
   
   // Rule of 25 for Corpus
   const fireCorpus = futureMonthlyExpenses * 12 * 25;
   
-  // SIP needed to reach corpus
-  const r = portfolioReturn / 12 / 100;
+  // SIP needed to reach corpus — safe from division-by-zero
+  const r = portfolioReturn > 0 ? portfolioReturn / 12 / 100 : 0;
   const n = yearsToRetire * 12;
-  const sipNeeded = Math.round(fireCorpus / (((Math.pow(1 + r, n) - 1) / r) * (1 + r)));
+  const sipNeeded = (r > 0 && n > 0 && fireCorpus > 0)
+    ? Math.round(fireCorpus / (((Math.pow(1 + r, n) - 1) / r) * (1 + r)))
+    : 0;
 
   const sipAffordable = sipNeeded < expenses * 0.5;
 

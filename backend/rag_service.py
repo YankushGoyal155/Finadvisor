@@ -457,7 +457,7 @@ IMPORTANT: Analyze any image the user sends thoroughly. If the user attaches a f
             chat_history = []
 
         history_str = ""
-        for msg in chat_history[-6:]:
+        for msg in chat_history[-10:]:
             role = "User" if msg.get("role") == "user" else "AI"
             history_str += f"{role}: {msg.get('content')}\n\n"
 

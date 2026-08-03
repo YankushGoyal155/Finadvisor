@@ -22,9 +22,9 @@ export default function InvestmentPage() {
   };
 
   const totalInvested = monthly * years * 12;
-  const futureValue = calcSIP(monthly, rate, years);
+  const futureValue = (monthly > 0 && rate > 0 && years > 0) ? calcSIP(monthly, rate, years) : totalInvested;
   const wealthGained = futureValue - totalInvested;
-  const gainPct = Math.round((wealthGained / futureValue) * 100);
+  const gainPct = futureValue > 0 ? Math.round((wealthGained / futureValue) * 100) : 0;
 
 
 

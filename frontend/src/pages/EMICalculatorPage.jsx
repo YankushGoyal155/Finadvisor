@@ -24,10 +24,10 @@ export default function EMICalculatorPage() {
     return (p * mr * Math.pow(1 + mr, n)) / (Math.pow(1 + mr, n) - 1);
   };
 
-  const emi = calcEMI(principal, rate, tenure);
+  const emi = (principal > 0 && rate > 0 && tenure > 0) ? calcEMI(principal, rate, tenure) : 0;
   const totalPayment = emi * tenure * 12;
   const totalInterest = totalPayment - principal;
-  const interestPct = Math.round((totalInterest / totalPayment) * 100);
+  const interestPct = totalPayment > 0 ? Math.round((totalInterest / totalPayment) * 100) : 0;
 
   const personalPresets = [
     { name: 'Home Loan', p: 5000000, r: 8.5, t: 20, icon: '🏠' },

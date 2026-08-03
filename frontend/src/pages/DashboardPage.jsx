@@ -145,7 +145,6 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
         gstRegistered: editForm.gstRegistered,
       };
       updateOnboardingData(updatedOnboarding);
-      localStorage.setItem('finance_onboarding_data', JSON.stringify(updatedOnboarding));
     } else {
       const updatedOnboarding = {
         ...onboardingData,
@@ -157,7 +156,6 @@ export default function DashboardPage({ setActivePage, user, onLogout }) {
         healthInsurance: editForm.healthInsurance,
       };
       updateOnboardingData(updatedOnboarding);
-      localStorage.setItem('finance_onboarding_data', JSON.stringify(updatedOnboarding));
 
       // Update calculator states
       if (editForm.loanPrincipal || editForm.loanRate || editForm.loanTenure) {

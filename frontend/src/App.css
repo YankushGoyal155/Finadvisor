@@ -28,9 +28,16 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Let the individual pages handle their own scrolling */
+  overflow-y: auto;
   position: relative;
   z-index: 1;
+  /* Smooth page transitions */
+  animation: pageTransition 0.35s ease-out;
+}
+
+@keyframes pageTransition {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Background Decorative Blobs */

@@ -20,6 +20,8 @@ export default function TopNav({ activePage, sidebarCollapsed, setSidebarCollaps
     retirement: 'FIRE Planner',
     afford: 'Can I Afford It?',
     checkin: 'Monthly Check-in',
+    data_sync: 'Data Sync (Setu AA)',
+    corp_tax: 'Corporate Tax Planner',
   };
 
   // Close dropdown when clicking outside
