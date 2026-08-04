@@ -19,14 +19,64 @@ from market_fetcher import get_live_market_data
 
 # ─── Fallback Knowledge ────────────────────────────────────────────────
 FALLBACK_KNOWLEDGE = """
-The old tax regime offers lower tax rates across different income brackets but requires taxpayers to let go of many tax exemptions and deductions such as HRA, LTA, 80C, 80D, etc. 
-The new tax regime has no tax up to Rs 7 lakh. The standard deduction of Rs 50,000 was introduced in the new tax regime in Budget 2023. In Budget 2024-25, standard deduction was increased to Rs 75,000 for the new tax regime.
-For FY 2025-26 under the new tax regime, slabs are: 0 to 4L is Nil. 4L to 8L is 5%. 8L to 12L is 10%. 12L to 16L is 15%. 16L to 20L is 20%. 20L to 24L is 25%. Above 24L is 30%. Rebate under 87A allows zero tax for income up to Rs 12 lakh under the new tax regime.
-Under the Old Regime, the standard deduction is Rs 50,000. Income up to Rs 2.5L is Nil. 2.5L to 5L is 5%. 5L to 10L is 20%. Above 10L is 30%. Rebate makes income up to Rs 5 lakh tax-free.
-Section 80C allows a maximum deduction of Rs 1.5 lakh from taxable income for investments like PPF, EPF, ELSS, Life Insurance premiums.
-Section 80D allows deduction up to Rs 25,000 for medical insurance for self, spouse, and dependent children. An additional deduction of Rs 50,000 is allowed for parents above 60 years.
-SIP (Systematic Investment Plan) is a method of investing in mutual funds. Large Cap funds have low risk, Flexi Cap have medium risk, Small Cap have highest risk and return potential.
-Always maintain an emergency fund equivalent to 6 months of living expenses.
+=== TAX REGIME COMPARISON (FY 2025-26 / AY 2026-27) ===
+New Tax Regime (Default): Income up to ₹4L = Nil, 4-8L = 5%, 8-12L = 10%, 12-16L = 15%, 16-20L = 20%, 20-24L = 25%, above 24L = 30%. Standard Deduction: ₹75,000. Rebate u/s 87A: Full rebate for taxable income ≤ ₹12 lakh (zero tax payable).
+Old Tax Regime: Up to ₹2.5L = Nil, 2.5-5L = 5%, 5-10L = 20%, above 10L = 30%. Standard Deduction: ₹50,000. Rebate: Income up to ₹5 lakh is tax-free.
+Choose old regime ONLY if total deductions (80C + 80D + HRA + LTA + 80CCD etc.) exceed ~₹3.75 lakh. Otherwise, new regime is cheaper.
+
+Section 80C (max ₹1.5L): PPF, EPF, ELSS (3-year lock-in equity MF), NSC, 5-yr FD, SCSS, SSY, Life Insurance Premium, Home Loan Principal, Tuition Fees.
+Section 80CCD(1B): Additional ₹50,000 for NPS above 80C limit.
+Section 80D: Health Insurance — Self/Family ₹25,000 (₹50,000 if senior citizen). Parents: ₹25,000 (₹50,000 if senior). Max ₹1,00,000.
+Section 24(b): Home Loan Interest deduction up to ₹2,00,000 for self-occupied property.
+Section 80E: Education Loan interest — no upper limit, for 8 years.
+Surcharge: 50L-1Cr: 10%, 1-2Cr: 15%, 2-5Cr: 25%, Above 5Cr: 25% (new)/37% (old). 4% Health & Education Cess.
+
+=== MUTUAL FUNDS & SIP ===
+SIP (Systematic Investment Plan) lets you invest fixed amounts monthly into mutual funds. Benefits: Rupee Cost Averaging, Compounding, Discipline. Starts from ₹100.
+Large Cap: Top 100 companies, low risk, 10-12% returns. Examples: HDFC Top 100, SBI Bluechip, Mirae Asset Large Cap, ICICI Prudential Bluechip.
+Mid Cap: 101-250 companies, medium risk, 12-16% returns. Examples: HDFC Mid-Cap Opportunities, Kotak Emerging Equity.
+Small Cap: 251+ companies, high risk, 15-20% returns. Examples: Quant Small Cap, Nippon India Small Cap, Axis Small Cap, DSP Small Cap.
+Flexi Cap: Flexible across all sizes. Examples: Parag Parikh Flexi Cap, HDFC Flexi Cap.
+ELSS: Tax-saving equity MF with 3-year lock-in (80C eligible). Examples: Mirae Asset Tax Saver, Quant Tax Plan.
+Index Funds: Passive, track Nifty/Sensex, lowest expense ratio. Examples: UTI Nifty 50 Index, HDFC Index Nifty 50.
+Debt Funds: Invest in bonds, 6-8% returns. Liquid Funds: Emergency fund parking, ~5-6%, instant redemption up to ₹50K.
+Expense Ratio: Annual fee. Always choose DIRECT plans (lower fee than Regular plans).
+MF Taxation: Equity >12 months: LTCG 12.5% on gains above ₹1.25L/year. <12 months STCG: 20%. Debt: Taxed at slab rate.
+XIRR: Correct metric for SIP returns (not CAGR). Measures real return on staggered investments.
+
+Beginner portfolio (age 25-35): 60% Large Cap/Index, 20% Mid Cap, 10% Small Cap, 10% Debt.
+Moderate (age 35-50): 40% Large, 30% Mid, 10% Small, 20% Debt.
+Conservative (50+): 30% Large, 10% Mid, 60% Debt/Hybrid.
+
+=== FIXED INCOME ===
+PPF: 7.1% p.a., 15-year lock-in, EEE tax status (fully tax-free), max ₹1.5L/year. Zero risk, government guaranteed.
+EPF: 8.25% p.a. (FY 2024-25), employer+employee contribute 12% of basic. Tax-free maturity after 5 years.
+NPS: 80CCD(1) within 80C + additional ₹50K u/s 80CCD(1B). 60% tax-free at maturity.
+FD: 6.5-7.5% major banks. Interest taxable. 5-yr tax-saver FD eligible under 80C.
+SGB (Sovereign Gold Bonds): RBI-issued, 2.5% annual interest + gold appreciation. No capital gains if held till 8-year maturity.
+SCSS (Senior Citizens Savings Scheme): 8.2% p.a., max ₹30L. SSY (Sukanya Samriddhi): 8.2%, for girl child.
+
+=== INSURANCE ===
+Health Insurance: Min ₹10L individual, ₹25L family. No co-payment, no room rent capping, network hospitals. Section 80D benefit.
+Term Insurance: 10-15× annual income. Pure protection, cheapest life cover. Best taken young.
+AVOID: ULIPs, Endowment Plans, Money-back plans — high charges, poor returns vs MF+Term combo.
+
+=== LOANS & EMI ===
+EMI = P × r × (1+r)^n / ((1+r)^n - 1). Total EMI should be ≤40% of net income (ideal 25-35%).
+Home Loan: 8.25-9.5%, Tax benefits on interest (24b) + principal (80C). Personal Loan: 10-18%, avoid if possible.
+CIBIL Score: 750+ is excellent. Pay on time, keep credit utilization <30%, don't close old cards.
+
+=== FINANCIAL PLANNING RULES ===
+Emergency fund = 6 months of living expenses. Park in: Liquid MF, High-interest savings account, Short-term FDs.
+50-30-20 Rule: 50% Needs, 30% Wants, 20% Savings & Investments.
+15-15-15 Rule: ₹15,000/month for 15 years at 15% return ≈ ₹1 Crore.
+Rule of 72: Divide 72 by return % = years to double money. Example: 12% return → doubles in 6 years.
+FIRE: Corpus = Annual Expenses × 25 (4% safe withdrawal rate). Account for 6-7% inflation in retirement planning.
+
+=== BUSINESS FINANCE ===
+Presumptive Tax (Sec 44AD): Turnover up to ₹3Cr (if ≥95% digital). Deemed profit: 6% digital, 8% cash.
+GST Registration: Mandatory if turnover > ₹40L (₹20L for services/NE states). Composition Scheme: up to ₹1.5Cr.
+Business Loan Interest: Fully deductible under Section 36(1)(iii). Depreciation on assets: Computers 40%, Furniture 10%, Vehicles 15%.
 """
 
 CHROMA_DB_DIR = "./chroma_db"
@@ -89,15 +139,51 @@ class RAGFinanceService:
             print(f"❌ Error loading ChromaDB: {e}")
             self.vector_store = None
 
-    def _retrieve_context(self, query: str, k: int = 4) -> str:
+    def _retrieve_context(self, query: str, k: int = 6) -> str:
+        """Retrieve context from ChromaDB + live market data + fallback knowledge.
+        Uses query expansion to find more relevant chunks."""
         retrieved_chunks = []
 
         if self.vector_store:
             try:
+                # Primary search with original query
                 results = self.vector_store.similarity_search(query, k=k)
                 if results:
                     retrieved_chunks = [doc.page_content for doc in results]
                     print(f"🔍 Retrieved {len(retrieved_chunks)} chunks from ChromaDB")
+                
+                # Query expansion — search with enriched financial terms for better recall
+                query_lower = query.lower()
+                expansion_map = {
+                    'tax': 'income tax deduction 80C 80D regime slab surcharge',
+                    'sip': 'SIP systematic investment plan mutual fund monthly',
+                    'mutual fund': 'mutual fund NAV SIP returns ELSS large cap mid cap small cap',
+                    'emi': 'EMI loan interest rate tenure principal home car personal',
+                    'insurance': 'health insurance term life insurance 80D premium',
+                    'retire': 'retirement FIRE corpus pension NPS EPF age monthly expenses inflation',
+                    'goal': 'financial goal savings target deadline milestone',
+                    'emergency': 'emergency fund liquid fund savings 6 months expenses',
+                    'ppf': 'PPF public provident fund 80C 7.1% EEE tax free',
+                    'nps': 'NPS national pension system 80CCD deduction',
+                    'gold': 'gold sovereign gold bond SGB ETF digital gold investment',
+                    'fd': 'fixed deposit FD bank interest rate TDS 80C',
+                    'real estate': 'real estate home loan rent REIT property section 24',
+                    'budget': 'union budget tax slab rebate standard deduction cess surcharge',
+                    'loan': 'loan EMI interest rate CIBIL score home car education personal',
+                    'save': 'savings investment SIP PPF EPF FD liquid fund',
+                    'business': 'business GST presumptive tax 44AD turnover revenue expenses profit',
+                }
+                for keyword, expansion in expansion_map.items():
+                    if keyword in query_lower:
+                        try:
+                            extra_results = self.vector_store.similarity_search(expansion, k=3)
+                            for doc in extra_results:
+                                if doc.page_content not in retrieved_chunks:
+                                    retrieved_chunks.append(doc.page_content)
+                            print(f"🔍 Expanded query with '{keyword}' — total chunks: {len(retrieved_chunks)}")
+                        except Exception:
+                            pass
+                        break  # Only expand with the first matching keyword
             except Exception as e:
                 print(f"⚠️ Vector search failed: {e}")
 

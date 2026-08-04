@@ -1,0 +1,254 @@
+============================================================
+COMPREHENSIVE INDIAN PERSONAL FINANCE KNOWLEDGE BASE
+Last Updated: August 2026
+============================================================
+
+=== SECTION 1: TAX PLANNING (FY 2025-26 / AY 2026-27) ===
+
+NEW TAX REGIME (DEFAULT — Section 115BAC):
+Tax Slabs for FY 2025-26:
+- Income up to ₹4,00,000: NIL (no tax)
+- ₹4,00,001 to ₹8,00,000: 5%
+- ₹8,00,001 to ₹12,00,000: 10%
+- ₹12,00,001 to ₹16,00,000: 15%
+- ₹16,00,001 to ₹20,00,000: 20%
+- ₹20,00,001 to ₹24,00,000: 25%
+- Above ₹24,00,000: 30%
+- Standard Deduction: ₹75,000
+- Rebate u/s 87A: Full rebate for taxable income up to ₹12,00,000 (zero tax payable).
+
+OLD TAX REGIME:
+Tax Slabs:
+- Up to ₹2,50,000: NIL
+- ₹2,50,001 to ₹5,00,000: 5%
+- ₹5,00,001 to ₹10,00,000: 20%
+- Above ₹10,00,000: 30%
+- Rebate u/s 87A: Income up to ₹5,00,000 is tax-free.
+- Standard Deduction: ₹50,000
+
+WHEN TO CHOOSE OLD vs NEW REGIME:
+The old regime is better ONLY IF total deductions under 80C, 80D, HRA, LTA, 80CCD etc. EXCEED approximately ₹3.75 lakh. Otherwise, the new regime is almost always cheaper. For salaried individuals earning under ₹15 lakh with basic deductions, the new regime is usually better.
+
+KEY DEDUCTIONS (OLD REGIME ONLY):
+Section 80C (Max ₹1,50,000): PPF, EPF, ELSS Mutual Funds, NSC, Life Insurance Premium, 5-year FD, SCSS, SSY, Home Loan Principal Repayment, Tuition Fees.
+Section 80CCD(1B) (Additional ₹50,000): NPS (National Pension System) — above and beyond 80C limit.
+Section 80D (Health Insurance):
+  - Self/Spouse/Children: ₹25,000 (₹50,000 if self is senior citizen)
+  - Parents: ₹25,000 (₹50,000 if parents are senior citizens)
+  - Maximum total: ₹1,00,000 (if both self and parents are senior citizens)
+Section 80E: Education Loan interest — no upper limit, for 8 years.
+Section 80TTA: Interest on Savings Account up to ₹10,000 (non-senior).
+Section 80TTB: Interest on Deposits up to ₹50,000 (senior citizens only).
+Section 24(b): Home Loan Interest Deduction up to ₹2,00,000 for self-occupied property.
+HRA Exemption: Available for salaried employees paying rent. Calculated as minimum of: Actual HRA received, 50%/40% of basic salary, Rent paid minus 10% of basic salary.
+
+SURCHARGE:
+- ₹50 lakh to ₹1 crore: 10%
+- ₹1 crore to ₹2 crore: 15%
+- ₹2 crore to ₹5 crore: 25%
+- Above ₹5 crore: 25% (new regime) / 37% (old regime)
+Health and Education Cess: 4% on total tax + surcharge.
+
+=== SECTION 2: MUTUAL FUNDS & SIP ===
+
+WHAT IS A MUTUAL FUND?
+A mutual fund pools money from many investors and invests it in stocks, bonds, or other securities managed by professional fund managers. Each investor owns units proportional to their investment.
+
+WHAT IS SIP (Systematic Investment Plan)?
+SIP allows you to invest a fixed amount regularly (usually monthly) into a mutual fund. Benefits: Rupee Cost Averaging (buy more units when cheap, fewer when expensive), Power of Compounding, Discipline, Small ticket size (starts from ₹100).
+
+TYPES OF MUTUAL FUNDS BY CATEGORY:
+1. Large Cap Funds: Invest in top 100 companies by market capitalization. Lower risk, stable returns (~10-12% long-term). Examples: HDFC Top 100, SBI Bluechip, Mirae Asset Large Cap.
+2. Mid Cap Funds: Invest in 101st to 250th companies. Medium risk, higher growth potential (~12-16%). Examples: HDFC Mid-Cap Opportunities, Kotak Emerging Equity.
+3. Small Cap Funds: Invest in companies ranked 251+. Highest risk, highest return potential (~15-20% long-term, but volatile). Examples: Quant Small Cap, Nippon India Small Cap, Axis Small Cap.
+4. Flexi Cap Funds: Can invest across large, mid, small caps. Flexible allocation managed by fund manager. Examples: Parag Parikh Flexi Cap, HDFC Flexi Cap.
+5. ELSS (Tax Saving) Funds: Equity funds with 3-year lock-in. Eligible for Section 80C deduction. Examples: Mirae Asset Tax Saver, Quant Tax Plan.
+6. Index Funds: Passively track an index like Nifty 50 or Sensex. Lowest expense ratio. Examples: UTI Nifty 50 Index Fund, HDFC Index Nifty 50.
+7. Debt Funds: Invest in bonds, government securities. Low risk, stable returns (~6-8%). Examples: HDFC Corporate Bond, ICICI Prudential Corporate Bond.
+8. Liquid Funds: Very short-term debt. Almost like savings. Returns ~5-6%. Emergency fund option.
+
+PORTFOLIO CONSTRUCTION ADVICE:
+For a beginner (age 25-35):
+- 60% in Large Cap or Index Funds (stability)
+- 20% in Mid Cap (growth)
+- 10% in Small Cap (aggressive growth, optional)
+- 10% in Debt/Liquid (safety cushion)
+
+For moderate investor (age 35-50):
+- 40% Large Cap
+- 30% Mid Cap
+- 10% Small Cap
+- 20% Debt
+
+For conservative investor (age 50+):
+- 30% Large Cap
+- 10% Mid Cap
+- 60% Debt/Hybrid
+
+EXPENSE RATIO: The annual fee charged by the fund house. Direct plans have lower expense ratios than Regular plans. Always prefer Direct plans.
+
+XIRR (Extended Internal Rate of Return): The correct way to measure SIP returns since investments are made at different times. CAGR works for lump sum, XIRR works for SIP.
+
+MUTUAL FUND TAXATION (FY 2025-26):
+Equity Mutual Funds (held > 12 months):
+- LTCG (Long Term Capital Gains): 12.5% on gains above ₹1,25,000 per year.
+- STCG (Short Term, < 12 months): 20%.
+Debt Mutual Funds:
+- LTCG: Taxed at slab rate (no indexation benefit for funds purchased after April 2023).
+- STCG: Taxed at slab rate.
+
+=== SECTION 3: FIXED INCOME INSTRUMENTS ===
+
+PPF (Public Provident Fund):
+- Current Rate: 7.1% p.a. (compounded annually)
+- Lock-in: 15 years (extendable in 5-year blocks)
+- Tax: EEE (Exempt-Exempt-Exempt) — No tax on investment, interest, or maturity.
+- Annual Limit: ₹1,50,000
+- Risk: Zero (Government guaranteed)
+
+EPF (Employee Provident Fund):
+- Current Rate: 8.25% p.a. (FY 2024-25)
+- Both employer and employee contribute 12% of basic salary
+- Tax-free maturity after 5 years of continuous service
+
+NPS (National Pension System):
+- Tax benefit under 80CCD(1) within 80C limit + additional ₹50,000 under 80CCD(1B)
+- Performance-linked returns (7-10% historically)
+- 60% corpus is tax-free on maturity, 40% goes to annuity
+
+Fixed Deposits (FD):
+- Current rates: 6.5-7.5% for major banks (varies by bank)
+- 5-year Tax-saving FD qualifies for 80C deduction (old regime)
+- Interest is fully taxable at slab rate. TDS deducted at 10% if interest > ₹40,000/year
+
+Sovereign Gold Bonds (SGB):
+- Issued by RBI, 2.5% annual interest + gold price appreciation
+- 8-year tenure (exit after 5 years allowed)
+- No capital gains tax if held till maturity
+- Better than physical gold — no making charges, no storage risk
+
+=== SECTION 4: LOANS & EMI ===
+
+HOME LOAN:
+- Interest rates: 8.25-9.50% (varies by bank, CIBIL score, and loan amount)
+- Tax benefit: Interest up to ₹2,00,000 (Section 24b), Principal up to ₹1,50,000 (Section 80C)
+- Under-construction property: Pre-EMI interest claimable in 5 equal installments after possession
+- Joint loan with spouse: Both can claim separate deductions
+
+EMI FORMULA: EMI = P × r × (1+r)^n / ((1+r)^n - 1) where P = principal, r = monthly interest rate, n = total months.
+
+RULE OF THUMB — HEALTHY EMI:
+- Total EMI should not exceed 40% of net monthly income
+- Ideal range: 25-35% of monthly take-home pay
+
+PERSONAL LOAN: Interest rates 10-18% depending on credit score. Avoid if possible — high interest.
+CAR LOAN: Interest rates 8-12%. Try to make at least 30% down payment.
+EDUCATION LOAN: Interest rates 8-12%. Section 80E deduction on interest, no limit.
+
+CIBIL SCORE:
+- 750+ is considered excellent
+- Factors: Payment history (35%), Credit utilization (30%), Credit history length (15%), Credit mix (10%), New credit (10%)
+- Tips to improve: Pay EMIs/credit card bills on time, keep credit utilization under 30%, don't close old credit cards
+
+=== SECTION 5: INSURANCE ===
+
+HEALTH INSURANCE:
+- Minimum recommended: ₹10 lakh cover for individuals, ₹25 lakh for family
+- Look for: No co-payment, No room rent capping, Network hospitals in your city, Pre-existing disease waiting period
+- Section 80D benefit in old regime
+- Super top-up plans are cost-effective for higher coverage
+
+TERM INSURANCE (Life Insurance):
+- Rule of thumb: Cover = 10-15× annual income
+- Best taken at young age (premiums are very low for 25-30 year olds)
+- Pure protection — no maturity value. Cheapest and best life cover.
+- Compare plans on term insurance aggregators for best premium
+
+AVOID:
+- ULIPs (Unit Linked Insurance Plans) — High charges, poor returns compared to MF + Term combo
+- Endowment Plans — Low returns (4-5%), not worth it
+- Money-back Plans — Similar to endowment, poor wealth creation
+
+=== SECTION 6: EMERGENCY FUND ===
+
+GOLDEN RULE: Maintain 6 months of living expenses as emergency fund.
+WHERE TO PARK:
+- Liquid Mutual Funds (best — 5-6% returns, instant redemption up to ₹50,000)
+- High-interest Savings Account (Airtel Payments Bank, Fi Money, etc. offer 6-7%)
+- Short-term FDs (laddered approach — 1, 2, 3 month FDs)
+
+NEVER use emergency fund for investments or discretionary spending.
+
+=== SECTION 7: FINANCIAL PLANNING RULES ===
+
+50-30-20 RULE:
+- 50% of income: Needs (rent, groceries, EMI, utilities)
+- 30% of income: Wants (dining, shopping, entertainment, travel)
+- 20% of income: Savings & Investments (SIP, PPF, FD)
+
+15-15-15 RULE OF SIP:
+If you invest ₹15,000/month for 15 years at 15% annual return, you get approximately ₹1 Crore.
+
+RULE OF 72:
+To double your money, divide 72 by the annual return rate. Example: At 12% return, money doubles in 72/12 = 6 years.
+
+FIRE (Financial Independence, Retire Early):
+- FIRE Corpus = Annual Expenses × 25 (based on 4% safe withdrawal rate)
+- Lean FIRE: Very frugal lifestyle
+- Fat FIRE: Comfortable retirement with luxuries
+- Barista FIRE: Part-time work + investment income
+
+RETIREMENT PLANNING IN INDIA:
+- Consider inflation at 6-7% — ₹40,000/month today = ~₹1.28 lakh/month in 20 years
+- Target corpus using Rule of 25: If future monthly expense is ₹1.28 lakh, annual = ₹15.36 lakh, corpus needed = ₹3.84 crore
+- Start early — even ₹5,000/month SIP from age 25 can build ₹3+ crore by 55
+
+=== SECTION 8: STOCK MARKET BASICS ===
+
+NIFTY 50: Index of top 50 companies listed on NSE. Considered the benchmark for Indian equities.
+SENSEX: Index of top 30 companies listed on BSE.
+
+SEBI DISCLAIMER: Finadvisor is NOT a SEBI-registered Investment Adviser. It cannot recommend specific stocks for buying/selling. Mutual fund recommendations are purely educational.
+
+ASSET ALLOCATION BY RISK:
+Conservative: 30% Equity, 50% Debt, 20% Gold/Real Estate
+Moderate: 60% Equity, 25% Debt, 15% Gold
+Aggressive: 80% Equity, 10% Debt, 10% Gold
+
+=== SECTION 9: GOLD INVESTMENT ===
+
+Ways to invest in gold:
+1. Sovereign Gold Bonds (SGB) — Best option. Government-backed, 2.5% annual interest, no capital gains tax at maturity.
+2. Gold ETFs — Track gold price, trade on stock exchange. No interest but highly liquid.
+3. Digital Gold (via apps) — Convenient, small amounts possible. Store digitally.
+4. Physical Gold — Making charges (8-25%), storage risk, impurity risk. Least recommended for investment.
+
+=== SECTION 10: REAL ESTATE ===
+
+- Not solely an "investment" — primary residence is a lifestyle choice
+- Rental yield in India: Typically 2-3% (much lower than other assets)
+- REITs (Real Estate Investment Trusts): Invest in commercial real estate without buying property. Listed on stock exchange. Yields 6-8%.
+- Home loan decision: If rent < EMI and you plan to stay 7+ years, buying can make sense. Otherwise, renting + investing the difference in SIP is often better.
+
+=== SECTION 11: NEW INDIA-SPECIFIC SCHEMES & REGULATIONS ===
+
+AGNIPATH SCHEME (Section 80CCH): Deduction for contribution to Agniveer Corpus Fund.
+PM VAYA VANDANA YOJANA: Pension scheme for senior citizens, 7.4% p.a.
+SENIOR CITIZENS SAVINGS SCHEME (SCSS): 8.2% p.a., max ₹30 lakh investment.
+SUKANYA SAMRIDDHI YOJANA (SSY): For girl child, 8.2% p.a., matures at age 21.
+MAHILA SAMMAN SAVINGS CERTIFICATE: For women, 7.5% for 2 years, max ₹2 lakh.
+
+=== SECTION 12: BUSINESS FINANCE (for Business Persona) ===
+
+PRESUMPTIVE TAXATION (Section 44AD):
+- For businesses with turnover up to ₹3 crore (if ≥95% receipts are digital)
+- Deemed profit: 6% of digital turnover, 8% of cash turnover
+- No need to maintain detailed books of accounts
+
+GST REGISTRATION:
+- Mandatory if annual turnover exceeds ₹40 lakh (₹20 lakh for NE states & special category)
+- For service providers: ₹20 lakh threshold
+- Composition Scheme: Simplified filing for turnover up to ₹1.5 crore (1% tax for manufacturers, 5% for restaurants, 6% for service providers)
+
+BUSINESS LOAN INTEREST: Fully deductible as business expense under Section 36(1)(iii).
+DEPRECIATION: Claim depreciation on business assets (computers: 40%, furniture: 10%, vehicles: 15%).
