@@ -63,11 +63,11 @@ export default function RetirementPage() {
           <div className="stats-grid" style={{ marginTop: '20px' }}>
             <div className="stat-item">
               <div className="label">Inflation (%)</div>
-              <input type="number" value={inflation} onChange={(e) => setInflation(Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--saffron)', fontSize: '18px', fontWeight: 'bold', fontFamily: 'var(--font-main)', outline: 'none' }} />
+              <input type="text" inputMode="decimal" value={inflation} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setInflation(v === '' ? 0 : Number(v)); }} style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--saffron)', fontSize: '18px', fontWeight: 'bold', fontFamily: 'var(--font-main)', outline: 'none' }} />
             </div>
             <div className="stat-item">
               <div className="label">Return (%)</div>
-              <input type="number" value={portfolioReturn} onChange={(e) => setPortfolioReturn(Number(e.target.value))} style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--green-light)', fontSize: '18px', fontWeight: 'bold', fontFamily: 'var(--font-main)', outline: 'none' }} />
+              <input type="text" inputMode="decimal" value={portfolioReturn} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setPortfolioReturn(v === '' ? 0 : Number(v)); }} style={{ width: '100%', background: 'transparent', border: 'none', color: 'var(--green-light)', fontSize: '18px', fontWeight: 'bold', fontFamily: 'var(--font-main)', outline: 'none' }} />
             </div>
           </div>
 

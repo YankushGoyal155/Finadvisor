@@ -59,7 +59,7 @@ export default function InvestmentPage() {
               <span>Monthly SIP Amount</span>
               <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
                 <span style={{color: 'var(--text-muted)'}}>₹</span>
-                <input type="number" value={monthly} onChange={(e) => setMonthly(Number(e.target.value) || 0)} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <input type="text" inputMode="numeric" value={monthly} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ''); setMonthly(v === '' ? 0 : Number(v)); }} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
               </div>
             </div>
             <input type="range" min="500" max="200000" step="500" value={monthly} onChange={(e) => setMonthly(Number(e.target.value))} />
@@ -69,7 +69,7 @@ export default function InvestmentPage() {
             <div className="input-label" style={{alignItems: 'center'}}>
               <span>Expected Return (Annual)</span>
               <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                <input type="number" step="0.5" value={rate} onChange={(e) => setRate(Number(e.target.value) || 0)} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <input type="text" inputMode="decimal" value={rate} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setRate(v === '' ? 0 : Number(v)); }} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
                 <span style={{color: 'var(--text-muted)'}}>%</span>
               </div>
             </div>
@@ -80,7 +80,7 @@ export default function InvestmentPage() {
             <div className="input-label" style={{alignItems: 'center'}}>
               <span>Time Horizon (Years)</span>
               <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                <input type="number" value={years} onChange={(e) => setYears(Number(e.target.value) || 0)} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <input type="text" inputMode="numeric" value={years} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ''); setYears(v === '' ? 0 : Number(v)); }} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
                 <span style={{color: 'var(--text-muted)'}}>y</span>
               </div>
             </div>

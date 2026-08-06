@@ -42,11 +42,11 @@ export function DashboardProvider({ children }) {
 
   // 6. Retirement Planning Data — default ZERO
   const [retirementData, setRetirementData] = useState(() => loadState('finance_retirement_data', {
-    currentAge: 0,
-    retirementAge: 0,
-    monthlyExpense: 0,
-    inflationRate: 0,
-    expectedReturn: 0
+    currentAge: 25,
+    retirementAge: 60,
+    monthlyExpense: 30000,
+    inflationRate: 6,
+    expectedReturn: 12
   }));
 
   // 7. Affordability Data

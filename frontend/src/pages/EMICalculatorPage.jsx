@@ -26,7 +26,7 @@ export default function EMICalculatorPage() {
 
   const emi = (principal > 0 && rate > 0 && tenure > 0) ? calcEMI(principal, rate, tenure) : 0;
   const totalPayment = emi * tenure * 12;
-  const totalInterest = totalPayment - principal;
+  const totalInterest = Math.max(0, totalPayment - principal);
   const interestPct = totalPayment > 0 ? Math.round((totalInterest / totalPayment) * 100) : 0;
 
   const personalPresets = [
@@ -67,7 +67,7 @@ export default function EMICalculatorPage() {
               <span>Loan Amount (Principal)</span>
               <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
                 <span style={{color: 'var(--text-muted)'}}>₹</span>
-                <input type="number" value={principal} onChange={(e) => setPrincipal(Number(e.target.value) || 0)} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <input type="text" inputMode="numeric" value={principal} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ''); setPrincipal(v === '' ? 0 : Number(v)); }} style={{width: '120px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
               </div>
             </div>
             <input type="range" min="100000" max="20000000" step="50000" value={principal} onChange={(e) => setPrincipal(Number(e.target.value))} />
@@ -77,7 +77,7 @@ export default function EMICalculatorPage() {
             <div className="input-label" style={{alignItems: 'center'}}>
               <span>Interest Rate (%)</span>
               <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                <input type="number" step="0.1" value={rate} onChange={(e) => setRate(Number(e.target.value) || 0)} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <input type="text" inputMode="decimal" value={rate} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value.replace(/[^0-9.]/g, ''); setRate(v === '' ? 0 : Number(v)); }} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
                 <span style={{color: 'var(--text-muted)'}}>%</span>
               </div>
             </div>
@@ -88,7 +88,7 @@ export default function EMICalculatorPage() {
             <div className="input-label" style={{alignItems: 'center'}}>
               <span>Tenure (Years)</span>
               <div style={{display: 'flex', gap: '8px', alignItems: 'center'}}>
-                <input type="number" value={tenure} onChange={(e) => setTenure(Number(e.target.value) || 0)} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
+                <input type="text" inputMode="numeric" value={tenure} onFocus={(e) => e.target.select()} onChange={(e) => { const v = e.target.value.replace(/[^0-9]/g, ''); setTenure(v === '' ? 0 : Number(v)); }} style={{width: '80px', padding: '6px', borderRadius: '4px', border: '1px solid var(--navy-border)', background: 'var(--navy-dark)', color: 'white', fontSize: '14px'}} />
                 <span style={{color: 'var(--text-muted)'}}>y</span>
               </div>
             </div>

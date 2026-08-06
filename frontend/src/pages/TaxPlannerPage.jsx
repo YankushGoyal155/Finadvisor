@@ -194,7 +194,10 @@ export default function TaxPlannerPage() {
 
   const bizTax = calculateBusinessTaxes();
   const gstAmount = gstRegistered ? Math.round(annualTurnover * (gstRate / 100)) : 0;
-  const bestTax = Math.min(bizTax.regime1Tax, bizTax.regime2Tax);
+  const isRegime2Valid = entityType === 'corporate' || bizTax.presumptiveEligible;
+  const isRegime1Best = !isRegime2Valid || bizTax.regime1Tax <= bizTax.regime2Tax;
+  const isRegime2Best = isRegime2Valid && bizTax.regime2Tax < bizTax.regime1Tax;
+  const bestTax = isRegime2Valid ? Math.min(bizTax.regime1Tax, bizTax.regime2Tax) : bizTax.regime1Tax;
   const retainedProfit = Math.max(0, netProfit - bestTax);
 
   // Entity type styling
@@ -440,8 +443,8 @@ export default function TaxPlannerPage() {
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
                   {/* Regime 1 */}
-                  <div style={{ flex: 1, background: bizTax.regime1Tax <= bizTax.regime2Tax ? 'linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%)' : 'rgba(0,0,0,0.2)', border: `1px solid ${bizTax.regime1Tax <= bizTax.regime2Tax ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255,255,255,0.08)'}`, padding: '20px', borderRadius: '12px', textAlign: 'center', position: 'relative' }}>
-                    {bizTax.regime1Tax <= bizTax.regime2Tax && (
+                  <div style={{ flex: 1, background: isRegime1Best ? 'linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%)' : 'rgba(0,0,0,0.2)', border: `1px solid ${isRegime1Best ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255,255,255,0.08)'}`, padding: '20px', borderRadius: '12px', textAlign: 'center', position: 'relative' }}>
+                    {isRegime1Best && (
                       <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#10b981', color: 'white', fontSize: '9px', fontWeight: 800, padding: '3px 10px', borderRadius: '20px', letterSpacing: '1px' }}>BEST OPTION</div>
                     )}
                     <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', minHeight: '36px', marginBottom: '10px' }}>{bizTax.regime1Name}</h4>
@@ -453,13 +456,22 @@ export default function TaxPlannerPage() {
                   <div style={{ width: '40px', height: '40px', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.06)', borderRadius: '50%', fontSize: '0.75rem', fontWeight: 800, color: 'var(--text-secondary)' }}>VS</div>
 
                   {/* Regime 2 */}
-                  <div style={{ flex: 1, background: bizTax.regime2Tax < bizTax.regime1Tax ? 'linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%)' : 'rgba(0,0,0,0.2)', border: `1px solid ${bizTax.regime2Tax < bizTax.regime1Tax ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255,255,255,0.08)'}`, padding: '20px', borderRadius: '12px', textAlign: 'center', position: 'relative' }}>
-                    {bizTax.regime2Tax < bizTax.regime1Tax && (
+                  <div style={{ flex: 1, background: isRegime2Best ? 'linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(5, 150, 105, 0.08) 100%)' : 'rgba(0,0,0,0.2)', border: `1px solid ${isRegime2Best ? 'rgba(16, 185, 129, 0.5)' : 'rgba(255,255,255,0.08)'}`, padding: '20px', borderRadius: '12px', textAlign: 'center', position: 'relative' }}>
+                    {isRegime2Best && (
                       <div style={{ position: 'absolute', top: '-10px', left: '50%', transform: 'translateX(-50%)', background: '#10b981', color: 'white', fontSize: '9px', fontWeight: 800, padding: '3px 10px', borderRadius: '20px', letterSpacing: '1px' }}>BEST OPTION</div>
                     )}
                     <h4 style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', minHeight: '36px', marginBottom: '10px' }}>{bizTax.regime2Name}</h4>
-                    <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>₹{bizTax.regime2Tax.toLocaleString('en-IN')}</div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Tax Payable</span>
+                    {isRegime2Valid ? (
+                      <>
+                        <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '4px' }}>₹{bizTax.regime2Tax.toLocaleString('en-IN')}</div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '1px' }}>Tax Payable</span>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#ef4444', marginBottom: '4px', marginTop: '6px' }}>Not Eligible</div>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', letterSpacing: '0.5px' }}>Limit Exceeded</span>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -471,13 +483,23 @@ export default function TaxPlannerPage() {
               </div>
 
               {/* Tax Savings */}
-              <div className="result-main" style={{ border: '1px dashed rgba(0,200,98,0.3)', background: 'rgba(0,200,98,0.04)' }}>
-                <div className="result-label">Potential Tax Savings</div>
-                <div className="result-value" style={{ color: 'var(--green-light)', fontSize: '42px' }}>₹{Math.abs(bizTax.regime1Tax - bizTax.regime2Tax).toLocaleString('en-IN')}</div>
-                <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
-                  by choosing <strong style={{ color: 'var(--text-primary)' }}>{bizTax.regime1Tax <= bizTax.regime2Tax ? bizTax.regime1Name : bizTax.regime2Name}</strong>
-                </p>
-              </div>
+              {isRegime2Valid ? (
+                <div className="result-main" style={{ border: '1px dashed rgba(0,200,98,0.3)', background: 'rgba(0,200,98,0.04)' }}>
+                  <div className="result-label">Potential Tax Savings</div>
+                  <div className="result-value" style={{ color: 'var(--green-light)', fontSize: '42px' }}>₹{Math.abs(bizTax.regime1Tax - bizTax.regime2Tax).toLocaleString('en-IN')}</div>
+                  <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    by choosing <strong style={{ color: 'var(--text-primary)' }}>{isRegime1Best ? bizTax.regime1Name : bizTax.regime2Name}</strong>
+                  </p>
+                </div>
+              ) : (
+                <div className="result-main" style={{ border: '1px dashed rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.04)' }}>
+                  <div className="result-label">Potential Tax Savings</div>
+                  <div className="result-value" style={{ color: '#ef4444', fontSize: '42px' }}>₹0</div>
+                  <p style={{ marginTop: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                    Presumptive taxation is not allowed; Normal Tax is required.
+                  </p>
+                </div>
+              )}
 
               {/* GST + Retained Profit Summary */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
