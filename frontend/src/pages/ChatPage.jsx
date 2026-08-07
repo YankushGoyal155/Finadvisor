@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useDashboard } from '../context/DashboardContext'
 import { useNotification } from '../context/NotificationContext'
 import { Sparkles, Bot, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react'
@@ -54,11 +54,134 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
   const isBusiness = persona === 'business';
 
   const [healthScore, setHealthScore] = useState(58);
+  const [typingPhase, setTypingPhase] = useState(0);
   useEffect(() => {
     const scoreKey = isBusiness ? 'business_health_score' : 'financial_health_score';
     const savedScore = localStorage.getItem(scoreKey);
     if (savedScore) setHealthScore(parseInt(savedScore, 10));
   }, [isBusiness]);
+
+  // ── Typing phase animation (cycle through phases while AI is thinking) ──
+  useEffect(() => {
+    if (!isTyping) { setTypingPhase(0); return; }
+    const phases = ['Searching knowledge base...', 'Analyzing your financial data...', 'Generating personalized advice...'];
+    let idx = 0;
+    setTypingPhase(0);
+    const interval = setInterval(() => {
+      idx = (idx + 1) % phases.length;
+      setTypingPhase(idx);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isTyping]);
+
+  // ── Derived Financial Metrics (for dashboard) ──
+  const financialMetrics = useMemo(() => {
+    const sal = Number(onboardingData?.monthlySalary) || 0;
+    const exp = Number(onboardingData?.monthlyExpenses) || 0;
+    const sipAmt = Number(investData?.monthlyAmount) || 0;
+    const emiP = Number(emiData?.principal) || 0;
+    const emiR = Number(emiData?.rate) || 0;
+    const emiT = Number(emiData?.tenure) || 0;
+    const monthlyEmi = (emiP > 0 && emiR > 0 && emiT > 0)
+      ? Math.round((emiP * (emiR/12/100) * Math.pow(1 + (emiR/12/100), emiT*12)) / (Math.pow(1 + (emiR/12/100), emiT*12) - 1))
+      : 0;
+    const savings = sal > 0 ? sal - exp - monthlyEmi - sipAmt : 0;
+    const savingsRatio = sal > 0 ? Math.round((savings / sal) * 100) : 0;
+    const emergencyMonths = (exp > 0 && onboardingData?.emergencySavings && onboardingData.emergencySavings !== 'no' && onboardingData.emergencySavings !== 'yes')
+      ? (Number(onboardingData.emergencySavings) / exp).toFixed(1)
+      : (onboardingData?.emergencySavings === 'yes' ? '3+' : '0');
+    const totalGoals = goalsData?.length || 0;
+    const goalsWithProgress = goalsData?.filter(g => g.current > 0 || g.saved > 0) || [];
+    const avgGoalProgress = goalsWithProgress.length > 0
+      ? Math.round(goalsWithProgress.reduce((sum, g) => sum + ((g.current || g.saved || 0) / (g.target || 1)) * 100, 0) / goalsWithProgress.length)
+      : 0;
+    const mfCount = savedMutualFunds?.length || 0;
+    const totalSipFromMf = savedMutualFunds?.reduce((s, f) => s + (Number(f.sipAmount) || 0), 0) || 0;
+    const debtRatio = sal > 0 ? Math.round(((monthlyEmi) / sal) * 100) : 0;
+    const hasInsurance = onboardingData?.healthInsurance === 'yes';
+    const hasTaxPlan = taxData?.income > 0;
+    const retireAge = retirementData?.retirementAge || 60;
+    const currentAge = retirementData?.currentAge || 25;
+
+    // Health score breakdown
+    const incomeScore = sal > 0 ? 90 : 10;
+    const savingsScore = savingsRatio >= 20 ? 85 : savingsRatio >= 10 ? 60 : savingsRatio > 0 ? 35 : 10;
+    const emergencyScore = emergencyMonths === '0' ? 15 : (parseFloat(emergencyMonths) >= 6 ? 90 : parseFloat(emergencyMonths) >= 3 ? 60 : 35);
+    const insuranceScore = hasInsurance ? 80 : 15;
+    const debtScore = debtRatio === 0 ? 95 : debtRatio <= 30 ? 80 : debtRatio <= 50 ? 50 : 20;
+    const investScore = (sipAmt + totalSipFromMf) > 0 ? 75 : 10;
+    const taxScore = hasTaxPlan ? 70 : 15;
+    const retireScore = retirementData?.currentAge > 0 ? 65 : 10;
+    const budgetScore = exp > 0 ? 70 : 10;
+    const goalScore = totalGoals > 0 ? (avgGoalProgress > 50 ? 80 : 50) : 10;
+
+    return {
+      salary: sal, expenses: exp, savings, savingsRatio, monthlyEmi,
+      sipAmt, totalSipFromMf, emergencyMonths, totalGoals, avgGoalProgress,
+      mfCount, debtRatio, hasInsurance, hasTaxPlan, retireAge, currentAge,
+      scores: {
+        income: incomeScore, savings: savingsScore, emergency: emergencyScore,
+        insurance: insuranceScore, debt: debtScore, invest: investScore,
+        tax: taxScore, retire: retireScore, budget: budgetScore, goals: goalScore
+      }
+    };
+  }, [onboardingData, investData, emiData, goalsData, savedMutualFunds, taxData, retirementData]);
+
+  // ── Top Recommendation Generator ──
+  const topRecommendation = useMemo(() => {
+    const m = financialMetrics;
+    if (m.emergencyMonths === '0') return { icon: '🛡️', text: 'Build your emergency fund first — aim for at least 3 months of expenses before increasing investments.' };
+    if (!m.hasInsurance) return { icon: '🏥', text: 'You don\'t have health insurance. A medical emergency can wipe out years of savings. Get covered ASAP.' };
+    if (m.debtRatio > 40) return { icon: '⚠️', text: `Your EMI-to-income ratio is ${m.debtRatio}%, which is above the safe limit. Focus on reducing debt before new investments.` };
+    if (m.savingsRatio < 10 && m.salary > 0) return { icon: '💡', text: 'Your savings ratio is below 10%. Try the 50-30-20 rule to bring your savings up.' };
+    if (m.sipAmt === 0 && m.totalSipFromMf === 0) return { icon: '📈', text: 'You haven\'t started any SIP yet. Even ₹500/month can grow significantly with compounding.' };
+    if (m.totalGoals === 0) return { icon: '🎯', text: 'Set at least one financial goal (house, car, retirement) — goals give direction to your investments.' };
+    if (parseFloat(m.emergencyMonths) < 6 && m.emergencyMonths !== '0') return { icon: '🛡️', text: `Your emergency fund covers only ${m.emergencyMonths} months. Target 6 months of expenses.` };
+    if (!m.hasTaxPlan) return { icon: '💰', text: 'Set up your tax planner to discover potential savings under Section 80C, 80D, and more.' };
+    return { icon: '🌟', text: 'You\'re on a great track! Consider reviewing your portfolio allocation for better diversification.' };
+  }, [financialMetrics]);
+
+  // ── Proactive Insights Generator ──
+  const proactiveInsights = useMemo(() => {
+    const m = financialMetrics;
+    const insights = [];
+    if (m.debtRatio > 30 && m.salary > 0) insights.push({ type: 'warning', icon: '⚠️', text: `Your EMI is ${m.debtRatio}% of income — recommended is below 30%.` });
+    if (m.emergencyMonths === '0') insights.push({ type: 'danger', icon: '🚨', text: 'No emergency fund detected. This is your #1 financial priority.' });
+    if (m.savingsRatio > 30 && m.salary > 0) insights.push({ type: 'success', icon: '✨', text: `Excellent! You\'re saving ${m.savingsRatio}% of your income.` });
+    if (m.mfCount > 0) insights.push({ type: 'info', icon: '📊', text: `${m.mfCount} mutual fund(s) tracked with ₹${(m.totalSipFromMf).toLocaleString('en-IN')}/month total SIP.` });
+    if (m.avgGoalProgress > 0) insights.push({ type: 'success', icon: '🎯', text: `Your goals are ${m.avgGoalProgress}% complete on average.` });
+    if (!m.hasInsurance) insights.push({ type: 'danger', icon: '🏥', text: 'Missing health insurance — high-risk gap in your financial safety net.' });
+    if (m.salary > 0 && !m.hasTaxPlan) insights.push({ type: 'warning', icon: '💸', text: 'Tax planner not configured. You might be paying more tax than necessary.' });
+    return insights.slice(0, 4); // Show max 4
+  }, [financialMetrics]);
+
+  // ── Greeting based on time of day ──
+  const getGreeting = useCallback(() => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  }, []);
+
+  const formatCurrency = (val) => {
+    if (val >= 10000000) return `₹${(val / 10000000).toFixed(1)}Cr`;
+    if (val >= 100000) return `₹${(val / 100000).toFixed(1)}L`;
+    if (val >= 1000) return `₹${(val / 1000).toFixed(1)}K`;
+    return `₹${val}`;
+  };
+
+  // ── Score color helper ──
+  const getScoreColor = (score) => {
+    if (score >= 70) return '#00c862';
+    if (score >= 40) return '#f59e0b';
+    return '#ff4d4d';
+  };
+
+  const getScoreClass = (score) => {
+    if (score >= 70) return 'score-high';
+    if (score >= 40) return 'score-mid';
+    return 'score-low';
+  };
 
   const userDataPayload = useMemo(() => {
     const monthlyEmi = (emiData?.principal > 0 && emiData?.rate > 0 && emiData?.tenure > 0)
@@ -131,6 +254,36 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
     { icon: '💹', title: 'Analyze Portfolio', desc: 'Analyze my mutual fund portfolio and suggest changes' },
     { icon: '📈', title: 'Increase Savings', desc: 'Can I increase my SIP?' }
   ];
+
+  // ── Suggested Actions (clickable cards) ──
+  const suggestedActions = useMemo(() => {
+    const m = financialMetrics;
+    const actions = [];
+    if (m.sipAmt === 0 && m.totalSipFromMf === 0) actions.push({ icon: '📈', label: 'Start SIP', query: 'Help me start my first SIP investment' });
+    else actions.push({ icon: '📈', label: 'Increase SIP', query: 'Can I increase my SIP amount? Analyze my capacity.' });
+    if (m.debtRatio > 30) actions.push({ icon: '🏦', label: 'Reduce EMI', query: 'How can I reduce my EMI burden?' });
+    if (!m.hasInsurance) actions.push({ icon: '🛡️', label: 'Get Insured', query: 'I need health insurance. What should I look for?' });
+    if (m.emergencyMonths === '0') actions.push({ icon: '💰', label: 'Emergency Fund', query: 'Help me build an emergency fund' });
+    if (!m.hasTaxPlan && m.salary > 0) actions.push({ icon: '💸', label: 'Save Tax', query: 'How can I save tax under Section 80C and 80D?' });
+    actions.push({ icon: '🔍', label: 'Review Portfolio', query: 'Review and analyze my complete investment portfolio' });
+    actions.push({ icon: '🏖️', label: 'Plan Retirement', query: 'Plan my retirement and calculate how much I need' });
+    actions.push({ icon: '⭐', label: 'Boost Score', query: `How can I improve my financial health score from ${healthScore}?` });
+    return actions.slice(0, 8);
+  }, [financialMetrics, healthScore]);
+
+  // ── Quick Suggested Questions (shown above input during conversation) ──
+  const quickQuestions = [
+    'Can I afford a car?',
+    'How can I save tax?',
+    'Review my investments',
+    'Analyze my expenses',
+    'How much should I invest monthly?',
+    'Plan my retirement',
+    'Increase my financial score',
+  ];
+
+  // ── Typing Phase Labels ──
+  const typingPhases = ['Searching knowledge base...', 'Analyzing your financial data...', 'Generating personalized advice...'];
 
   // ── Document upload handler ──
   const handleDocUpload = async (e) => {
@@ -594,14 +747,134 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
       </div>
 
       {isWelcome ? (
-        /* ── ChatGPT-Style Centered Welcome ── */
+        /* ── Personalized Financial Dashboard Welcome ── */
         <div className="chat-center-wrap">
           <div className="chat-center-content">
-            <div className="chat-ai-avatar" style={{ margin: '0 auto', width: '56px', height: '56px', marginBottom: '16px' }}>
-              <span className="avatar-rupee" style={{ fontSize: '24px' }}>₹</span>
-              <span className="avatar-pulse"></span>
+            {/* ── Personalized Dashboard ── */}
+            <div className="welcome-dashboard">
+              {/* Greeting */}
+              <div className="welcome-greeting">
+                <div className="greeting-text">
+                  <h1>{getGreeting()}, {user?.username || 'there'} 👋</h1>
+                  <p>Here's your financial snapshot — let's make smart decisions today.</p>
+                </div>
+                <span className="greeting-time">{new Date().toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+              </div>
+
+              {/* Health Score Card */}
+              <div className={`health-score-card ${getScoreClass(healthScore)}`}>
+                <div className="health-score-ring">
+                  <svg width="90" height="90" viewBox="0 0 90 90">
+                    <circle cx="45" cy="45" r="38" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+                    <circle cx="45" cy="45" r="38" fill="none" stroke={getScoreColor(healthScore)} strokeWidth="6" strokeLinecap="round" strokeDasharray={`${(healthScore / 100) * 238.76} 238.76`} style={{ transition: 'stroke-dasharray 1s ease' }} />
+                  </svg>
+                  <div className="score-value">
+                    <span className="score-number" style={{ color: getScoreColor(healthScore) }}>{healthScore}</span>
+                    <span className="score-label">/ 100</span>
+                  </div>
+                </div>
+                <div className="health-score-info">
+                  <h3>Financial Health Score</h3>
+                  <div className="health-score-categories">
+                    {[
+                      { name: 'Income', score: financialMetrics.scores.income },
+                      { name: 'Savings', score: financialMetrics.scores.savings },
+                      { name: 'Emergency', score: financialMetrics.scores.emergency },
+                      { name: 'Insurance', score: financialMetrics.scores.insurance },
+                      { name: 'Debt', score: financialMetrics.scores.debt },
+                      { name: 'Investments', score: financialMetrics.scores.invest },
+                      { name: 'Tax', score: financialMetrics.scores.tax },
+                      { name: 'Goals', score: financialMetrics.scores.goals },
+                    ].map((cat, i) => (
+                      <div key={i} className="score-category">
+                        <span style={{ minWidth: '68px' }}>{cat.name}</span>
+                        <div className="cat-bar">
+                          <div className="cat-bar-fill" style={{ width: `${cat.score}%`, background: getScoreColor(cat.score) }} />
+                        </div>
+                        <span style={{ fontSize: '10px', color: getScoreColor(cat.score), fontWeight: 700, minWidth: '20px' }}>{cat.score}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <span className="stat-icon">💰</span>
+                  <span className="stat-value">{financialMetrics.salary > 0 ? formatCurrency(financialMetrics.savings) : '—'}</span>
+                  <span className="stat-label">Monthly Savings</span>
+                  {financialMetrics.savingsRatio > 0 && <span className={`stat-change ${financialMetrics.savingsRatio >= 20 ? 'positive' : 'negative'}`}>{financialMetrics.savingsRatio}% of income</span>}
+                </div>
+                <div className="stat-card">
+                  <span className="stat-icon">📈</span>
+                  <span className="stat-value">{(financialMetrics.sipAmt + financialMetrics.totalSipFromMf) > 0 ? formatCurrency(financialMetrics.sipAmt + financialMetrics.totalSipFromMf) : '—'}</span>
+                  <span className="stat-label">Total SIP</span>
+                  {financialMetrics.mfCount > 0 && <span className="stat-change positive">{financialMetrics.mfCount} fund(s)</span>}
+                </div>
+                <div className="stat-card">
+                  <span className="stat-icon">🛡️</span>
+                  <span className="stat-value">{financialMetrics.emergencyMonths !== '0' ? `${financialMetrics.emergencyMonths} mo` : '—'}</span>
+                  <span className="stat-label">Emergency Fund</span>
+                  <span className={`stat-change ${parseFloat(financialMetrics.emergencyMonths) >= 6 ? 'positive' : parseFloat(financialMetrics.emergencyMonths) >= 3 ? 'neutral' : 'negative'}`}>
+                    {parseFloat(financialMetrics.emergencyMonths) >= 6 ? 'Healthy' : parseFloat(financialMetrics.emergencyMonths) >= 3 ? 'Moderate' : 'Low'}
+                  </span>
+                </div>
+                <div className="stat-card">
+                  <span className="stat-icon">🏦</span>
+                  <span className="stat-value">{financialMetrics.monthlyEmi > 0 ? formatCurrency(financialMetrics.monthlyEmi) : '—'}</span>
+                  <span className="stat-label">Monthly EMI</span>
+                  {financialMetrics.debtRatio > 0 && <span className={`stat-change ${financialMetrics.debtRatio <= 30 ? 'positive' : 'negative'}`}>{financialMetrics.debtRatio}% of income</span>}
+                </div>
+                <div className="stat-card">
+                  <span className="stat-icon">🎯</span>
+                  <span className="stat-value">{financialMetrics.totalGoals > 0 ? `${financialMetrics.avgGoalProgress}%` : '—'}</span>
+                  <span className="stat-label">Goals Progress</span>
+                  {financialMetrics.totalGoals > 0 && <span className="stat-change neutral">{financialMetrics.totalGoals} goal(s)</span>}
+                </div>
+                <div className="stat-card">
+                  <span className="stat-icon">🏥</span>
+                  <span className="stat-value">{financialMetrics.hasInsurance ? 'Active' : 'None'}</span>
+                  <span className="stat-label">Health Insurance</span>
+                  <span className={`stat-change ${financialMetrics.hasInsurance ? 'positive' : 'negative'}`}>{financialMetrics.hasInsurance ? '✓ Covered' : '✕ Not Covered'}</span>
+                </div>
+              </div>
+
+              {/* Top Recommendation */}
+              <div className="top-recommendation">
+                <span className="rec-icon">{topRecommendation.icon}</span>
+                <div className="rec-content">
+                  <h4>Top Recommendation</h4>
+                  <p>{topRecommendation.text}</p>
+                </div>
+              </div>
+
+              {/* Proactive Insights */}
+              {proactiveInsights.length > 0 && (
+                <div className="proactive-insights">
+                  <h4>Smart Insights</h4>
+                  {proactiveInsights.map((insight, i) => (
+                    <div key={i} className={`insight-item ${insight.type}`} onClick={() => handleSend(`Tell me more about: ${insight.text}`)}>
+                      <span className="insight-icon">{insight.icon}</span>
+                      <span>{insight.text}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Suggested Actions */}
+              <div className="suggested-actions">
+                <h4>Quick Actions</h4>
+                <div className="actions-grid">
+                  {suggestedActions.map((a, i) => (
+                    <button key={i} className="action-card" onClick={() => handleSend(a.query)}>
+                      <span className="action-icon">{a.icon}</span>
+                      <span className="action-label">{a.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
-            <h1 className="chat-center-heading">What can I help you with? 🙏</h1>
 
             {/* Input in the center */}
             <div className="chat-center-input">
@@ -676,21 +949,53 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
               <input ref={imgInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageAttach} />
             </div>
 
-            {/* Suggestion Chips */}
-            <div className="chat-center-chips">
-              {dynamicSuggestions.map((s, i) => (
-                <button key={i} className="chat-chip" onClick={() => handleSend(s.desc)}>
-                  <span className="chat-chip-icon">{s.icon}</span>
-                  {s.title}
-                </button>
+            {/* Quick Questions */}
+            <div className="quick-questions">
+              {quickQuestions.map((q, i) => (
+                <button key={i} className="quick-q-btn" onClick={() => handleSend(q)}>{q}</button>
               ))}
             </div>
           </div>
-          <p className="chat-disclaimer">AI can make mistakes. Check facts before relying.</p>
+          <p className="chat-disclaimer">AI can make mistakes. Verify important financial decisions with a certified advisor.</p>
         </div>
       ) : (
         /* ── Chat Conversation Mode ── */
         <>
+          {/* Sticky Financial Summary Bar */}
+          <div className="sticky-summary-bar">
+            <div className="summary-pill highlight">
+              <span className="pill-icon">💳</span>
+              <span>Score:</span>
+              <span className="pill-value" style={{ color: getScoreColor(healthScore) }}>{healthScore}/100</span>
+            </div>
+            {financialMetrics.salary > 0 && (
+              <div className="summary-pill">
+                <span className="pill-icon">💰</span>
+                <span>Savings:</span>
+                <span className="pill-value">{formatCurrency(financialMetrics.savings)}/mo</span>
+              </div>
+            )}
+            {(financialMetrics.sipAmt + financialMetrics.totalSipFromMf) > 0 && (
+              <div className="summary-pill">
+                <span className="pill-icon">📈</span>
+                <span>SIP:</span>
+                <span className="pill-value">{formatCurrency(financialMetrics.sipAmt + financialMetrics.totalSipFromMf)}</span>
+              </div>
+            )}
+            {financialMetrics.monthlyEmi > 0 && (
+              <div className="summary-pill">
+                <span className="pill-icon">🏦</span>
+                <span>EMI:</span>
+                <span className="pill-value">{formatCurrency(financialMetrics.monthlyEmi)}</span>
+              </div>
+            )}
+            <div className="summary-pill">
+              <span className="pill-icon">🛡️</span>
+              <span>Emergency:</span>
+              <span className="pill-value">{financialMetrics.emergencyMonths !== '0' ? `${financialMetrics.emergencyMonths}mo` : 'None'}</span>
+            </div>
+          </div>
+
           <div className="chat-messages">
             {messages.map((msg, i) => (
               <div key={i} className={`message ${msg.role} slide-in`}>
@@ -713,6 +1018,7 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
                   <div className="typing-dots">
                     <span></span><span></span><span></span>
                   </div>
+                  <div className="typing-phase-text">{typingPhases[typingPhase]}</div>
                 </div>
               </div>
             )}
@@ -721,6 +1027,14 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
 
           {/* Input at bottom when chatting */}
           <div className="chat-input-area">
+            {/* Suggested Questions Row */}
+            {!isTyping && messages.length >= 2 && (
+              <div className="chat-suggestions-row">
+                {quickQuestions.slice(0, 5).map((q, i) => (
+                  <button key={i} className="chat-suggest-btn" onClick={() => handleSend(q)}>{q}</button>
+                ))}
+              </div>
+            )}
             {/* Upload status toast */}
             {uploadStatus && (
               <div className={`upload-toast ${uploadStatus.type}`}>
@@ -800,11 +1114,29 @@ export default function ChatPage({ selectedModel: initialSelectedModel = 'gpt-4o
 
 function formatMarkdown(text) {
   if (!text) return '';
+  
+  // 1. Strip Action Tags immediately (so they aren't parsed as text)
   text = text.replace(/\[\[ACTION:[\s\S]*?\]\]/g, '');
   text = text.replace(/\[\[ACTION:[\s\S]*$/gm, '');
-  
-  // Code blocks (```...```)
-  text = text.replace(/```([\s\S]*?)```/g, '<pre style="background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:12px; overflow-x:auto; font-size:12px; margin:8px 0; font-family:monospace;"><code>$1</code></pre>');
+
+  // 2. Parse Structured Recommendation Cards
+  // Format from backend: **📌 Recommendation**: [Text] \n **📝 Reason**: [Text] etc.
+  const cardRegex = /\*\*(📌 Recommendation|📝 Reason|📊 Impact|✅ Next Steps)\*\*\s*:\s*([^\n]+(\n(?!\*\*).*)*)/g;
+  text = text.replace(cardRegex, (match, title, content) => {
+    return `<div class="ai-structured-card">
+      <h4>${title}</h4>
+      <p>${content.trim()}</p>
+    </div>`;
+  });
+
+  // 3. Parse Source Citations (Source: Income Tax Act, etc.)
+  const sourceRegex = /\(Source:\s*([^)]+)\)/gi;
+  text = text.replace(sourceRegex, '<span class="source-citation">📚 Source: $1</span>');
+
+  // 4. Parse Calculation Details (Formula blocks)
+  // E.g., [Calculation: `Principal * Rate`] or [Formula: ...] (If AI uses them, or we can just style code blocks specially if they have formulas)
+  // For now, let's just make sure code blocks are parsed nicely
+  text = text.replace(/```([\s\S]*?)```/g, '<div class="calc-detail-block">$1</div>');
   
   // Inline code (`...`)
   text = text.replace(/`([^`]+)`/g, '<code style="background:rgba(255,107,0,0.12); padding:2px 6px; border-radius:4px; font-size:0.9em; font-family:monospace; color:var(--saffron-light);">$1</code>');
@@ -837,7 +1169,8 @@ function formatMarkdown(text) {
   
   // Line breaks
   text = text.replace(/\n\n/g, '<br/><br/>');
-  text = text.replace(/\n(?!<div|<pre|<h[1-3]|<hr)/g, '<br/>');
+  // Avoid inserting <br/> inside structured cards or block elements
+  text = text.replace(/\n(?!<div|<h[1-3]|<hr|<\/div>|<br)/g, '<br/>');
   
   return text.trim();
 }
